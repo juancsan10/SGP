@@ -24,7 +24,7 @@ Ver más en [`docs/05-equipo/`](docs/05-equipo/).
 ```
 sgp-sena/
 ├── backend/                 # API REST (Node.js + Express + MySQL, JWT, bcrypt)
-├── frontend/                 # Interfaces por rol (admin, aprendiz, instructor)
+├── frontend/                 # App React + Vite (login, dashboard, proyectos, tareas...)
 ├── database/                 # Todo lo relacionado a la BD (corre en Docker)
 │   ├── docker-init/           # Scripts que Docker ejecuta al iniciar
 │   ├── scripts-originales/    # Borradores previos, referencia histórica
@@ -51,6 +51,28 @@ docker compose up -d
 ```
 
 Más detalles en [`database/README.md`](database/README.md).
+
+## 🚀 Levantar todo el proyecto (BD + backend + frontend)
+
+```bash
+# 1. Base de datos
+cp .env.example .env
+docker compose up -d
+
+# 2. Backend
+cd backend
+cp .env.example .env
+npm install
+node database/seed.js   # datos de prueba (usuarios, proyectos...)
+npm run dev              # http://localhost:3000
+
+# 3. Frontend (en otra terminal)
+cd frontend
+npm install
+npm run dev               # http://localhost:5173
+```
+
+Cuentas de prueba disponibles tras el seed en [`backend/README.md`](backend/README.md).
 
 ## 🌱 Flujo de ramas (Git Flow simplificado)
 
