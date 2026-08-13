@@ -11,10 +11,21 @@ cp .env.example .env   # si no existe aún; ajusta las claves
 docker compose up -d
 ```
 
-Al primer arranque, MySQL 8 ejecuta automáticamente, en orden, todo lo que está en `docker-init/`:
+Al primer arranque, MySQL 8 ejecuta automáticamente todo lo que está en `docker-init/`:
 
 1. `001_schema.sql` — crea la base de datos y las 16 tablas (sin datos)
-2. `002_seed_data.sql` — inserta datos de ejemplo para desarrollo/pruebas
+
+Los **datos de ejemplo no se cargan por SQL plano**: el login del backend usa `bcrypt`, así
+que las contraseñas de prueba deben quedar hasheadas. Para eso, después de levantar el
+contenedor, se corre un script de Node incluido en el backend:
+
+```bash
+cd backend
+npm install
+node database/seed.js
+```
+
+Ver [`../backend/database/README_seedjs.md`](../backend/database/README_seedjs.md) para el detalle.
 
 ## Reiniciar la base de datos desde cero
 
@@ -28,11 +39,13 @@ docker compose up -d
 ```
 database/
 ├── docker-init/            # scripts que Docker ejecuta automáticamente
-│   ├── 001_schema.sql
-│   └── 002_seed_data.sql
+│   └── 001_schema.sql        # única fuente de verdad del esquema (16 tablas)
 ├── scripts-originales/      # borradores/versiones previas, solo como referencia histórica
 └── backups/                 # dumps manuales (ignorado por git, excepto .gitkeep)
 ```
+
+Los datos de ejemplo (seed) se generan desde `backend/database/seed.js`, no desde aquí —
+ver la sección anterior.
 
 ## Nota sobre `scripts-originales/`
 

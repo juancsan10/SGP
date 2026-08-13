@@ -23,7 +23,7 @@ Ver más en [`docs/05-equipo/`](docs/05-equipo/).
 
 ```
 sgp-sena/
-├── backend/                 # API / lógica de servidor
+├── backend/                 # API REST (Node.js + Express + MySQL, JWT, bcrypt)
 ├── frontend/                 # Interfaces por rol (admin, aprendiz, instructor)
 ├── database/                 # Todo lo relacionado a la BD (corre en Docker)
 │   ├── docker-init/           # Scripts que Docker ejecuta al iniciar

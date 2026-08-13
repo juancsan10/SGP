@@ -6,9 +6,7 @@ node_modules/
 dist/
 build/
 
-# Backend (ajustar según stack final: Java, Node, PHP, etc.)
-target/
-*.class
+# Backend (Node.js)
 *.log
 
 # Sistema
