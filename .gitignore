@@ -1,0 +1,20 @@
+# Entorno / credenciales
+.env
+
+# Node / frontend
+node_modules/
+dist/
+build/
+
+# Backend (ajustar según stack final: Java, Node, PHP, etc.)
+target/
+*.class
+*.log
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Backups locales de base de datos
+database/backups/*
+!database/backups/.gitkeep
