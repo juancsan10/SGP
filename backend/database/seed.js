@@ -3,7 +3,7 @@
 // Inserta datos de ejemplo con contraseñas hasheadas
 //
 // USO:  node database/seed.js
-// (ejecutar DESPUÉS de: npm install)
+// (ejecutar DESPUÉS de: pnpm install)
 // =====================================================
 
 require('dotenv').config();
@@ -41,8 +41,11 @@ async function seed() {
     await conn.execute('SET FOREIGN_KEY_CHECKS = 0');
 
     // Limpiar tablas en orden inverso de dependencias
+    // (se agregan aquí las 5 tablas nuevas: comentarios, archivos,
+    // evaluaciones, reuniones, github_integration)
     const tablas = [
       'historial_cambios','notificaciones','mensajes','repositorios',
+      'comentarios','archivos','evaluaciones','reuniones','github_integration',
       'entregables','tareas','fases_proyecto','equipos_proyecto',
       'proyectos','usuarios','roles',
     ];
@@ -211,6 +214,43 @@ async function seed() {
     `);
     console.log('✅  Repositorios insertados');
 
+    // ── COMENTARIOS (NUEVO: retroalimentación sobre entregables, RN-015) ──
+    // Nota: id_entregable 1-7 corresponden a los entregables sembrados arriba
+    // (fueron creados con AUTO_INCREMENT, así que asumimos ese orden 1..7).
+    await conn.execute(`
+      INSERT INTO comentarios (contenido, id_usuario, id_entregable) VALUES
+      ('Buen trabajo con el documento, solo falta detallar el alcance en la sección 3.', 2, 1),
+      ('Corregido, gracias por la observación.', 3, 1),
+      ('Los diagramas de casos de uso están completos y bien documentados.', 2, 2)
+    `);
+    console.log('✅  Comentarios insertados');
+
+    // ── EVALUACIONES (NUEVO, RN-016) ──────────────────────
+    // Solo se evalúan entregables de proyectos en estado "En Revisión".
+    // Ninguno de los proyectos sembrados está en ese estado todavía, así
+    // que esta tabla queda vacía intencionalmente (ver RN-016 en
+    // reglas-de-negocio.md). Cambia el estado de un proyecto a
+    // "En Revisión" vía PUT /proyectos/:id para poder probar el endpoint
+    // POST /evaluaciones.
+
+    // ── REUNIONES (NUEVO) ──────────────────────────────────
+    await conn.execute(`
+      INSERT INTO reuniones (titulo, descripcion, fecha_reunion, lugar, id_proyecto) VALUES
+      ('Seguimiento semanal Sistema Web', 'Revisión de avance del sprint actual', '2025-06-06 14:00:00', 'Sala virtual - Meet', 1),
+      ('Kickoff App Móvil', 'Reunión inicial de planificación', '2025-02-05 09:00:00', 'Bloque 5 - Sala 302', 2)
+    `);
+    console.log('✅  Reuniones insertadas');
+
+    // ── GITHUB_INTEGRATION (NUEVO) ─────────────────────────
+    // El "token" de ejemplo es un valor ficticio; en un caso real cada
+    // usuario lo genera desde GitHub (Settings > Developer settings > PAT).
+    await conn.execute(`
+      INSERT INTO github_integration (github_username, github_token, id_usuario) VALUES
+      ('carlos-lopez-dev', 'ghp_ejemploFicticioNoUsarEnProduccion01', 3),
+      ('ana-martinez-dev',  'ghp_ejemploFicticioNoUsarEnProduccion02', 4)
+    `);
+    console.log('✅  Integraciones de GitHub insertadas');
+
     console.log('\n✅✅✅  ¡SEED COMPLETADO EXITOSAMENTE!\n');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('  Cuentas de acceso (contraseña: 123)');
@@ -221,7 +261,7 @@ async function seed() {
     console.log('  👤 carlos@mail.com  → Aprendiz');
     console.log('  👤 ana@mail.com     → Aprendiz');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-    console.log('  Ahora ejecuta:  npm run dev\n');
+    console.log('  Ahora ejecuta:  pnpm run dev\n');
 
   } catch (err) {
     console.error('\n❌  Error durante el seed:', err.message);

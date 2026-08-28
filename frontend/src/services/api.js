@@ -114,3 +114,41 @@ export const historialService = {
   getAll:     ()       => api.get('/historial'),
   getByTabla: (tabla)  => api.get(`/historial/${tabla}`),
 };
+
+// ── Comentarios (NUEVO — RN-015) ───────────────────────
+export const comentariosService = {
+  getByEntregable: (idEntregable)  => api.get(`/comentarios/${idEntregable}`),
+  create:          (data)          => api.post('/comentarios', data),
+  update:          (id, data)      => api.put(`/comentarios/${id}`, data),
+  remove:          (id)            => api.delete(`/comentarios/${id}`),
+};
+
+// ── Archivos (NUEVO) ────────────────────────────────────
+export const archivosService = {
+  getByEntregable: (idEntregable)  => api.get(`/archivos/${idEntregable}`),
+  create:          (data)          => api.post('/archivos', data),
+  remove:          (id)            => api.delete(`/archivos/${id}`),
+};
+
+// ── Evaluaciones (NUEVO — RN-016) ──────────────────────
+export const evaluacionesService = {
+  getByEntregable: (idEntregable)  => api.get(`/evaluaciones/${idEntregable}`),
+  create:          (data)          => api.post('/evaluaciones', data),
+  update:          (id, data)      => api.put(`/evaluaciones/${id}`, data),
+};
+
+// ── Reuniones (NUEVO) ───────────────────────────────────
+export const reunionesService = {
+  getByProyecto: (idProy)   => api.get(`/reuniones/${idProy}`),
+  create:        (data)     => api.post('/reuniones', data),
+  update:        (id, data) => api.put(`/reuniones/${id}`, data),
+  remove:        (id)       => api.delete(`/reuniones/${id}`),
+};
+
+// ── GitHub Integration (NUEVO) ──────────────────────────
+export const githubIntegrationService = {
+  getByUsuario: (idUsuario)  => api.get(`/github-integration/${idUsuario}`),
+  create:       (data)       => api.post('/github-integration', data),
+  update:       (data)       => api.put('/github-integration', data),
+  remove:       ()           => api.delete('/github-integration'),
+};

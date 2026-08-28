@@ -62,15 +62,19 @@ docker compose up -d
 # 2. Backend
 cd backend
 cp .env.example .env
-npm install
+pnpm install
 node database/seed.js   # datos de prueba (usuarios, proyectos...)
-npm run dev              # http://localhost:3000
+pnpm run dev             # http://localhost:3000
 
 # 3. Frontend (en otra terminal)
 cd frontend
-npm install
-npm run dev               # http://localhost:5173
+pnpm install
+pnpm run dev              # http://localhost:5173
 ```
+
+> Este proyecto usa **pnpm** como gestor de paquetes (fijado en `packageManager`
+> dentro de cada `package.json`). Si no lo tienes instalado:
+> `corepack enable` (Node 16.9+) o `npm install -g pnpm`.
 
 Cuentas de prueba disponibles tras el seed en [`backend/README.md`](backend/README.md).
 

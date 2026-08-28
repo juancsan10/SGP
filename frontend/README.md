@@ -4,12 +4,15 @@ Aplicación en **React 18 + Vite + React Router + Axios**, conectada al backend 
 
 ## Cómo levantarlo
 
+Requiere **pnpm** (gestor de paquetes del proyecto, fijado en `packageManager` dentro de
+`package.json`). Si no lo tienes: `corepack enable` o `npm install -g pnpm`.
+
 Con el backend ya corriendo en `http://localhost:3000` (ver `../backend/README.md`):
 
 ```bash
 cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 Queda disponible en `http://localhost:5173`. En desarrollo, Vite hace de proxy: todo lo que

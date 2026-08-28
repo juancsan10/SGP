@@ -13,6 +13,14 @@ const notificacionesRoutes = require('./notificaciones.routes');
 const repositoriosRoutes = require('./repositorios.routes');
 const historialRoutes    = require('./historial.routes');
 
+// NUEVOS — tablas que ya existían en el schema pero no tenían rutas/controladores
+// (ver backend/README.md, sección "Cobertura actual de la API")
+const comentariosRoutes       = require('./comentarios.routes');
+const archivosRoutes          = require('./archivos.routes');
+const evaluacionesRoutes      = require('./evaluaciones.routes');
+const reunionesRoutes         = require('./reuniones.routes');
+const githubIntegrationRoutes = require('./githubIntegration.routes');
+
 router.use('/auth',           authRoutes);
 router.use('/usuarios',       usuariosRoutes);
 router.use('/proyectos',      proyectosRoutes);
@@ -24,5 +32,12 @@ router.use('/mensajes',       mensajesRoutes);
 router.use('/notificaciones', notificacionesRoutes);
 router.use('/repositorios',   repositoriosRoutes);
 router.use('/historial',      historialRoutes);
+
+// NUEVOS
+router.use('/comentarios',        comentariosRoutes);
+router.use('/archivos',           archivosRoutes);
+router.use('/evaluaciones',       evaluacionesRoutes);
+router.use('/reuniones',          reunionesRoutes);
+router.use('/github-integration', githubIntegrationRoutes);
 
 module.exports = router;

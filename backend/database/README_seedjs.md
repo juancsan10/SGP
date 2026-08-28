@@ -5,7 +5,7 @@ para poder probar el sistema con información realista sin tener que cargarla ma
 
 ## Uso
 ​```bash
-npm install
+pnpm install
 node database/seed.js
 ​```
 > Ejecutar **después** de levantar la base de datos con Docker (`docker compose up -d` desde
@@ -14,10 +14,12 @@ node database/seed.js
 > que es la única fuente de verdad del esquema. No hay un `schema.sql` local en esta carpeta
 > para evitar tener dos versiones desincronizadas.
 >
-> Este script solo llena de datos las 11 tablas que el backend ya implementa. Las otras 5
-> (`comentarios`, `archivos`, `evaluaciones`, `reuniones`, `github_integration`) existen en la
-> base de datos pero aún no tienen rutas/controladores — quedan sin sembrar hasta que se
-> implementen (ver `../README.md`).
+> Este script siembra datos de ejemplo para las **16 tablas**, incluidas `comentarios`,
+> `archivos`, `reuniones` y `github_integration` (ver `../README.md` para el detalle de sus
+> endpoints). La tabla `evaluaciones` queda vacía a propósito: RN-016 exige que el proyecto
+> del entregable esté en estado "En Revisión" antes de poder evaluarlo, así que pruébala
+> cambiando el estado de un proyecto vía `PUT /proyectos/:id` y luego llamando a
+> `POST /evaluaciones`.
 
 ## ¿Qué hace paso a paso?
 

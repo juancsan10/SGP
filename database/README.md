@@ -21,7 +21,7 @@ contenedor, se corre un script de Node incluido en el backend:
 
 ```bash
 cd backend
-npm install
+pnpm install
 node database/seed.js
 ```
 
