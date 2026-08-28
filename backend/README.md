@@ -82,6 +82,20 @@ y el backend ya implementa rutas/controladores para las **16**:
 | `reuniones` | `POST /reuniones` · `GET /reuniones/:id_proyecto` · `PUT /reuniones/:id` · `DELETE /reuniones/:id` | RN-021 (notifica automáticamente a todo el equipo del proyecto al programarse). Solo Instructor/Administrador programan. |
 | `github-integration` | `POST /github-integration` · `GET /github-integration/:id_usuario` · `PUT /github-integration` · `DELETE /github-integration` | Es 1 registro por usuario (su propia cuenta de GitHub). `github_token` **nunca** se expone en las respuestas JSON. Solo el propio usuario o un Administrador pueden consultarlo. |
 
+## 📦 Dependencias
+
+Este proyecto usa **pnpm** como gestor de paquetes (no `npm`/`yarn`). Instalar con:
+```bash
+pnpm install
+```
+
+Todas las versiones en `package.json` están **pineadas** (versión exacta, sin `^` ni `~`) y
+fueron revisadas con `pnpm audit` antes de fijarlas — **0 vulnerabilidades conocidas** al
+momento de este commit. Si se agrega una dependencia nueva, se recomienda:
+1. Instalarla con `pnpm add <paquete>@<version-exacta>`
+2. Correr `pnpm audit` y resolver cualquier alerta antes de hacer commit
+3. Confirmar que quedó sin el prefijo `^`/`~` en `package.json`
+
 ## ⚠️ Pendiente (fuera del alcance de esta corrección)
 
 - Subida física de archivos (hoy `archivos` solo guarda nombre + ruta como texto).

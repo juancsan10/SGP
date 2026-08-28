@@ -47,6 +47,18 @@ frontend/
         └── api.js            # cliente Axios centralizado + un service por entidad
 ```
 
+## 📦 Dependencias
+
+Se usa **pnpm**: `pnpm install`. Todas las versiones están pineadas (sin `^`/`~`) y
+revisadas con `pnpm audit`.
+
+**Pendiente conocido:** quedan 2 vulnerabilidades moderadas en `react-router` (open redirect
+y un caso de deserialización en SSR — este último no aplica aquí porque el proyecto es una
+SPA sin server-side rendering). Se resuelven saltando a `react-router-dom` v7, que es un
+cambio de versión mayor y podría requerir ajustes de código en `App.jsx`. No se aplicó de
+una vez para no arriesgar romper el enrutamiento sin poder probarlo en un navegador real —
+queda pendiente de hacerlo con cuidado y probando manualmente después.
+
 ## Notas
 
 - El token JWT se guarda en `localStorage` (`sgp_token`); si el backend responde 401,
