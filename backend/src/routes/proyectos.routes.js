@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ctrl = require('../controllers/proyectos.controller');
-const { verifyToken, requireRole } = require('../middlewares/auth.middleware');
+const { verifyToken, requireRole, requireProjectMember } = require('../middlewares/auth.middleware');
 
 router.post('/',     verifyToken, requireRole('Instructor','Administrador'), ctrl.create);
 router.get('/',      verifyToken, ctrl.getAll);
