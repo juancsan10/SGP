@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENA Proyectos – Administrador</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">SENA Proyectos</div>
+
+  <div class="sidebar-sec">General</div>
+  <button class="nav-item active" onclick="nav('inicio')"><span class="ni">🏠</span> Inicio</button>
+  <button class="nav-item" onclick="nav('reportes')"><span class="ni">📈</span> Reportes</button>
+  <button class="nav-item" onclick="nav('alertas')"><span class="ni">🔔</span> Alertas <span class="nav-badge">5</span></button>
+
+  <div class="sidebar-sec">Gestión</div>
+  <button class="nav-item" onclick="nav('fichas')"><span class="ni">📋</span> Fichas</button>
+  <button class="nav-item" onclick="nav('proyectos')"><span class="ni">🗂️</span> Proyectos</button>
+  <button class="nav-item" onclick="nav('instructores')"><span class="ni">👩‍🏫</span> Instructores</button>
+  <button class="nav-item" onclick="nav('aprendices')"><span class="ni">👥</span> Aprendices</button>
+
+  <div class="sidebar-sec">Vistas de Rol</div>
+  <button class="nav-item" onclick="window.open('dashboard_aprendiz_sena.html')"><span class="ni">🟢</span> Ver Aprendiz</button>
+  <button class="nav-item" onclick="window.open('dashboard_instructor_sena.html')"><span class="ni">🟠</span> Ver Instructor</button>
+
+  <div class="sidebar-sec">Sistema</div>
+  <button class="nav-item" onclick="nav('usuarios')"><span class="ni">👤</span> Usuarios</button>
+  <button class="nav-item" onclick="nav('mensajes')"><span class="ni">💬</span> Mensajes</button>
+  <button class="nav-item" onclick="nav('configuracion')"><span class="ni">⚙️</span> Configuración</button>
+</aside>
+
+<div class="topbar">
+  <div class="topbar-brand">SENA Proyectos</div>
+  <div class="topbar-nav">
+    <button onclick="nav('inicio')" class="active" id="tnav-inicio">Inicio</button>
+    <button onclick="nav('fichas')" id="tnav-fichas">Fichas</button>
+    <button onclick="nav('usuarios')" id="tnav-usuarios">Usuarios</button>
+    <button onclick="nav('reportes')" id="tnav-reportes">Reportes</button>
+    <a href="dashboard_aprendiz_sena.html" target="_blank"><button class="role-btn verde">Vista Aprendiz</button></a>
+    <a href="dashboard_instructor_sena.html" target="_blank"><button class="role-btn naranja">Vista Instructor</button></a>
+    <span class="topbar-role">Administrador</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- INICIO -->
+  <div class="section active" id="sec-inicio">
+    <div class="page-title">Inicio</div>
+    <div class="page-sub">Panel de administración · Acceso completo a todos los roles y módulos</div>
+
+    <div class="kpi-grid">
+      <div class="kpi verde"><div class="kpi-label">Total Fichas</div><div class="kpi-val">8</div><div class="kpi-sub">3 en fase lectiva</div></div>
+      <div class="kpi"><div class="kpi-label">Total Instructores</div><div class="kpi-val">12</div><div class="kpi-sub">10 activos</div></div>
+      <div class="kpi naranja"><div class="kpi-label">Total Aprendices</div><div class="kpi-val">247</div><div class="kpi-sub">18 en riesgo</div></div>
+      <div class="kpi rojo"><div class="kpi-label">Proyectos Activos</div><div class="kpi-val">34</div><div class="kpi-sub">6 requieren atención</div></div>
+    </div>
+
+    <div class="sec-title" style="font-size:14px;font-weight:700;margin-bottom:10px">Acceso rápido por rol</div>
+    <div class="two-col2" style="margin-bottom:18px">
+      <a href="dashboard_aprendiz_sena.html" target="_blank" class="acceso verde"><div class="acc-icon">👨‍💻</div><div><div class="acc-title verde">Vista Aprendiz</div><div class="acc-sub">Proyectos, tareas, calificaciones</div></div><div class="acc-arrow">→</div></a>
+      <a href="dashboard_instructor_sena.html" target="_blank" class="acceso naranja"><div class="acc-icon">👩‍🏫</div><div><div class="acc-title naranja">Vista Instructor</div><div class="acc-sub">Fichas, proyectos, aprendices</div></div><div class="acc-arrow">→</div></a>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="card"><div class="card-head">Estado de Fichas <span class="vm" onclick="nav('fichas')">Ver todas →</span></div><div class="card-body" style="padding:0 16px">
+          <table class="tbl"><thead><tr><th>Ficha</th><th>Instructor</th><th>Aprendices</th><th>Fase</th></tr></thead>
+          <tbody>
+            <tr><td><b>2758401</b></td><td>Miguel Ramírez</td><td>28</td><td><span class="badge bg">Lectiva</span></td></tr>
+            <tr><td><b>2841022</b></td><td>Sara López</td><td>30</td><td><span class="badge bg">Lectiva</span></td></tr>
+            <tr><td><b>2905115</b></td><td>Carlos Vera</td><td>26</td><td><span class="badge bo">Práctica</span></td></tr>
+            <tr><td><b>2633890</b></td><td>Ana Morales</td><td>29</td><td><span class="badge bb">Finalizada</span></td></tr>
+          </tbody></table>
+        </div></div>
+        <div class="card"><div class="card-head">🚨 Proyectos críticos <span class="vm" onclick="nav('proyectos')">Ver →</span></div><div class="card-body">
+          <div class="srow"><div><div class="name">Sistema Facturación Electrónica</div><div class="sub">Ficha 2905115 · Sin avance 2 semanas</div></div><span class="badge br">Crítico</span></div>
+          <div class="srow"><div><div class="name">Portal Web Inventarios</div><div class="sub">Ficha 2841022 · Entregable vencido</div></div><span class="badge bo">Alerta</span></div>
+          <div class="srow"><div><div class="name">App Gestión Escolar</div><div class="sub">Ficha 2633890 · 3 sin entregar</div></div><span class="badge bo">Alerta</span></div>
+        </div></div>
+      </div>
+      <div>
+        <div class="card"><div class="card-head">📅 Próximos Eventos</div><div class="card-body">
+          <div class="erow"><div class="ebox"><div class="ed">27</div><div class="em">Mar</div></div><div><div class="etitle">Jurado F.2758401</div><div class="esub">8:00 am · Sala 301</div></div></div>
+          <div class="erow"><div class="ebox"><div class="ed">2</div><div class="em">Abr</div></div><div><div class="etitle">Visita Coordinación</div><div class="esub">10:00 am · Auditorio</div></div></div>
+          <div class="erow"><div class="ebox"><div class="ed">8</div><div class="em">Abr</div></div><div><div class="etitle">Cierre Lectiva F.2905115</div><div class="esub">Todo el día</div></div></div>
+        </div></div>
+        <div class="card"><div class="card-head">🕐 Actividad Reciente</div><div class="card-body">
+          <div class="act-row"><div class="act-dot ad-g"></div><div class="act-text"><b>Carlos Niño</b> entregó Sprint 3</div><div class="act-time">5 min</div></div>
+          <div class="act-row"><div class="act-dot ad-b"></div><div class="act-text">Ficha <b>2905115</b> inició fase práctica</div><div class="act-time">1 h</div></div>
+          <div class="act-row"><div class="act-dot ad-r"></div><div class="act-text"><b>Ana Torres</b> marcada en riesgo</div><div class="act-time">2 h</div></div>
+          <div class="act-row"><div class="act-dot ad-o"></div><div class="act-text">Instructor <b>Jorge Rueda</b> registrado</div><div class="act-time">Ayer</div></div>
+          <div class="act-row"><div class="act-dot ad-g"></div><div class="act-text">Proyecto <b>App Móvil</b> finalizado</div><div class="act-time">Ayer</div></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORTES -->
+  <div class="section" id="sec-reportes">
+    <div class="page-title">Reportes</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Promedio general</div><div class="stat-val" style="color:#39A900">4.1</div></div>
+      <div class="stat-card"><div class="stat-label">Tasa de entrega</div><div class="stat-val" style="color:#1a73e8">82%</div></div>
+      <div class="stat-card"><div class="stat-label">Aprendices en riesgo</div><div class="stat-val" style="color:#e53935">18</div></div>
+    </div>
+    <div class="card"><div class="card-head">Resumen por ficha</div><div class="card-body" style="padding:0 16px">
+      <table class="tbl"><thead><tr><th>Ficha</th><th>Instructor</th><th>Aprendices</th><th>Promedio</th><th>Entregas OK</th><th>En riesgo</th></tr></thead>
+      <tbody>
+        <tr><td><b>2758401</b></td><td>Miguel Ramírez</td><td>28</td><td>4.2</td><td>87%</td><td><span class="badge br">2</span></td></tr>
+        <tr><td><b>2841022</b></td><td>Sara López</td><td>30</td><td>4.0</td><td>80%</td><td><span class="badge bo">1</span></td></tr>
+        <tr><td><b>2905115</b></td><td>Carlos Vera</td><td>26</td><td>3.8</td><td>76%</td><td><span class="badge br">2</span></td></tr>
+        <tr><td><b>2633890</b></td><td>Ana Morales</td><td>29</td><td>4.4</td><td>92%</td><td><span class="badge bgr">0</span></td></tr>
+      </tbody></table>
+    </div></div>
+  </div>
+
+  <!-- ALERTAS -->
+  <div class="section" id="sec-alertas">
+    <div class="page-title">Alertas del Sistema</div>
+    <div class="card"><div class="card-body">
+      <div class="srow"><div><div class="name">Ana Torres – Sin entregas hace 2 semanas</div><div class="sub">Ficha 2758401</div></div><span class="badge br">Crítico</span></div>
+      <div class="srow"><div><div class="name">Camila Ruiz – Ausentismo grave</div><div class="sub">Ficha 2905115</div></div><span class="badge br">Crítico</span></div>
+      <div class="srow"><div><div class="name">Sistema Facturación – Sin avance 2 semanas</div><div class="sub">Ficha 2905115</div></div><span class="badge br">Crítico</span></div>
+      <div class="srow"><div><div class="name">Luis García – Bajo rendimiento</div><div class="sub">Ficha 2841022</div></div><span class="badge bo">Alerta</span></div>
+      <div class="srow"><div><div class="name">Portal Inventarios – Entregable vencido</div><div class="sub">Ficha 2841022</div></div><span class="badge bo">Alerta</span></div>
+    </div></div>
+  </div>
+
+  <!-- FICHAS -->
+  <div class="section" id="sec-fichas">
+    <div class="page-title">Fichas</div>
+    <div class="two-col2">
+      <div class="card"><div class="card-head">Fichas registradas</div><div class="card-body" style="padding:0 16px">
+        <table class="tbl"><thead><tr><th>Ficha</th><th>Instructor</th><th>Aprendices</th><th>Proyectos</th><th>Fase</th></tr></thead>
+        <tbody>
+          <tr><td><b>2758401</b></td><td>Miguel Ramírez</td><td>28</td><td>4</td><td><span class="badge bg">Lectiva</span></td></tr>
+          <tr><td><b>2841022</b></td><td>Sara López</td><td>30</td><td>5</td><td><span class="badge bg">Lectiva</span></td></tr>
+          <tr><td><b>2905115</b></td><td>Carlos Vera</td><td>26</td><td>3</td><td><span class="badge bo">Práctica</span></td></tr>
+          <tr><td><b>2633890</b></td><td>Ana Morales</td><td>29</td><td>6</td><td><span class="badge bb">Finalizada</span></td></tr>
+          <tr><td><b>2710045</b></td><td>Jorge Rueda</td><td>25</td><td>0</td><td><span class="badge bgr">Por iniciar</span></td></tr>
+        </tbody></table>
+      </div></div>
+      <div class="card"><div class="card-head">Crear nueva ficha</div><div class="card-body">
+        <div class="form-group"><label class="form-label">Número de ficha</label><input class="form-input" placeholder="Ej: 3012456"></div>
+        <div class="form-group"><label class="form-label">Programa</label><select class="form-select"><option>ADSO</option><option>Diseño Web</option><option>Soporte TI</option></select></div>
+        <div class="form-group"><label class="form-label">Instructor asignado</label><select class="form-select"><option>Miguel Ramírez</option><option>Sara López</option><option>Carlos Vera</option><option>Ana Morales</option></select></div>
+        <div class="form-group"><label class="form-label">Fase inicial</label><select class="form-select"><option>Lectiva</option><option>Práctica</option></select></div>
+        <button class="btn-primary" onclick="alert('Ficha creada correctamente')">Crear ficha</button>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- PROYECTOS -->
+  <div class="section" id="sec-proyectos">
+    <div class="page-title">Proyectos</div>
+    <div class="card"><div class="card-body" style="padding:0 16px">
+      <table class="tbl"><thead><tr><th>Proyecto</th><th>Ficha</th><th>Aprendices</th><th>Progreso</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td><b>Sistema Gestión SENA</b></td><td>2758401</td><td>6</td><td>68%</td><td><span class="badge bg">En Desarrollo</span></td></tr>
+        <tr><td><b>App Móvil ADSO</b></td><td>2758401</td><td>5</td><td>100%</td><td><span class="badge bb">Finalizado</span></td></tr>
+        <tr><td><b>Portal Web Inventarios</b></td><td>2841022</td><td>7</td><td>85%</td><td><span class="badge bo">En Revisión</span></td></tr>
+        <tr><td><b>Sistema Facturación</b></td><td>2905115</td><td>8</td><td>12%</td><td><span class="badge bgr">Planeación</span></td></tr>
+        <tr><td><b>App Gestión Escolar</b></td><td>2633890</td><td>6</td><td>100%</td><td><span class="badge bb">Finalizado</span></td></tr>
+      </tbody></table>
+    </div></div>
+  </div>
+
+  <!-- INSTRUCTORES -->
+  <div class="section" id="sec-instructores">
+    <div class="page-title">Instructores</div>
+    <div class="two-col2">
+      <div class="card"><div class="card-head">Instructores registrados</div><div class="card-body" style="padding:0 16px">
+        <table class="tbl"><thead><tr><th>Instructor</th><th>Fichas</th><th>Aprendices</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td><b>Miguel Ramírez</b></td><td>1</td><td>28</td><td><span class="badge bg">Activo</span></td></tr>
+          <tr><td><b>Sara López</b></td><td>2</td><td>60</td><td><span class="badge bg">Activo</span></td></tr>
+          <tr><td><b>Carlos Vera</b></td><td>1</td><td>26</td><td><span class="badge bo">Carga alta</span></td></tr>
+          <tr><td><b>Ana Morales</b></td><td>2</td><td>58</td><td><span class="badge bg">Activo</span></td></tr>
+          <tr><td><b>Jorge Rueda</b></td><td>1</td><td>25</td><td><span class="badge bgr">Nuevo</span></td></tr>
+        </tbody></table>
+      </div></div>
+      <div class="card"><div class="card-head">Registrar instructor</div><div class="card-body">
+        <div class="form-group"><label class="form-label">Nombre completo</label><input class="form-input" placeholder="Nombre del instructor"></div>
+        <div class="form-group"><label class="form-label">Correo institucional</label><input class="form-input" placeholder="correo@sena.edu.co"></div>
+        <div class="form-group"><label class="form-label">Especialidad</label><select class="form-select"><option>ADSO</option><option>Diseño Web</option><option>Soporte TI</option></select></div>
+        <button class="btn-primary" onclick="alert('Instructor registrado')">Registrar</button>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- APRENDICES -->
+  <div class="section" id="sec-aprendices">
+    <div class="page-title">Aprendices</div>
+    <div class="card"><div class="card-body" style="padding:0 16px">
+      <table class="tbl"><thead><tr><th>Aprendiz</th><th>Ficha</th><th>Instructor</th><th>Entregas</th><th>Nota prom.</th><th>Estado</th></tr></thead>
+      <tbody>
+        <tr><td><b>Carlos Niño</b></td><td>2758401</td><td>Ramírez</td><td>8/8</td><td>4.6</td><td><span class="badge bg">Al día</span></td></tr>
+        <tr><td><b>Laura Peña</b></td><td>2758401</td><td>Ramírez</td><td>7/8</td><td>4.1</td><td><span class="badge bg">Al día</span></td></tr>
+        <tr><td><b>Ana Torres</b></td><td>2758401</td><td>Ramírez</td><td>4/8</td><td>3.0</td><td><span class="badge br">Crítico</span></td></tr>
+        <tr><td><b>Luis García</b></td><td>2841022</td><td>López</td><td>6/8</td><td>3.5</td><td><span class="badge bo">Alerta</span></td></tr>
+        <tr><td><b>Camila Ruiz</b></td><td>2905115</td><td>Vera</td><td>3/8</td><td>2.8</td><td><span class="badge br">Crítico</span></td></tr>
+        <tr><td><b>María Cárdenas</b></td><td>2841022</td><td>López</td><td>8/8</td><td>4.9</td><td><span class="badge bg">Al día</span></td></tr>
+      </tbody></table>
+    </div></div>
+  </div>
+
+  <!-- USUARIOS -->
+  <div class="section" id="sec-usuarios">
+    <div class="page-title">Usuarios del Sistema</div>
+    <div class="two-col2">
+      <div class="card"><div class="card-head">Usuarios registrados</div><div class="card-body" style="padding:0 16px">
+        <table class="tbl"><thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+        <tbody>
+          <tr><td><b><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c2a3a6afabac82b1a7aca3eca7a6b7eca1ad">[email&#160;protected]</a></b></td><td><span class="badge bb">Admin</span></td><td><span class="badge bg">Activo</span></td><td>—</td></tr>
+          <tr><td><b><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3855164a5955514a5d42784b5d5659165d5c4d165b57">[email&#160;protected]</a></b></td><td><span class="badge bo">Instructor</span></td><td><span class="badge bg">Activo</span></td><td><button class="btn-danger" onclick="alert('Usuario desactivado')">Desactivar</button></td></tr>
+          <tr><td><b><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="55267b393a25302f1526303b347b3031207b363a">[email&#160;protected]</a></b></td><td><span class="badge bo">Instructor</span></td><td><span class="badge bg">Activo</span></td><td><button class="btn-danger" onclick="alert('Usuario desactivado')">Desactivar</button></td></tr>
+          <tr><td><b><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b2d8c7d3dc9cc2d7c0d7c8f2c1d7dcd39cd7d6c79cd1dd">[email&#160;protected]</a></b></td><td><span class="badge bgr">Aprendiz</span></td><td><span class="badge bg">Activo</span></td><td><button class="btn-danger" onclick="alert('Usuario desactivado')">Desactivar</button></td></tr>
+        </tbody></table>
+      </div></div>
+      <div class="card"><div class="card-head">Crear usuario</div><div class="card-body">
+        <div class="form-group"><label class="form-label">Nombre completo</label><input class="form-input" placeholder="Nombre"></div>
+        <div class="form-group"><label class="form-label">Correo</label><input class="form-input" placeholder="correo@sena.edu.co"></div>
+        <div class="form-group"><label class="form-label">Rol</label><select class="form-select"><option>Aprendiz</option><option>Instructor</option><option>Administrador</option></select></div>
+        <div class="form-group"><label class="form-label">Contraseña temporal</label><input class="form-input" type="password" placeholder="Contraseña"></div>
+        <button class="btn-primary" onclick="alert('Usuario creado correctamente')">Crear usuario</button>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- MENSAJES -->
+  <div class="section" id="sec-mensajes">
+    <div class="page-title">Mensajes</div>
+    <div class="card"><div class="card-head">Canal general – Administración</div><div class="card-body">
+      <div class="chat-wrap">
+        <div class="chat-msgs" id="chatMsgsA">
+          <div class="msg other"><div class="msg-avatar">MR</div><div><div class="msg-bubble">Admin, ¿ya está lista la ficha 2710045?</div><div class="msg-time">9:00 am</div></div></div>
+          <div class="msg mine"><div class="msg-avatar" style="background:#1a73e8">AD</div><div><div class="msg-bubble">Sí, acabo de registrar al instructor Jorge Rueda</div><div class="msg-time">9:05 am</div></div></div>
+          <div class="msg other"><div class="msg-avatar">SL</div><div><div class="msg-bubble">Perfecto. ¿Cuándo arranca la fase lectiva?</div><div class="msg-time">9:07 am</div></div></div>
+          <div class="msg mine"><div class="msg-avatar" style="background:#1a73e8">AD</div><div><div class="msg-bubble">La próxima semana. Les envío el cronograma hoy</div><div class="msg-time">9:10 am</div></div></div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chatInputA" placeholder="Escribe un mensaje..." onkeydown="if(event.key==='Enter')sendMsgA()">
+          <button class="chat-send" onclick="sendMsgA()">Enviar</button>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- CONFIGURACION -->
+  <div class="section" id="sec-configuracion">
+    <div class="page-title">Configuración</div>
+    <div class="two-col2">
+      <div class="card"><div class="card-head">Datos del administrador</div><div class="card-body">
+        <div class="form-group"><label class="form-label">Nombre completo</label><input class="form-input" value="Admin SENA"></div>
+        <div class="form-group"><label class="form-label">Correo</label><input class="form-input" value="admin@sena.edu.co"></div>
+        <div class="form-group"><label class="form-label">Centro de formación</label><input class="form-input" value="Centro de Servicios Financieros"></div>
+        <button class="btn-primary" onclick="alert('Datos guardados')">Guardar cambios</button>
+      </div></div>
+      <div class="card"><div class="card-head">Seguridad</div><div class="card-body">
+        <div class="form-group"><label class="form-label">Contraseña actual</label><input class="form-input" type="password"></div>
+        <div class="form-group"><label class="form-label">Nueva contraseña</label><input class="form-input" type="password"></div>
+        <div class="form-group"><label class="form-label">Confirmar</label><input class="form-input" type="password"></div>
+        <button class="btn-primary" onclick="alert('Contraseña actualizada')">Cambiar contraseña</button>
+      </div></div>
+    </div>
+  </div>
+
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+function nav(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.topbar-nav button:not(.role-btn)').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => { if(n.getAttribute('onclick') && n.getAttribute('onclick').includes("nav('"+id+"')")) n.classList.add('active'); });
+  const tb = document.getElementById('tnav-' + id);
+  if(tb) tb.classList.add('active');
+}
+functio
