@@ -1,0 +1,35 @@
+{
+  "name": "sgp-sena-backend",
+  "version": "1.0.0",
+  "description": "API REST - Sistema de Gestión de Proyectos SENA",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "sena",
+    "proyectos",
+    "api",
+    "rest",
+    "node"
+  ],
+  "author": "Rubiel Rodriguez, Juan Manuel Arcila, Juan Carlos Sanchez",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "2.4.3",
+    "cors": "2.8.5",
+    "dotenv": "16.0.0",
+    "express": "4.22.2",
+    "express-validator": "7.0.1",
+    "helmet": "7.0.0",
+    "jsonwebtoken": "9.0.0",
+    "morgan": "1.11.0",
+    "mysql2": "3.24.2",
+    "express-rate-limit": "7.5.0"
+  },
+  "devDependencies": {
+    "nodemon": "3.0.0"
+  },
+  "packageManager": "pnpm@9.15.0"
+}

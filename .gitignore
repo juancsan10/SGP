@@ -1,0 +1,18 @@
+# Entorno / credenciales
+.env
+
+# Node / frontend
+node_modules/
+dist/
+build/
+
+# Backend (Node.js)
+*.log
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Backups locales de base de datos
+database/backups/*
+!database/backups/.gitkeep
