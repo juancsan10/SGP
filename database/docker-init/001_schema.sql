@@ -201,7 +201,7 @@ CREATE TABLE reuniones (
     FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto)
 );
 
-CREATE TABLE GITHUB_INTEGRATION (
+CREATE TABLE github_integration (
     id_integration INT PRIMARY KEY AUTO_INCREMENT,
     github_username VARCHAR(100) NOT NULL,
     github_token VARCHAR(255) NOT NULL,
