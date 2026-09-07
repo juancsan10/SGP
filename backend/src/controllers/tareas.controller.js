@@ -9,6 +9,23 @@ const create = async (req, res) => {
     if (!titulo || !id_proyecto || !id_asignado) {
       return res.status(400).json({ success: false, message: 'titulo, id_proyecto e id_asignado son requeridos' });
     }
+    if (fecha_inicio && fecha_vencimiento && new Date(fecha_vencimiento) < new Date(fecha_inicio)) {
+      return res.status(400).json({ success: false, message: 'La fecha de vencimiento no puede ser anterior a la fecha de inicio' });
+    }
+
+    const [proyecto] = await db.query('SELECT id_proyecto, estado FROM proyectos WHERE id_proyecto=?', [id_proyecto]);
+    if (!proyecto.length) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+    if (['Finalizado', 'Cancelado'].includes(proyecto[0].estado)) {
+      return res.status(400).json({ success: false, message: 'No se pueden crear tareas en un proyecto finalizado o cancelado' });
+    }
+
+    const [asignado] = await db.query('SELECT id_usuario, estado FROM usuarios WHERE id_usuario=?', [id_asignado]);
+    if (!asignado.length || !asignado[0].estado) return res.status(404).json({ success: false, message: 'Usuario asignado no encontrado o inactivo' });
+
+    const [miembro] = await db.query('SELECT id_equipo FROM equipos_proyecto WHERE id_proyecto=? AND id_usuario=?', [id_proyecto, id_asignado]);
+    if (!miembro.length) {
+      return res.status(400).json({ success: false, message: 'El usuario asignado debe pertenecer al equipo del proyecto' });
+    }
 
     // RN-017: toda tarea debe tener responsable (ya validado)
     const [result] = await db.query(
@@ -49,6 +66,10 @@ const getByProyecto = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { titulo, descripcion, fecha_inicio, fecha_vencimiento, estado, prioridad, porcentaje_avance } = req.body;
+
+    if (fecha_inicio && fecha_vencimiento && new Date(fecha_vencimiento) < new Date(fecha_inicio)) {
+      return res.status(400).json({ success: false, message: 'La fecha de vencimiento no puede ser anterior a la fecha de inicio' });
+    }
 
     // RN-013
     if (porcentaje_avance !== undefined && (porcentaje_avance < 0 || porcentaje_avance > 100)) {

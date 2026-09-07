@@ -1,6 +1,6 @@
 services:
   db:
-    image: mysql:8.0
+    image: mysql:8.0.42
     container_name: sgp_sena_db
     restart: unless-stopped
     environment:

@@ -10,6 +10,15 @@ const create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'nombre, fecha_entrega e id_fase son requeridos' });
     }
 
+    const [fase] = await db.query('SELECT id_fase, id_proyecto FROM fases_proyecto WHERE id_fase=?', [id_fase]);
+    if (!fase.length) return res.status(404).json({ success: false, message: 'Fase no encontrada' });
+
+    const [proyecto] = await db.query('SELECT estado FROM proyectos WHERE id_proyecto=?', [fase[0].id_proyecto]);
+    if (!proyecto.length) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+    if (['Finalizado', 'Cancelado'].includes(proyecto[0].estado)) {
+      return res.status(400).json({ success: false, message: 'No se pueden crear entregables en un proyecto finalizado o cancelado' });
+    }
+
     const [result] = await db.query(
       `INSERT INTO entregables (nombre, descripcion, fecha_entrega, url_drive, version, estado, id_fase) VALUES (?, ?, ?, ?, ?, 'Pendiente', ?)`,
       [nombre, descripcion || null, fecha_entrega, url_drive || null, version || '1.0', id_fase]
@@ -39,6 +48,10 @@ const getByFase = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { nombre, descripcion, fecha_entrega, fecha_entregado, estado, url_drive, version } = req.body;
+
+    if (fecha_entrega && fecha_entregado && new Date(fecha_entregado) < new Date(fecha_entrega)) {
+      return res.status(400).json({ success: false, message: 'La fecha de entrega real no puede ser anterior a la fecha programada' });
+    }
 
     const [result] = await db.query(
       `UPDATE entregables SET nombre = COALESCE(?, nombre), descripcion = COALESCE(?, descripcion),

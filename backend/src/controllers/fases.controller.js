@@ -9,6 +9,15 @@ const create = async (req, res) => {
     if (!nombre_fase || !id_proyecto) {
       return res.status(400).json({ success: false, message: 'nombre_fase e id_proyecto son requeridos' });
     }
+    if (fecha_inicio && fecha_fin && new Date(fecha_fin) <= new Date(fecha_inicio)) {
+      return res.status(400).json({ success: false, message: 'La fecha de fin debe ser posterior a la fecha de inicio' });
+    }
+
+    const [proyecto] = await db.query('SELECT id_proyecto, estado FROM proyectos WHERE id_proyecto=?', [id_proyecto]);
+    if (!proyecto.length) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+    if (['Finalizado', 'Cancelado'].includes(proyecto[0].estado)) {
+      return res.status(400).json({ success: false, message: 'No se pueden agregar fases a un proyecto finalizado o cancelado' });
+    }
 
     const [result] = await db.query(
       `INSERT INTO fases_proyecto (nombre_fase, descripcion, fecha_inicio, fecha_fin, id_proyecto) VALUES (?, ?, ?, ?, ?)`,
@@ -39,6 +48,10 @@ const getByProyecto = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { nombre_fase, descripcion, fecha_inicio, fecha_fin, porcentaje_avance } = req.body;
+
+    if (fecha_inicio && fecha_fin && new Date(fecha_fin) <= new Date(fecha_inicio)) {
+      return res.status(400).json({ success: false, message: 'La fecha de fin debe ser posterior a la fecha de inicio' });
+    }
 
     // RN-013
     if (porcentaje_avance !== undefined && (porcentaje_avance < 0 || porcentaje_avance > 100)) {

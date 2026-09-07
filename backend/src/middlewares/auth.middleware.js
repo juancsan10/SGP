@@ -55,9 +55,94 @@ const requireProjectMember = (resource='project') => async (req,res,next) => {
   } catch (err) { return next(err); }
 };
 
+// Solo Administrador o Instructor responsable pueden administrar la estructura del proyecto.
+const requireProjectManager = (resource='project') => async (req,res,next) => {
+  try {
+    if (req.user?.rol === 'Administrador') return next();
+    if (req.user?.rol !== 'Instructor') {
+      return res.status(403).json({success:false,message:'Solo el instructor responsable puede administrar este recurso'});
+    }
+
+    const projectId = await resolveProjectId(req, resource);
+    if (!projectId) return res.status(404).json({success:false,message:'Proyecto o recurso no encontrado'});
+
+    const [rows] = await db.query(
+      'SELECT id_proyecto FROM proyectos WHERE id_proyecto=? AND id_instructor=?',
+      [projectId, req.user.id]
+    );
+
+    if (!rows.length) return res.status(403).json({success:false,message:'Solo el instructor responsable puede administrar este proyecto'});
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Administrador/instructor responsable: cualquier tarea del proyecto.
+// Aprendiz: únicamente su propia tarea asignada.
+const requireTaskEditor = async (req,res,next) => {
+  try {
+    if (req.user?.rol === 'Administrador') return next();
+
+    const taskId = req.params.id;
+    if (!taskId) return res.status(400).json({success:false,message:'Identificador de tarea requerido'});
+
+    const [rows] = await db.query(
+      'SELECT id_proyecto, id_asignado FROM tareas WHERE id_tarea=?',
+      [taskId]
+    );
+
+    if (!rows.length) return res.status(404).json({success:false,message:'Tarea no encontrada'});
+
+    const task = rows[0];
+
+    if (req.user?.rol === 'Instructor') {
+      const [projectRows] = await db.query(
+        'SELECT id_proyecto FROM proyectos WHERE id_proyecto=? AND id_instructor=?',
+        [task.id_proyecto, req.user.id]
+      );
+      if (projectRows.length) return next();
+      return res.status(403).json({success:false,message:'Solo el instructor responsable puede modificar esta tarea'});
+    }
+
+    if (req.user?.rol === 'Aprendiz' && Number(task.id_asignado) === Number(req.user.id)) {
+      return next();
+    }
+
+    return res.status(403).json({success:false,message:'No tienes permisos para modificar esta tarea'});
+  } catch (err) {
+    next(err);
+  }
+};
+
+const requireNotificationOwner = async (req,res,next) => {
+  try {
+    if (req.user?.rol === 'Administrador') return next();
+    const [rows] = await db.query(
+      'SELECT id_usuario FROM notificaciones WHERE id_notificacion=?',
+      [req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({success:false,message:'Notificación no encontrada'});
+    if (Number(rows[0].id_usuario) !== Number(req.user.id)) {
+      return res.status(403).json({success:false,message:'Solo puedes gestionar tus propias notificaciones'});
+    }
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
 const requireSelfOrAdmin = (req,res,next) => {
   if (req.user?.rol === 'Administrador' || req.user?.id === Number(req.params.id)) return next();
   return res.status(403).json({success:false,message:'Solo puedes modificar tu propia cuenta'});
 };
 
-module.exports = { verifyToken, requireRole, requireProjectMember, requireSelfOrAdmin };
+module.exports = {
+  verifyToken,
+  requireRole,
+  requireProjectMember,
+  requireProjectManager,
+  requireTaskEditor,
+  requireNotificationOwner,
+  requireSelfOrAdmin
+};
