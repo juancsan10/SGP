@@ -18,6 +18,7 @@ const passwordValidators = [
 ];
 
 router.get('/',verifyToken,requireRole('Administrador','Instructor'),pagination,validate,ctrl.getAll);
+router.get('/aprendices/buscar',verifyToken,requireRole('Administrador','Instructor'),ctrl.searchAprendizByIdentificacion);
 router.get('/:id',verifyToken,requireSelfOrAdmin,[idParam('id')],validate,ctrl.getById);
 router.put('/:id',verifyToken,requireSelfOrAdmin,[idParam('id'),...profileValidators],validate,ctrl.update);
 router.put('/:id/password',verifyToken,requireSelfOrAdmin,[idParam('id'),...passwordValidators],validate,ctrl.changePassword);

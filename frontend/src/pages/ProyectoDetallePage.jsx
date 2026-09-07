@@ -699,8 +699,8 @@ export default function ProyectoDetallePage() {
           <label className="form-label">Asignar a *</label>
           <select className="form-select" value={formTarea.id_asignado}
             onChange={e=>setFormTarea({...formTarea,id_asignado:e.target.value})} required>
-            <option value="">Seleccionar usuario</option>
-            {usuarios.map(u=>(
+            <option value="">Seleccionar aprendiz</option>
+            {usuarios.filter(u=>u.rol === 'Aprendiz').map(u=>(
               <option key={u.id_usuario} value={u.id_usuario}>
                 {u.nombres} {u.apellidos} ({u.rol})
               </option>
@@ -719,8 +719,8 @@ export default function ProyectoDetallePage() {
           <label className="form-label">Usuario *</label>
           <select className="form-select" value={formEquip.id_usuario}
             onChange={e=>setFormEquip({...formEquip,id_usuario:e.target.value})} required>
-            <option value="">Seleccionar usuario</option>
-            {usuarios.filter(u=>!equipo.find(e=>e.id_usuario===u.id_usuario)).map(u=>(
+            <option value="">Seleccionar aprendiz</option>
+            {usuarios.filter(u=>u.rol === 'Aprendiz' && !equipo.find(e=>e.id_usuario===u.id_usuario)).map(u=>(
               <option key={u.id_usuario} value={u.id_usuario}>
                 {u.nombres} {u.apellidos} ({u.rol})
               </option>

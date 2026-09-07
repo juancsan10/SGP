@@ -8,7 +8,7 @@ const getAll = async (req, res) => {
     const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
     const [rows] = await db.query(
-      `SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.ficha, u.programa_formacion, u.estado, u.fecha_registro, r.nombre_rol AS rol
+      `SELECT u.id_usuario, u.nombres, u.apellidos, u.identificacion, u.correo, u.ficha, u.programa_formacion, u.estado, u.fecha_registro, r.nombre_rol AS rol
        FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol ORDER BY u.fecha_registro DESC LIMIT ? OFFSET ?`, [limit, offset]
     );
     return res.json({ success: true, data: rows });
@@ -21,7 +21,7 @@ const getAll = async (req, res) => {
 const getById = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.ficha, u.programa_formacion, u.estado, u.fecha_registro, r.nombre_rol AS rol
+      `SELECT u.id_usuario, u.nombres, u.apellidos, u.identificacion, u.correo, u.ficha, u.programa_formacion, u.estado, u.fecha_registro, r.nombre_rol AS rol
        FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol WHERE u.id_usuario = ?`,
       [req.params.id]
     );
@@ -33,6 +33,16 @@ const getById = async (req, res) => {
 };
 
 // PUT /api/v1/usuarios/:id
+const searchAprendizByIdentificacion = async (req,res) => {
+  try {
+    const identificacion = String(req.query.identificacion || '').trim();
+    if (!identificacion || !/^[A-Za-z0-9.-]{4,30}$/.test(identificacion)) return res.status(400).json({success:false,message:'Identificación inválida'});
+    const [rows] = await db.query(`SELECT u.id_usuario,u.nombres,u.apellidos,u.identificacion,u.correo,u.ficha,u.programa_formacion,u.estado,r.nombre_rol AS rol FROM usuarios u JOIN roles r ON u.id_rol=r.id_rol WHERE u.id_rol=3 AND u.estado=1 AND u.identificacion=?`,[identificacion]);
+    if (!rows.length) return res.status(404).json({success:false,message:'No se encontró un aprendiz activo con esa identificación'});
+    return res.json({success:true,data:rows[0]});
+  } catch(err) { return res.status(500).json({success:false,message:'Error interno del servidor'}); }
+};
+
 const update = async (req, res) => {
   try {
     const { nombres, apellidos, ficha, programa_formacion } = req.body;
@@ -78,4 +88,4 @@ const changePassword = async (req,res) => {
     res.json({success:true,message:'Contraseña actualizada'});
   } catch(err){console.error(err);res.status(500).json({success:false,message:'Error interno del servidor'});}
 };
-module.exports = { getAll, getById, update, remove, changePassword };
+module.exports = { getAll, getById, searchAprendizByIdentificacion, update, remove, changePassword };

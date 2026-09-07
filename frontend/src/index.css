@@ -434,3 +434,14 @@ tbody tr:hover td { background: var(--slate-50); }
 .project-card-instructor {
   font-size: 11px; color: var(--slate-500);
 }
+
+/* Tema visual por rol */
+.role-admin { --role-primary:#7C3AED; --role-secondary:#5B21B6; --role-soft:#EDE9FE; --role-bg:#F8F7FF; }
+.role-instructor { --role-primary:#2563EB; --role-secondary:#1D4ED8; --role-soft:#DBEAFE; --role-bg:#F7FAFF; }
+.role-aprendiz { --role-primary:#059669; --role-secondary:#047857; --role-soft:#D1FAE5; --role-bg:#F4FBF8; }
+.role-admin .sidebar,.role-instructor .sidebar,.role-aprendiz .sidebar{background:var(--role-secondary)}
+.role-admin .nav-link.active,.role-instructor .nav-link.active,.role-aprendiz .nav-link.active{background:rgba(255,255,255,.16);border-left-color:#fff}
+.role-admin .btn-primary,.role-instructor .btn-primary,.role-aprendiz .btn-primary{background:var(--role-primary)}
+.role-admin .btn-primary:hover:not(:disabled),.role-instructor .btn-primary:hover:not(:disabled),.role-aprendiz .btn-primary:hover:not(:disabled){background:var(--role-secondary)}
+.role-admin .progress-bar,.role-instructor .progress-bar,.role-aprendiz .progress-bar{background:var(--role-primary)}
+.role-admin .sidebar-avatar,.role-instructor .sidebar-avatar,.role-aprendiz .sidebar-avatar{background:var(--role-soft);color:var(--role-secondary)}

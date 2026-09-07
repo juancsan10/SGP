@@ -45,6 +45,7 @@ export const authService = {
 export const usuariosService = {
   getAll:   ()         => api.get('/usuarios'),
   getById:  (id)       => api.get(`/usuarios/${id}`),
+  searchAprendiz: (identificacion) => api.get('/usuarios/aprendices/buscar', { params: { identificacion } }),
   update:   (id, data) => api.put(`/usuarios/${id}`, data),
   remove:   (id)       => api.delete(`/usuarios/${id}`),
 };
@@ -131,6 +132,12 @@ export const archivosService = {
 };
 
 // ── Evaluaciones (NUEVO — RN-016) ──────────────────────
+export const entregasService = {
+  getByTarea: (idTarea) => api.get(`/entregas/tarea/${idTarea}`),
+  submit: (idTarea,data) => api.post(`/entregas/tarea/${idTarea}`,data),
+  review: (idTarea,data) => api.put(`/entregas/tarea/${idTarea}/revision`,data),
+};
+
 export const evaluacionesService = {
   getByEntregable: (idEntregable)  => api.get(`/evaluaciones/${idEntregable}`),
   create:          (data)          => api.post('/evaluaciones', data),

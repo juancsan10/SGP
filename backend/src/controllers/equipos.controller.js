@@ -20,6 +20,9 @@ const create = async (req, res) => {
     if (!usuario.length || !usuario[0].estado) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado o inactivo' });
     }
+    if (Number(usuario[0].id_rol) !== 3) {
+      return res.status(400).json({ success: false, message: 'Solo se pueden asignar aprendices a un proyecto' });
+    }
 
     const [duplicado] = await db.query(
       'SELECT id_equipo FROM equipos_proyecto WHERE id_proyecto=? AND id_usuario=?',

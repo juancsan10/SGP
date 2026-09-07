@@ -11,6 +11,10 @@ export default function UsuariosPage() {
   const [loading,  setLoading]  = useState(true);
   const [filtro,   setFiltro]   = useState('');
   const [rolFiltro,setRolFiltro]= useState('');
+  const [identificacion, setIdentificacion] = useState('');
+  const [aprendizEncontrado, setAprendizEncontrado] = useState(null);
+  const [buscandoAprendiz, setBuscandoAprendiz] = useState(false);
+  const [busquedaError, setBusquedaError] = useState('');
   const [modal,    setModal]    = useState(false);
   const [usuSel,   setUsuSel]   = useState(null);
   const [saving,   setSaving]   = useState(false);
@@ -29,6 +33,13 @@ export default function UsuariosPage() {
   }
 
   useEffect(() => { cargar(); }, []);
+
+  async function buscarAprendiz(e) {
+    e.preventDefault(); setBuscandoAprendiz(true); setBusquedaError(''); setAprendizEncontrado(null);
+    try { const r=await usuariosService.searchAprendiz(identificacion.trim()); setAprendizEncontrado(r.data.data); }
+    catch(err) { setBusquedaError(err.response?.data?.message || 'No se encontró el aprendiz'); }
+    finally { setBuscandoAprendiz(false); }
+  }
 
   function abrirEditar(u) {
     setUsuSel(u);
@@ -83,6 +94,18 @@ export default function UsuariosPage() {
       </div>
 
       <div className="page-body">
+        <div className="card" style={{marginBottom:20,borderLeft:'4px solid var(--role-primary)'}}>
+          <div className="card-body">
+            <div style={{fontWeight:700,marginBottom:4}}>🔎 Buscar aprendiz por identificación</div>
+            <div style={{fontSize:12,color:'var(--slate-500)',marginBottom:12}}>Solo consulta aprendices activos.</div>
+            <form onSubmit={buscarAprendiz} style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+              <input className="form-input" style={{maxWidth:300}} placeholder="Ej. 1005789124" value={identificacion} onChange={e=>setIdentificacion(e.target.value.replace(/[^A-Za-z0-9.-]/g,''))}/>
+              <button className="btn btn-primary" disabled={buscandoAprendiz || identificacion.length<4}>{buscandoAprendiz?'Buscando…':'Buscar aprendiz'}</button>
+            </form>
+            {busquedaError && <div className="alert alert-error" style={{marginTop:12}}>{busquedaError}</div>}
+            {aprendizEncontrado && <div style={{marginTop:14,padding:14,borderRadius:10,background:'var(--role-bg)',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:8}}><div><strong>{aprendizEncontrado.nombres} {aprendizEncontrado.apellidos}</strong></div><div>Identificación: <strong>{aprendizEncontrado.identificacion}</strong></div><div>Ficha: {aprendizEncontrado.ficha||'—'}</div><div>Programa: {aprendizEncontrado.programa_formacion||'—'}</div></div>}
+          </div>
+        </div>
         {/* Filtros */}
         <div style={{ display:'flex', gap:12, marginBottom:20, flexWrap:'wrap' }}>
           <input
@@ -106,7 +129,7 @@ export default function UsuariosPage() {
               <table>
                 <thead>
                   <tr>
-                    <th>Usuario</th><th>Correo</th><th>Rol</th>
+                    <th>Usuario</th><th>Identificación</th><th>Correo</th><th>Rol</th>
                     <th>Ficha</th><th>Programa</th><th>Estado</th>
                     <th>Registro</th><th></th>
                   </tr>
@@ -124,6 +147,7 @@ export default function UsuariosPage() {
                           </div>
                         </div>
                       </td>
+                      <td style={{ fontSize:12 }}>{u.identificacion || '—'}</td>
                       <td style={{ fontSize:12 }}>{u.correo}</td>
                       <td>{rolBadge(u.rol)}</td>
                       <td>{u.ficha || '—'}</td>

@@ -12,6 +12,7 @@ function getNavItems(esAdmin, esInstructor) {
     { path: '/dashboard',      icon: '🏠', label: 'Inicio' },
     { path: '/proyectos',      icon: '📁', label: 'Proyectos' },
     { path: '/tareas',         icon: '✅', label: 'Mis Tareas' },
+    { path: '/entregas',       icon: '📤', label: 'Entregas' },
     { path: '/notificaciones', icon: '🔔', label: 'Notificaciones' },
     { path: '/calendario', icon: '🗓️', label: 'Calendario' },
     { path: '/timeline', icon: '📈', label: 'Línea de tiempo' },
@@ -27,7 +28,7 @@ function getNavItems(esAdmin, esInstructor) {
 }
 
 export default function AppLayout() {
-  const { usuario, logout, esAdmin, esInstructor } = useAuth();
+  const { usuario, logout, esAdmin, esInstructor, rolClase } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
   const navItems  = getNavItems(esAdmin, esInstructor);
@@ -43,7 +44,7 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout ${rolClase}`}>
       {/* ── Sidebar ───────────────────────────────── */}
       <aside className="sidebar">
         {/* Logo */}

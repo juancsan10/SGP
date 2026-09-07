@@ -1,0 +1,11 @@
+const express = require('express');
+const router = express.Router();
+const ctrl = require('../controllers/entregas.controller');
+const { verifyToken, requireTaskOwnerOrAdmin, requireTaskDeliveryReview } = require('../middlewares/auth.middleware');
+const { validate } = require('../middlewares/validation.middleware');
+const { idParam, optionalText } = require('../validators/common.validators');
+const entregaBody = [optionalText('comentario_aprendiz',5000), optionalText('url_entrega',500), optionalText('ruta_archivo',500)];
+router.get('/tarea/:id',verifyToken,[idParam('id')],validate,ctrl.getByTarea);
+router.post('/tarea/:id',verifyToken,requireTaskOwnerOrAdmin,[idParam('id'),...entregaBody],validate,ctrl.submit);
+router.put('/tarea/:id/revision',verifyToken,requireTaskDeliveryReview,[idParam('id'),optionalText('estado',50),optionalText('observacion_instructor',5000)],validate,ctrl.review);
+module.exports=router;

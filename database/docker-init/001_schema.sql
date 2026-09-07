@@ -22,6 +22,7 @@ CREATE TABLE usuarios (
     nombres VARCHAR(100) NOT NULL,
     apellidos VARCHAR(100) NOT NULL,
     correo VARCHAR(150) NOT NULL UNIQUE,
+    identificacion VARCHAR(30) UNIQUE,
     contrasena VARCHAR(255) NOT NULL,
     ficha VARCHAR(50),
     programa_formacion VARCHAR(150),
@@ -105,6 +106,24 @@ CREATE TABLE tareas (
     id_asignado INT NOT NULL,
     FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto),
     FOREIGN KEY (id_asignado) REFERENCES usuarios(id_usuario)
+);
+
+-- ============================================
+-- TABLA ENTREGAS DE TAREAS
+-- ============================================
+CREATE TABLE entregas_tareas (
+    id_entrega INT AUTO_INCREMENT PRIMARY KEY,
+    id_tarea INT NOT NULL UNIQUE,
+    id_aprendiz INT NOT NULL,
+    comentario_aprendiz TEXT,
+    url_entrega VARCHAR(500),
+    ruta_archivo VARCHAR(500),
+    estado VARCHAR(50) NOT NULL DEFAULT 'Entregada',
+    fecha_entrega DATETIME DEFAULT CURRENT_TIMESTAMP,
+    observacion_instructor TEXT,
+    fecha_revision DATETIME NULL,
+    FOREIGN KEY (id_tarea) REFERENCES tareas(id_tarea),
+    FOREIGN KEY (id_aprendiz) REFERENCES usuarios(id_usuario)
 );
 
 -- ============================================

@@ -105,14 +105,30 @@ const requireTaskEditor = async (req,res,next) => {
       return res.status(403).json({success:false,message:'Solo el instructor responsable puede modificar esta tarea'});
     }
 
-    if (req.user?.rol === 'Aprendiz' && Number(task.id_asignado) === Number(req.user.id)) {
-      return next();
-    }
-
-    return res.status(403).json({success:false,message:'No tienes permisos para modificar esta tarea'});
+    return res.status(403).json({success:false,message:'El aprendiz no puede modificar la tarea. Debe realizar o corregir su entrega.'});
   } catch (err) {
     next(err);
   }
+};
+
+const requireTaskOwnerOrAdmin = async (req,res,next) => {
+  try {
+    if (req.user?.rol === 'Administrador') return next();
+    const [rows] = await db.query('SELECT id_asignado FROM tareas WHERE id_tarea=?', [req.params.id]);
+    if (!rows.length) return res.status(404).json({success:false,message:'Tarea no encontrada'});
+    if (req.user?.rol === 'Aprendiz' && Number(rows[0].id_asignado) === Number(req.user.id)) return next();
+    return res.status(403).json({success:false,message:'Solo el aprendiz asignado puede realizar o corregir esta entrega'});
+  } catch (err) { next(err); }
+};
+
+const requireTaskDeliveryReview = async (req,res,next) => {
+  try {
+    if (req.user?.rol === 'Administrador') return next();
+    if (req.user?.rol !== 'Instructor') return res.status(403).json({success:false,message:'Solo el instructor responsable puede revisar entregas'});
+    const [rows] = await db.query('SELECT p.id_proyecto FROM tareas t JOIN proyectos p ON p.id_proyecto=t.id_proyecto WHERE t.id_tarea=? AND p.id_instructor=?',[req.params.id,req.user.id]);
+    if (!rows.length) return res.status(403).json({success:false,message:'Solo el instructor responsable puede revisar esta entrega'});
+    next();
+  } catch (err) { next(err); }
 };
 
 const requireNotificationOwner = async (req,res,next) => {
@@ -143,6 +159,8 @@ module.exports = {
   requireProjectMember,
   requireProjectManager,
   requireTaskEditor,
+  requireTaskOwnerOrAdmin,
+  requireTaskDeliveryReview,
   requireNotificationOwner,
   requireSelfOrAdmin
 };
