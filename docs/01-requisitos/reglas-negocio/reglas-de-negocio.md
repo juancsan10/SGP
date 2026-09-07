@@ -86,17 +86,6 @@ Estas reglas son obligatorias y deben ser respetadas por todos los usuarios del 
 
 ---
 
-## 🚀 Módulo de Proyección Profesional
-
-| Código | Regla | Descripción |
-|--------|------|-------------|
-| RN-027 | Perfil visible | El aprendiz decide si su perfil es público. |
-| RN-028 | Consentimiento | No se comparte información sin autorización. |
-| RN-029 | Acceso empresarial | Solo perfiles públicos son visibles. |
-| RN-030 | Información mostrada | Incluye proyectos, habilidades y desempeño. |
-
----
-
 **Versión:** 1.0  
 **Fecha:** 2026  
 **Proyecto:** Sistema de Gestión de Proyectos SENA

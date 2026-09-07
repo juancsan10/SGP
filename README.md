@@ -98,7 +98,7 @@ Usar commits convencionales a partir de esta versión y vincular cambios con Git
 
 Implementado: autenticación, roles, proyectos, equipos, tareas, fases, entregables, comentarios, evaluaciones, reuniones, mensajes, notificaciones, historial, calendario, línea de tiempo y recuperación de contraseña.
 
-Aplazado: almacenamiento cloud, exportación PDF/Excel, tiempo real mediante WebSocket, Proyección Profesional y cobertura automatizada extensa.
+Aplazado: almacenamiento cloud, exportación PDF/Excel, tiempo real mediante WebSocket y cobertura automatizada extensa.
 
 ## Licencia
 
