@@ -48,19 +48,26 @@ const getByProyecto = async (req, res) => {
 // PUT /api/v1/tareas/:id
 const update = async (req, res) => {
   try {
-    const { titulo, descripcion, fecha_inicio, fecha_vencimiento, estado, prioridad, porcentaje_avance } = req.body;
+    let { titulo, descripcion, fecha_inicio, fecha_vencimiento, estado, prioridad, porcentaje_avance, id_asignado } = req.body;
 
     // RN-013
     if (porcentaje_avance !== undefined && (porcentaje_avance < 0 || porcentaje_avance > 100)) {
       return res.status(400).json({ success: false, message: 'RN-013: El avance debe estar entre 0% y 100%' });
     }
 
+    if (estado === 'Completada' && porcentaje_avance === undefined) {
+      porcentaje_avance = 100.00;
+    } else if (Number(porcentaje_avance) === 100 && !estado) {
+      estado = 'Completada';
+    }
+
     const [result] = await db.query(
       `UPDATE tareas SET titulo = COALESCE(?, titulo), descripcion = COALESCE(?, descripcion),
        fecha_inicio = COALESCE(?, fecha_inicio), fecha_vencimiento = COALESCE(?, fecha_vencimiento),
        estado = COALESCE(?, estado), prioridad = COALESCE(?, prioridad),
-       porcentaje_avance = COALESCE(?, porcentaje_avance) WHERE id_tarea = ?`,
-      [titulo, descripcion, fecha_inicio, fecha_vencimiento, estado, prioridad, porcentaje_avance, req.params.id]
+       porcentaje_avance = COALESCE(?, porcentaje_avance),
+       id_asignado = COALESCE(?, id_asignado) WHERE id_tarea = ?`,
+      [titulo, descripcion, fecha_inicio, fecha_vencimiento, estado, prioridad, porcentaje_avance, id_asignado, req.params.id]
     );
 
     if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Tarea no encontrada' });

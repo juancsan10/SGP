@@ -6,5 +6,6 @@ const { verifyToken, requireProjectMember } = require('../middlewares/auth.middl
 router.post('/',              verifyToken, requireProjectMember('project-direct'), ctrl.create);
 router.get('/:id_proyecto',   verifyToken, requireProjectMember('project-direct'), ctrl.getByProyecto);
 router.put('/:id',            verifyToken, requireProjectMember('repository'), ctrl.update);
+router.delete('/:id',         verifyToken, requireProjectMember('repository'), ctrl.remove);
 
 module.exports = router;

@@ -50,4 +50,16 @@ const update = async (req, res) => {
   }
 };
 
-module.exports = { create, getByProyecto, update };
+// DELETE /api/v1/repositorios/:id
+const remove = async (req, res) => {
+  try {
+    const [result] = await db.query('DELETE FROM repositorios WHERE id_repositorio = ?', [req.params.id]);
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Repositorio no encontrado' });
+    await registrarCambio('repositorios', req.params.id, 'DELETE', req.user?.id);
+    return res.json({ success: true, message: 'Repositorio desvinculado' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { create, getByProyecto, update, remove };

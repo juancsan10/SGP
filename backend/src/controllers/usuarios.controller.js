@@ -35,11 +35,33 @@ const getById = async (req, res) => {
 // PUT /api/v1/usuarios/:id
 const update = async (req, res) => {
   try {
-    const { nombres, apellidos, ficha, programa_formacion } = req.body;
+    const { nombres, apellidos, ficha, programa_formacion, id_rol, estado, contrasena } = req.body;
     const { id } = req.params;
 
-    const query = `UPDATE usuarios SET nombres = COALESCE(?, nombres), apellidos = COALESCE(?, apellidos), ficha = COALESCE(?, ficha), programa_formacion = COALESCE(?, programa_formacion) WHERE id_usuario = ?`;
-    const params = [nombres ?? null, apellidos ?? null, ficha ?? null, programa_formacion ?? null, id];
+    let hashPass = null;
+    if (contrasena && contrasena.trim().length >= 8) {
+      hashPass = await bcrypt.hash(contrasena.trim(), 10);
+    }
+
+    const query = `UPDATE usuarios SET 
+      nombres = COALESCE(?, nombres), 
+      apellidos = COALESCE(?, apellidos), 
+      ficha = COALESCE(?, ficha), 
+      programa_formacion = COALESCE(?, programa_formacion),
+      id_rol = COALESCE(?, id_rol),
+      estado = COALESCE(?, estado),
+      contrasena = COALESCE(?, contrasena)
+      WHERE id_usuario = ?`;
+    const params = [
+      nombres ?? null, 
+      apellidos ?? null, 
+      ficha ?? null, 
+      programa_formacion ?? null,
+      id_rol ? Number(id_rol) : null,
+      estado !== undefined && estado !== null ? (estado ? 1 : 0) : null,
+      hashPass,
+      id
+    ];
 
     const [result] = await db.query(query, params);
     if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
@@ -47,6 +69,7 @@ const update = async (req, res) => {
     await registrarCambio('usuarios', id, 'UPDATE', req.user?.id);
     return res.json({ success: true, message: 'Usuario actualizado' });
   } catch (err) {
+    console.error(err);
     return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };

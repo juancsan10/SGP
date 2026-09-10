@@ -55,8 +55,8 @@ CREATE TABLE equipos_proyecto (
     id_proyecto INT NOT NULL,
     id_usuario INT NOT NULL,
     rol_en_equipo VARCHAR(100),
-    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto) ON DELETE CASCADE,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
 
 -- ============================================
@@ -70,7 +70,7 @@ CREATE TABLE fases_proyecto (
     fecha_fin DATE,
     porcentaje_avance DECIMAL(5,2) DEFAULT 0.00,
     id_proyecto INT NOT NULL,
-    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto)
+    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto) ON DELETE CASCADE
 );
 
 -- ============================================
@@ -86,7 +86,7 @@ CREATE TABLE entregables (
     url_drive VARCHAR(255),
     version VARCHAR(50),
     id_fase INT NOT NULL,
-    FOREIGN KEY (id_fase) REFERENCES fases_proyecto(id_fase)
+    FOREIGN KEY (id_fase) REFERENCES fases_proyecto(id_fase) ON DELETE CASCADE
 );
 
 -- ============================================
@@ -103,8 +103,8 @@ CREATE TABLE tareas (
     porcentaje_avance DECIMAL(5,2) DEFAULT 0.00,
     id_proyecto INT NOT NULL,
     id_asignado INT NOT NULL,
-    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto),
-    FOREIGN KEY (id_asignado) REFERENCES usuarios(id_usuario)
+    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto) ON DELETE CASCADE,
+    FOREIGN KEY (id_asignado) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
 
 -- ============================================
@@ -116,8 +116,8 @@ CREATE TABLE mensajes (
     fecha_envio DATETIME DEFAULT CURRENT_TIMESTAMP,
     id_remitente INT NOT NULL,
     id_proyecto INT NOT NULL,
-    FOREIGN KEY (id_remitente) REFERENCES usuarios(id_usuario),
-    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto)
+    FOREIGN KEY (id_remitente) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto) ON DELETE CASCADE
 );
 
 -- ============================================
@@ -131,7 +131,7 @@ CREATE TABLE notificaciones (
     leida BOOLEAN DEFAULT FALSE,
     fecha_envio DATETIME DEFAULT CURRENT_TIMESTAMP,
     id_usuario INT NOT NULL,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
 
 -- ============================================
@@ -143,7 +143,7 @@ CREATE TABLE repositorios (
     rama_principal VARCHAR(100),
     ultima_actualizacion DATETIME,
     id_proyecto INT NOT NULL,
-    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto)
+    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto) ON DELETE CASCADE
 );
 
 -- ============================================
@@ -156,7 +156,19 @@ CREATE TABLE historial_cambios (
     accion VARCHAR(50),
     fecha_cambio DATETIME DEFAULT CURRENT_TIMESTAMP,
     id_usuario INT,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE SET NULL
+);
+
+-- ============================================
+-- TABLA PASSWORD_RESET_TOKENS
+-- ============================================
+CREATE TABLE password_reset_tokens (
+    id_token INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    token VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
 
 -- ============================================
@@ -169,8 +181,8 @@ CREATE TABLE comentarios (
     fecha_comentario DATETIME DEFAULT CURRENT_TIMESTAMP,
     id_usuario INT NOT NULL,
     id_entregable INT NOT NULL,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario),
-    FOREIGN KEY (id_entregable) REFERENCES entregables(id_entregable)
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_entregable) REFERENCES entregables(id_entregable) ON DELETE CASCADE
 );
 
 CREATE TABLE archivos (
@@ -179,8 +191,9 @@ CREATE TABLE archivos (
     ruta_archivo VARCHAR(255) NOT NULL,
     fecha_subida DATETIME DEFAULT CURRENT_TIMESTAMP,
     id_entregable INT NOT NULL,
-    FOREIGN KEY (id_entregable) REFERENCES entregables(id_entregable)
+    FOREIGN KEY (id_entregable) REFERENCES entregables(id_entregable) ON DELETE CASCADE
 );
+
 CREATE TABLE evaluaciones (
     id_evaluacion INT PRIMARY KEY AUTO_INCREMENT,
     calificacion DECIMAL(5,2) NOT NULL,
@@ -188,9 +201,10 @@ CREATE TABLE evaluaciones (
     fecha_evaluacion DATETIME DEFAULT CURRENT_TIMESTAMP,
     id_entregable INT NOT NULL,
     id_usuario INT NOT NULL,
-    FOREIGN KEY (id_entregable) REFERENCES entregables(id_entregable),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+    FOREIGN KEY (id_entregable) REFERENCES entregables(id_entregable) ON DELETE CASCADE,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
+
 CREATE TABLE reuniones (
     id_reunion INT PRIMARY KEY AUTO_INCREMENT,
     titulo VARCHAR(150) NOT NULL,
@@ -198,16 +212,16 @@ CREATE TABLE reuniones (
     fecha_reunion DATETIME NOT NULL,
     lugar VARCHAR(255),
     id_proyecto INT NOT NULL,
-    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto)
+    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto) ON DELETE CASCADE
 );
 
-CREATE TABLE GITHUB_INTEGRATION (
+CREATE TABLE github_integration (
     id_integration INT PRIMARY KEY AUTO_INCREMENT,
     github_username VARCHAR(100) NOT NULL,
     github_token VARCHAR(255) NOT NULL,
     fecha_integracion DATETIME DEFAULT CURRENT_TIMESTAMP,
     id_usuario INT NOT NULL,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
 
 -- ROLES

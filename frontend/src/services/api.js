@@ -45,6 +45,7 @@ export const authService = {
 export const usuariosService = {
   getAll:   ()         => api.get('/usuarios'),
   getById:  (id)       => api.get(`/usuarios/${id}`),
+  create:   (data)     => api.post('/auth/users', data),
   update:   (id, data) => api.put(`/usuarios/${id}`, data),
   remove:   (id)       => api.delete(`/usuarios/${id}`),
 };
@@ -107,6 +108,7 @@ export const repositoriosService = {
   getByProyecto: (idProy)  => api.get(`/repositorios/${idProy}`),
   create:        (data)    => api.post('/repositorios', data),
   update:        (id, data)=> api.put(`/repositorios/${id}`, data),
+  remove:        (id)      => api.delete(`/repositorios/${id}`),
 };
 
 // ── Historial ─────────────────────────────────────────
