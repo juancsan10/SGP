@@ -13,10 +13,20 @@ const create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'La fecha de vencimiento no puede ser anterior a la fecha de inicio' });
     }
 
-    const [proyecto] = await db.query('SELECT id_proyecto, estado FROM proyectos WHERE id_proyecto=?', [id_proyecto]);
+    const [proyecto] = await db.query('SELECT id_proyecto, estado, fecha_inicio, fecha_fin FROM proyectos WHERE id_proyecto=?', [id_proyecto]);
     if (!proyecto.length) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
     if (['Finalizado', 'Cancelado'].includes(proyecto[0].estado)) {
       return res.status(400).json({ success: false, message: 'No se pueden crear tareas en un proyecto finalizado o cancelado' });
+    }
+
+    // NUEVO: coherencia de fechas padre-hijo — la tarea debe quedar DENTRO
+    // del rango de fechas del proyecto al que pertenece.
+    const { fecha_inicio: proyectoInicio, fecha_fin: proyectoFin } = proyecto[0];
+    if (fecha_inicio && proyectoInicio && new Date(fecha_inicio) < new Date(proyectoInicio)) {
+      return res.status(400).json({ success: false, message: `La fecha de inicio de la tarea no puede ser anterior al inicio del proyecto (${new Date(proyectoInicio).toISOString().slice(0,10)})` });
+    }
+    if (fecha_vencimiento && proyectoFin && new Date(fecha_vencimiento) > new Date(proyectoFin)) {
+      return res.status(400).json({ success: false, message: `La fecha de vencimiento de la tarea no puede ser posterior al fin del proyecto (${new Date(proyectoFin).toISOString().slice(0,10)})` });
     }
 
     const [asignado] = await db.query('SELECT id_usuario, estado FROM usuarios WHERE id_usuario=?', [id_asignado]);
@@ -69,6 +79,26 @@ const update = async (req, res) => {
 
     if (fecha_inicio && fecha_vencimiento && new Date(fecha_vencimiento) < new Date(fecha_inicio)) {
       return res.status(400).json({ success: false, message: 'La fecha de vencimiento no puede ser anterior a la fecha de inicio' });
+    }
+
+    // NUEVO: coherencia con el proyecto padre también al editar.
+    if (fecha_inicio || fecha_vencimiento) {
+      const [tareaActual] = await db.query(
+        `SELECT t.fecha_inicio AS tarea_inicio, t.fecha_vencimiento AS tarea_venc, p.fecha_inicio AS proyecto_inicio, p.fecha_fin AS proyecto_fin
+         FROM tareas t JOIN proyectos p ON p.id_proyecto = t.id_proyecto WHERE t.id_tarea = ?`,
+        [req.params.id]
+      );
+      if (tareaActual.length) {
+        const { proyecto_inicio, proyecto_fin } = tareaActual[0];
+        const nuevoInicio = fecha_inicio || tareaActual[0].tarea_inicio;
+        const nuevoVenc = fecha_vencimiento || tareaActual[0].tarea_venc;
+        if (nuevoInicio && proyecto_inicio && new Date(nuevoInicio) < new Date(proyecto_inicio)) {
+          return res.status(400).json({ success: false, message: `La fecha de inicio de la tarea no puede ser anterior al inicio del proyecto (${new Date(proyecto_inicio).toISOString().slice(0,10)})` });
+        }
+        if (nuevoVenc && proyecto_fin && new Date(nuevoVenc) > new Date(proyecto_fin)) {
+          return res.status(400).json({ success: false, message: `La fecha de vencimiento de la tarea no puede ser posterior al fin del proyecto (${new Date(proyecto_fin).toISOString().slice(0,10)})` });
+        }
+      }
     }
 
     // RN-013

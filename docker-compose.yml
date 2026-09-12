@@ -32,6 +32,11 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-2h}
       FRONTEND_URL: ${FRONTEND_URL}
+    volumes:
+      # NUEVO: persiste los archivos subidos por los usuarios (multer,
+      # ver backend/src/middlewares/upload.middleware.js) entre reinicios
+      # del contenedor.
+      - uploads_data:/app/uploads
     ports:
       - "${BACKEND_PORT:-3000}:3000"
     depends_on:
@@ -56,3 +61,5 @@ services:
 volumes:
   db_data:
     name: sgp_sena_db_data
+  uploads_data:
+    name: sgp_sena_uploads_data

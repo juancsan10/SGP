@@ -129,6 +129,15 @@ export const archivosService = {
   getByEntregable: (idEntregable)  => api.get(`/archivos/${idEntregable}`),
   create:          (data)          => api.post('/archivos', data),
   remove:          (id)            => api.delete(`/archivos/${id}`),
+  // NUEVO: sube el binario real (antes solo se podía escribir manualmente
+  // un nombre + ruta de texto).
+  upload: (idEntregable, archivo) => {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    return api.post(`/archivos/upload/${idEntregable}`, formData, {
+      headers: { 'Content-Type': undefined },
+    });
+  },
 };
 
 // ── Evaluaciones (NUEVO — RN-016) ──────────────────────
@@ -136,6 +145,18 @@ export const entregasService = {
   getByTarea: (idTarea) => api.get(`/entregas/tarea/${idTarea}`),
   submit: (idTarea,data) => api.post(`/entregas/tarea/${idTarea}`,data),
   review: (idTarea,data) => api.put(`/entregas/tarea/${idTarea}/revision`,data),
+  // NUEVO: sube el binario real de la entrega. Igual que en archivosService,
+  // se quita el Content-Type por defecto para que el navegador calcule el
+  // "multipart/form-data; boundary=..." correcto automáticamente.
+  uploadArchivo: (idTarea, archivo, extras = {}) => {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    if (extras.comentario_aprendiz) formData.append('comentario_aprendiz', extras.comentario_aprendiz);
+    if (extras.url_entrega) formData.append('url_entrega', extras.url_entrega);
+    return api.post(`/entregas/tarea/${idTarea}/upload`, formData, {
+      headers: { 'Content-Type': undefined },
+    });
+  },
 };
 
 export const evaluacionesService = {

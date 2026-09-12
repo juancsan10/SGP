@@ -100,8 +100,9 @@ export default function LoginPage() {
 
         <div style={styles.hint}>
           <strong>Cuentas de demo (BD de ejemplo):</strong><br />
-          Admin: juan@mail.com · Instructor: maria@mail.com<br />
-          Contraseña (sin hash): 123
+          Admin: diana.rios@sgpsena.local · Instructor: laura.gomez@sgpsena.local<br />
+          Aprendiz: carlos.herrera@sgpsena.local<br />
+          Contraseña: Sena2026*
         </div>
       </div>
     </div>

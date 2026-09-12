@@ -66,7 +66,7 @@ export default function ProyectoDetallePage() {
   const [archivosEnt,   setArchivosEnt]   = useState([]);
   const [evaluaciones,  setEvaluaciones]  = useState([]);
   const [nuevoComentario, setNuevoComentario] = useState('');
-  const [formArchivo, setFormArchivo] = useState({ nombre_archivo:'', ruta_archivo:'' });
+  const [archivoSubiendo, setArchivoSubiendo] = useState(false); // NUEVO
   const [formEvaluacion, setFormEvaluacion] = useState({ calificacion:'', comentarios:'' });
   const [detalleError, setDetalleError] = useState('');
 
@@ -229,7 +229,7 @@ export default function ProyectoDetallePage() {
   async function abrirDetalleEntregable(entregable) {
     setEntregableSel(entregable);
     setNuevoComentario('');
-    setFormArchivo({ nombre_archivo:'', ruta_archivo:'' });
+    setArchivoSubiendo(false);
     setFormEvaluacion({ calificacion:'', comentarios:'' });
     setDetalleError('');
     setModalDetalle(true);
@@ -257,16 +257,46 @@ export default function ProyectoDetallePage() {
     } catch (err) { setDetalleError(err.response?.data?.message || 'Error al comentar'); }
   }
 
-  // ── NUEVO: Adjuntar archivo (registro de nombre + ruta) ──
-  async function agregarArchivo(e) {
-    e.preventDefault();
-    if (!formArchivo.nombre_archivo || !formArchivo.ruta_archivo) return;
+  // ── Subir un archivo real (NUEVO — reemplaza el formulario manual
+  //    de nombre+ruta de texto que existía antes) ──
+  const TIPOS_ARCHIVO_PERMITIDOS = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+  const TAMANO_MAXIMO_MB = 10;
+
+  async function subirArchivo(e) {
+    const archivo = e.target.files?.[0];
+    e.target.value = ''; // permite volver a elegir el mismo archivo después
+    if (!archivo) return;
+    setDetalleError('');
+
+    if (!TIPOS_ARCHIVO_PERMITIDOS.includes(archivo.type)) {
+      setDetalleError('Solo se permiten archivos PDF, JPG, PNG o WEBP');
+      return;
+    }
+    if (archivo.size > TAMANO_MAXIMO_MB * 1024 * 1024) {
+      setDetalleError(`El archivo supera el tamaño máximo permitido (${TAMANO_MAXIMO_MB} MB)`);
+      return;
+    }
+
+    setArchivoSubiendo(true);
     try {
-      await archivosService.create({ ...formArchivo, id_entregable: entregableSel.id_entregable });
-      setFormArchivo({ nombre_archivo:'', ruta_archivo:'' });
+      await archivosService.upload(entregableSel.id_entregable, archivo);
       const r = await archivosService.getByEntregable(entregableSel.id_entregable);
       setArchivosEnt(r.data.data || []);
-    } catch (err) { setDetalleError(err.response?.data?.message || 'Error al adjuntar archivo'); }
+    } catch (err) {
+      setDetalleError(err.response?.data?.message || 'Error al subir el archivo');
+    } finally {
+      setArchivoSubiendo(false);
+    }
+  }
+
+  // ── NUEVO: Borrar un archivo (también borra el binario en el servidor) ──
+  async function borrarArchivo(idArchivo) {
+    if (!confirm('¿Eliminar este archivo?')) return;
+    try {
+      await archivosService.remove(idArchivo);
+      const r = await archivosService.getByEntregable(entregableSel.id_entregable);
+      setArchivosEnt(r.data.data || []);
+    } catch (err) { setDetalleError(err.response?.data?.message || 'Error al eliminar el archivo'); }
   }
 
   // ── NUEVO: Calificar entregable (RN-016: solo si el proyecto está "En Revisión") ──
@@ -858,25 +888,35 @@ export default function ProyectoDetallePage() {
                 <button type="submit" className="btn btn-primary btn-sm" disabled={!nuevoComentario.trim()}>Enviar</button>
               </form>
 
-              {/* Archivos */}
+              {/* Archivos (NUEVO: subida real de binarios) */}
               <h4 style={{ fontSize:13, marginBottom:8 }}>📎 Archivos</h4>
               <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:12 }}>
                 {archivosEnt.length === 0 && <p style={{fontSize:12,color:'var(--slate-500)'}}>Sin archivos adjuntos.</p>}
                 {archivosEnt.map(a => (
-                  <div key={a.id_archivo} style={{ fontSize:12, display:'flex', justifyContent:'space-between' }}>
-                    <span>📄 {a.nombre_archivo}</span>
-                    <span style={{ color:'var(--slate-500)' }}>{formatFecha(a.fecha_subida)}</span>
+                  <div key={a.id_archivo} style={{ fontSize:12, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <a href={a.ruta_archivo} target="_blank" rel="noopener noreferrer" style={{ color:'var(--green-700)', textDecoration:'none' }}>
+                      📄 {a.nombre_archivo}
+                    </a>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <span style={{ color:'var(--slate-500)' }}>{formatFecha(a.fecha_subida)}</span>
+                      <button type="button" onClick={() => borrarArchivo(a.id_archivo)}
+                        style={{ background:'none', border:'none', color:'var(--red-600)', cursor:'pointer', fontSize:12 }}>
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
-              <form onSubmit={agregarArchivo} style={{ display:'flex', gap:8, marginBottom:20 }}>
-                <input className="form-input" style={{ flex:1 }} placeholder="Nombre del archivo"
-                  value={formArchivo.nombre_archivo} onChange={e=>setFormArchivo({...formArchivo,nombre_archivo:e.target.value})} />
-                <input className="form-input" style={{ flex:1 }} placeholder="Ruta o URL"
-                  value={formArchivo.ruta_archivo} onChange={e=>setFormArchivo({...formArchivo,ruta_archivo:e.target.value})} />
-                <button type="submit" className="btn btn-primary btn-sm"
-                  disabled={!formArchivo.nombre_archivo || !formArchivo.ruta_archivo}>Adjuntar</button>
-              </form>
+              <div style={{ marginBottom:20 }}>
+                <label className="btn btn-secondary btn-sm" style={{ cursor: archivoSubiendo ? 'not-allowed' : 'pointer', opacity: archivoSubiendo ? 0.6 : 1 }}>
+                  {archivoSubiendo ? 'Subiendo…' : '📤 Adjuntar archivo'}
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" style={{ display:'none' }}
+                    disabled={archivoSubiendo} onChange={subirArchivo} />
+                </label>
+                <span style={{ fontSize:11, color:'var(--slate-500)', marginLeft:8 }}>
+                  PDF, JPG, PNG o WEBP · máx. 10 MB
+                </span>
+              </div>
 
               {/* Evaluación — RN-016 */}
               <h4 style={{ fontSize:13, marginBottom:8 }}>📝 Evaluación</h4>
