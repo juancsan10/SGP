@@ -6,6 +6,11 @@ node_modules/
 dist/
 build/
 
+# Este proyecto usa pnpm (ver "packageManager" en package.json) — si por error
+# se corre "npm install", NO versionar el lockfile de npm que genera.
+package-lock.json
+yarn.lock
+
 # Backend (Node.js)
 *.log
 

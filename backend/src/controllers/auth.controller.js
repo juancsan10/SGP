@@ -21,11 +21,8 @@ const login=async(req,res)=>{
   const {correo,contrasena}=req.body;
   if(!correo||!contrasena) return res.status(400).json({success:false,message:'Correo y contraseña son requeridos'});
   const [rows]=await db.query(`SELECT u.id_usuario,u.nombres,u.apellidos,u.correo,u.contrasena,u.ficha,u.programa_formacion,u.id_rol,r.nombre_rol AS rol FROM usuarios u JOIN roles r ON u.id_rol=r.id_rol WHERE u.correo=? AND u.estado=1`,[correo]);
-  const u=rows[0];
-  let passOk = false;
-  try { passOk = await bcrypt.compare(contrasena, u.contrasena); } catch (e) {}
-  if (!passOk && contrasena === u.contrasena) passOk = true;
-  if (!passOk) return res.status(401).json({success:false,message:'Credenciales inválidas'});
+  if(!rows.length) return res.status(401).json({success:false,message:'Credenciales inválidas o usuario inactivo'});
+  const u=rows[0]; if(!(await bcrypt.compare(contrasena,u.contrasena))) return res.status(401).json({success:false,message:'Credenciales inválidas'});
   const token=jwt.sign({id:u.id_usuario,correo:u.correo,rol:u.rol,id_rol:u.id_rol},process.env.JWT_SECRET,{expiresIn:process.env.JWT_EXPIRES_IN||'2h'});
   res.json({success:true,message:'Inicio de sesión exitoso',data:{token,usuario:{id:u.id_usuario,nombres:u.nombres,apellidos:u.apellidos,correo:u.correo,rol:u.rol,ficha:u.ficha,programa_formacion:u.programa_formacion}}});
  }catch(err){console.error(err);res.status(500).json({success:false,message:'Error interno del servidor'});}
@@ -60,7 +57,7 @@ const resetPassword=async(req,res)=>{
 const createUserByAdmin=async(req,res)=>{
  try{
   const {nombres,apellidos,correo,contrasena,ficha,programa_formacion,id_rol}=req.body;
-  if(!nombres||!apellidos||!correo||!contrasena||![1,2,3].includes(Number(id_rol))) return res.status(400).json({success:false,message:'Datos inválidos. El rol debe ser Administrador (1), Instructor (2) o Aprendiz (3)'});
+  if(!nombres||!apellidos||!correo||!contrasena||![1,2].includes(Number(id_rol))) return res.status(400).json({success:false,message:'Datos inválidos. El rol debe ser Administrador (1) o Instructor (2)'});
   const [exists]=await db.query('SELECT id_usuario FROM usuarios WHERE correo=?',[correo]); if(exists.length) return res.status(400).json({success:false,message:'El correo ya está registrado'});
   const hash=await bcrypt.hash(contrasena,10);
   const [r]=await db.query('INSERT INTO usuarios (nombres,apellidos,correo,contrasena,ficha,programa_formacion,id_rol) VALUES (?,?,?,?,?,?,?)',[nombres,apellidos,correo,hash,ficha||null,programa_formacion||null,id_rol]);

@@ -3,12 +3,10 @@
 // Vista de tareas de todos los proyectos accesibles
 // =====================================================
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { proyectosService, tareasService } from '../services/api.js';
 import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, EmptyState, formatFecha } from '../components/helpers.jsx';
 
 export default function TareasPage() {
-  const navigate = useNavigate();
   const [tareas,  setTareas]  = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtro,  setFiltro]  = useState('');
@@ -22,7 +20,7 @@ export default function TareasPage() {
 
         const resultados = await Promise.allSettled(
           proyectos.map(p => tareasService.getByProyecto(p.id_proyecto)
-            .then(r => (r.data.data || []).map(t => ({ ...t, proyecto_nombre: p.nombre, id_proyecto: p.id_proyecto })))
+            .then(r => (r.data.data || []).map(t => ({ ...t, proyecto_nombre: p.nombre })))
           )
         );
 
@@ -101,7 +99,6 @@ export default function TareasPage() {
                     <th>Asignado a</th>
                     <th>Vencimiento</th>
                     <th>Avance</th>
-                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -128,11 +125,6 @@ export default function TareasPage() {
                       </td>
                       <td style={{ minWidth:120 }}>
                         <ProgressBar value={parseFloat(t.porcentaje_avance)||0} />
-                      </td>
-                      <td>
-                        <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/proyectos/${t.id_proyecto}`)}>
-                          Ver proyecto →
-                        </button>
                       </td>
                     </tr>
                   ))}

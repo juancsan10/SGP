@@ -44,7 +44,7 @@ export default function LoginPage() {
       <div style={styles.card}>
         {/* Encabezado */}
         <div style={styles.header}>
-          <div style={styles.icon}>🎓</div>
+          <div style={styles.logo}>S</div>
           <h1 style={styles.title}>SGP SENA</h1>
           <p style={styles.subtitle}>Sistema de Gestión de Proyectos</p>
         </div>
@@ -99,9 +99,11 @@ export default function LoginPage() {
         </form>}
 
         <div style={styles.hint}>
-          <strong>Cuentas de demo (BD de ejemplo):</strong><br />
-          Admin: juan@mail.com · Instructor: maria@mail.com<br />
-          Contraseña (sin hash): 123
+          <div style={styles.hintLabel}>📌 Cuentas de demo</div>
+          <div style={styles.hintRow}><span>Admin</span><code style={styles.hintCode}>diana.rios@sgpsena.local</code></div>
+          <div style={styles.hintRow}><span>Instructor</span><code style={styles.hintCode}>laura.gomez@sgpsena.local</code></div>
+          <div style={styles.hintRow}><span>Aprendiz</span><code style={styles.hintCode}>carlos.herrera@sgpsena.local</code></div>
+          <div style={styles.hintRow}><span>Contraseña</span><code style={styles.hintCode}>Sena2026*</code></div>
         </div>
       </div>
     </div>
@@ -111,7 +113,7 @@ export default function LoginPage() {
 const styles = {
   page: {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #0f172a 0%, #064e3b 100%)',
+    background: 'var(--slate-900)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     padding: 16,
   },
@@ -119,14 +121,18 @@ const styles = {
     background: 'var(--white)',
     borderRadius: 'var(--radius-lg)',
     boxShadow: 'var(--shadow-lg)',
-    padding: '36px 32px',
+    padding: '40px 32px',
     width: '100%', maxWidth: 400,
   },
   header: {
     textAlign: 'center', marginBottom: 28,
   },
-  icon: {
-    fontSize: 44, lineHeight: 1, marginBottom: 10,
+  logo: {
+    width: 52, height: 52, margin: '0 auto 16px',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 24, fontWeight: 800, color: 'var(--white)',
+    borderRadius: 'var(--radius-md)',
+    background: 'var(--green-600)',
   },
   title: {
     fontFamily: 'var(--font-display)',
@@ -140,11 +146,19 @@ const styles = {
     display: 'flex', flexDirection: 'column', gap: 16,
   },
   hint: {
-    marginTop: 20, padding: '10px 14px',
+    marginTop: 20, padding: '14px 16px',
     background: 'var(--slate-50)',
-    border: '1px solid var(--slate-200)',
     borderRadius: 'var(--radius-sm)',
-    fontSize: 11, color: 'var(--slate-500)',
-    lineHeight: 1.6,
+  },
+  hintLabel: {
+    fontSize: 11.5, fontWeight: 700, color: 'var(--slate-700)',
+    marginBottom: 8,
+  },
+  hintRow: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    fontSize: 11.5, color: 'var(--slate-500)', padding: '3px 0',
+  },
+  hintCode: {
+    fontSize: 11, fontWeight: 600, color: 'var(--slate-700)',
   },
 };

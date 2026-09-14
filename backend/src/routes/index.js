@@ -21,6 +21,7 @@ const evaluacionesRoutes      = require('./evaluaciones.routes');
 const reunionesRoutes         = require('./reuniones.routes');
 const githubIntegrationRoutes = require('./githubIntegration.routes');
 const agendaRoutes = require('./agenda.routes');
+const entregasRoutes = require('./entregas.routes');
 
 router.use('/auth',           authRoutes);
 router.use('/usuarios',       usuariosRoutes);
@@ -41,5 +42,6 @@ router.use('/evaluaciones',       evaluacionesRoutes);
 router.use('/reuniones',          reunionesRoutes);
 router.use('/github-integration', githubIntegrationRoutes);
 router.use('/agenda', agendaRoutes);
+router.use('/entregas', entregasRoutes);
 
 module.exports = router;

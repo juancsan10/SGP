@@ -103,6 +103,20 @@ const update = async (req, res) => {
     const { nombre, descripcion, fecha_inicio, fecha_fin, estado, porcentaje_avance } = req.body;
     const { id } = req.params;
 
+    const [proyectoActual] = await db.query(
+      'SELECT fecha_inicio, fecha_fin, estado, porcentaje_avance FROM proyectos WHERE id_proyecto = ?',
+      [id]
+    );
+    if (!proyectoActual.length) {
+      return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+    }
+
+    const inicio = fecha_inicio || proyectoActual[0].fecha_inicio;
+    const fin = fecha_fin || proyectoActual[0].fecha_fin;
+    if (fin && new Date(fin) <= new Date(inicio)) {
+      return res.status(400).json({ success: false, message: 'La fecha de fin debe ser posterior a la fecha de inicio' });
+    }
+
     // RN-013: avance entre 0 y 100
     if (porcentaje_avance !== undefined && (porcentaje_avance < 0 || porcentaje_avance > 100)) {
       return res.status(400).json({ success: false, message: 'RN-013: El avance debe estar entre 0% y 100%' });

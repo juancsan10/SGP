@@ -12,6 +12,14 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
+      // NUEVO: los enlaces de descarga/vista de archivos subidos apuntan
+      // a rutas relativas "/uploads/...". Sin este proxy, en desarrollo
+      // el navegador las pediría contra el propio Vite (5173) en vez del
+      // backend.
+      '/uploads': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
     },
   },
 })

@@ -29,7 +29,7 @@ Se presentaron los siguientes entregables al instructor:
 - Documento de RF y RNF con 6 módulos funcionales, 26 requisitos funcionales y 15 no funcionales.
 - Diagrama Entidad-Relación del sistema con 11 entidades y sus relaciones (`Diagrama ER de sistema de gestión.png`).
 - DDL funcional con las tablas: `roles`, `usuarios`, `proyectos`, `equipos_proyecto`, `fases_proyecto`, `entregables`, `tareas`, `mensajes`, `notificaciones`, `repositorios`, `historial_cambios`.
-- Documento de reglas de negocio (RN-001 a RN-030).
+- Documento de reglas de negocio (RN-001 a RN-026).
 - Documento de restricciones técnicas, operativas, de seguridad y de alcance.
 
 ---

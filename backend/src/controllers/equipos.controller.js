@@ -10,8 +10,29 @@ const create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'id_proyecto e id_usuario son requeridos' });
     }
 
+    const [proyecto] = await db.query('SELECT id_proyecto, estado FROM proyectos WHERE id_proyecto = ?', [id_proyecto]);
+    if (!proyecto.length) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+    if (['Finalizado', 'Cancelado'].includes(proyecto[0].estado)) {
+      return res.status(400).json({ success: false, message: 'No se pueden modificar equipos de un proyecto finalizado o cancelado' });
+    }
+
+    const [usuario] = await db.query('SELECT id_usuario, id_rol, estado FROM usuarios WHERE id_usuario = ?', [id_usuario]);
+    if (!usuario.length || !usuario[0].estado) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado o inactivo' });
+    }
+    if (Number(usuario[0].id_rol) !== 3) {
+      return res.status(400).json({ success: false, message: 'Solo se pueden asignar aprendices a un proyecto' });
+    }
+
+    const [duplicado] = await db.query(
+      'SELECT id_equipo FROM equipos_proyecto WHERE id_proyecto=? AND id_usuario=?',
+      [id_proyecto, id_usuario]
+    );
+    if (duplicado.length) {
+      return res.status(409).json({ success: false, message: 'El usuario ya pertenece a este proyecto' });
+    }
+
     // RN-001: aprendiz max 2 proyectos activos
-    const [usuario] = await db.query('SELECT id_rol FROM usuarios WHERE id_usuario = ?', [id_usuario]);
     if (usuario.length > 0 && usuario[0].id_rol === 3) { // Aprendiz
       const [activos] = await db.query(
         `SELECT COUNT(*) AS total FROM equipos_proyecto ep

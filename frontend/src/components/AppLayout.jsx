@@ -12,6 +12,7 @@ function getNavItems(esAdmin, esInstructor) {
     { path: '/dashboard',      icon: '🏠', label: 'Inicio' },
     { path: '/proyectos',      icon: '📁', label: 'Proyectos' },
     { path: '/tareas',         icon: '✅', label: 'Mis Tareas' },
+    { path: '/entregas',       icon: '📤', label: 'Entregas' },
     { path: '/notificaciones', icon: '🔔', label: 'Notificaciones' },
     { path: '/calendario', icon: '🗓️', label: 'Calendario' },
     { path: '/timeline', icon: '📈', label: 'Línea de tiempo' },
@@ -27,7 +28,7 @@ function getNavItems(esAdmin, esInstructor) {
 }
 
 export default function AppLayout() {
-  const { usuario, logout, esAdmin, esInstructor } = useAuth();
+  const { usuario, logout, esAdmin, esInstructor, rolClase } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation();
   const navItems  = getNavItems(esAdmin, esInstructor);
@@ -43,13 +44,13 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout ${rolClase}`}>
       {/* ── Sidebar ───────────────────────────────── */}
       <aside className="sidebar">
         {/* Logo */}
         <div className="sidebar-brand">
           <div className="sidebar-brand-logo">
-            <div className="sidebar-brand-icon">🎓</div>
+            <div className="sidebar-brand-icon">S</div>
             <div className="sidebar-brand-text">
               <h2>SGP SENA</h2>
               <span>Gestión de Proyectos</span>

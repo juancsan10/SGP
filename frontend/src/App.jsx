@@ -11,6 +11,7 @@ import ProyectosPage      from './pages/ProyectosPage.jsx';
 import ProyectoDetallePage from './pages/ProyectoDetallePage.jsx';
 import UsuariosPage       from './pages/UsuariosPage.jsx';
 import TareasPage         from './pages/TareasPage.jsx';
+import EntregasPage       from './pages/EntregasPage.jsx';
 import NotificacionesPage from './pages/NotificacionesPage.jsx';
 import HistorialPage      from './pages/HistorialPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="proyectos"      element={<ProyectosPage />} />
         <Route path="proyectos/:id"  element={<ProyectoDetallePage />} />
         <Route path="tareas"         element={<TareasPage />} />
+        <Route path="entregas"       element={<EntregasPage />} />
         <Route path="notificaciones" element={<NotificacionesPage />} />
         <Route path="calendario" element={<CalendarioPage />} />
         <Route path="timeline" element={<TimelinePage />} />

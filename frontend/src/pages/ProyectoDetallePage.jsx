@@ -1,7 +1,7 @@
 // =====================================================
 // pages/ProyectoDetallePage.jsx
 // Vista detallada de un proyecto con pestañas:
-// Fases · Entregables · Tareas · Equipo · Mensajes · Repositorios · Reuniones
+// Fases · Tareas · Equipo · Mensajes · Repositorios
 // =====================================================
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -10,10 +10,13 @@ import {
   proyectosService, fasesService, tareasService,
   equiposService, mensajesService, repositoriosService,
   entregablesService, usuariosService,
-  comentariosService, archivosService, evaluacionesService, reunionesService,
+  comentariosService, archivosService, evaluacionesService, reunionesService, // NUEVOS
 } from '../services/api.js';
 import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha } from '../components/helpers.jsx';
 
+// NUEVO: se agregan las pestañas "Entregables" (RF3.3/RF4.2/RF6.2 — antes el
+// servicio ya existía pero nunca se usaba en esta página) y "Reuniones"
+// (RF5.3 — antes esta tabla ni siquiera tenía controlador en el backend).
 const TABS = ['Resumen','Fases','Entregables','Tareas','Equipo','Mensajes','Repositorios','Reuniones'];
 
 export default function ProyectoDetallePage() {
@@ -22,62 +25,62 @@ export default function ProyectoDetallePage() {
   const { esAdmin, esInstructor, usuario } = useAuth();
   const canEdit  = esAdmin || esInstructor;
 
-  const [tab,         setTab]         = useState('Resumen');
-  const [proyecto,    setProyecto]    = useState(null);
-  const [fases,       setFases]       = useState([]);
-  const [tareas,      setTareas]      = useState([]);
-  const [equipo,      setEquipo]      = useState([]);
-  const [mensajes,    setMensajes]    = useState([]);
-  const [repos,       setRepos]       = useState([]);
-  const [usuarios,    setUsuarios]    = useState([]);
-  const [entregables, setEntregables] = useState([]);
-  const [reuniones,   setReuniones]   = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [error,       setError]       = useState('');
+  const [tab,       setTab]       = useState('Resumen');
+  const [proyecto,  setProyecto]  = useState(null);
+  const [fases,     setFases]     = useState([]);
+  const [tareas,    setTareas]    = useState([]);
+  const [equipo,    setEquipo]    = useState([]);
+  const [mensajes,  setMensajes]  = useState([]);
+  const [repos,     setRepos]     = useState([]);
+  const [usuarios,  setUsuarios]  = useState([]);
+  const [entregables, setEntregables] = useState([]); // NUEVO
+  const [reuniones,   setReuniones]   = useState([]); // NUEVO
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState('');
 
   // ── Mensajes ──────────────────────────────────────
   const [msgTexto,  setMsgTexto]  = useState('');
   const mensajesEndRef = useRef(null);
 
-  // ── Modales ───────────────────────────────────────
-  const [modalFase,       setModalFase]       = useState(false);
-  const [modalTarea,      setModalTarea]      = useState(false);
-  const [modalEquip,      setModalEquip]      = useState(false);
-  const [modalRepo,       setModalRepo]       = useState(false);
-  const [modalEntregable, setModalEntregable] = useState(false);
-  const [modalReunion,    setModalReunion]    = useState(false);
-  const [modalDetalle,    setModalDetalle]    = useState(false);
+  // ── Modales rápidos ───────────────────────────────
+  const [modalFase,  setModalFase]  = useState(false);
+  const [modalTarea, setModalTarea] = useState(false);
+  const [modalEquip, setModalEquip] = useState(false);
+  const [modalRepo,  setModalRepo]  = useState(false);
+  const [modalEntregable, setModalEntregable] = useState(false); // NUEVO
+  const [modalReunion,    setModalReunion]    = useState(false); // NUEVO
+  const [modalDetalle,    setModalDetalle]    = useState(false); // NUEVO: comentarios+archivos+evaluación
 
-  // ── Modos Edición ──────────────────────────────────
-  const [editFaseSel,       setEditFaseSel]       = useState(null);
-  const [editTareaSel,      setEditTareaSel]      = useState(null);
-  const [editEntregableSel, setEditEntregableSel] = useState(null);
-  const [editRepoSel,       setEditRepoSel]       = useState(null);
-  const [editReunionSel,    setEditReunionSel]    = useState(null);
+  const [formFase,  setFormFase]  = useState({ nombre_fase:'', descripcion:'', fecha_inicio:'', fecha_fin:'' });
+  const [formTarea, setFormTarea] = useState({ titulo:'', descripcion:'', prioridad:'Media', fecha_vencimiento:'', id_asignado:'' });
+  const [formEquip, setFormEquip] = useState({ id_usuario:'', rol_en_equipo:'' });
+  const [formRepo,  setFormRepo]  = useState({ url_github:'', rama_principal:'main' });
+  const [formEntregable, setFormEntregable] = useState({ nombre:'', descripcion:'', fecha_entrega:'', url_drive:'', version:'1.0', id_fase:'' }); // NUEVO
+  const [formReunion,    setFormReunion]    = useState({ titulo:'', descripcion:'', fecha_reunion:'', lugar:'' }); // NUEVO
+  const [saving,    setSaving]    = useState(false);
+  const [saveError, setSaveError] = useState('');
 
-  const [formFase,       setFormFase]       = useState({ nombre_fase:'', descripcion:'', fecha_inicio:'', fecha_fin:'' });
-  const [formTarea,      setFormTarea]      = useState({ titulo:'', descripcion:'', prioridad:'Media', fecha_vencimiento:'', id_asignado:'' });
-  const [formEquip,      setFormEquip]      = useState({ id_usuario:'', rol_en_equipo:'' });
-  const [formRepo,       setFormRepo]       = useState({ url_github:'', rama_principal:'main' });
-  const [formEntregable, setFormEntregable] = useState({ nombre:'', descripcion:'', fecha_entrega:'', url_drive:'', version:'1.0', id_fase:'' });
-  const [formReunion,    setFormReunion]    = useState({ titulo:'', descripcion:'', fecha_reunion:'', lugar:'' });
-  const [saving,         setSaving]         = useState(false);
-  const [saveError,      setSaveError]      = useState('');
-
-  // ── Detalle entregable ────────────────────────────
-  const [entregableSel,   setEntregableSel]   = useState(null);
-  const [comentarios,     setComentarios]     = useState([]);
-  const [archivosEnt,     setArchivosEnt]     = useState([]);
-  const [evaluaciones,    setEvaluaciones]    = useState([]);
+  // ── Detalle de un entregable: comentarios + archivos + evaluación (NUEVO) ──
+  const [entregableSel, setEntregableSel] = useState(null);
+  const [comentarios,   setComentarios]   = useState([]);
+  const [archivosEnt,   setArchivosEnt]   = useState([]);
+  const [evaluaciones,  setEvaluaciones]  = useState([]);
   const [nuevoComentario, setNuevoComentario] = useState('');
-  const [formArchivo,     setFormArchivo]     = useState({ nombre_archivo:'', ruta_archivo:'' });
-  const [formEvaluacion,  setFormEvaluacion]  = useState({ calificacion:'', comentarios:'' });
-  const [detalleError,    setDetalleError]    = useState('');
+  const [archivoSubiendo, setArchivoSubiendo] = useState(false); // NUEVO
+  const [formEvaluacion, setFormEvaluacion] = useState({ calificacion:'', comentarios:'' });
+  const [detalleError, setDetalleError] = useState('');
 
   async function cargar() {
     setLoading(true);
     try {
-      const [pRes, fRes, tRes, eRes, mRes, rRes, uRes, reunRes] = await Promise.all([
+      // CORREGIDO (bug crítico): antes esto usaba Promise.all(), así que
+      // cuando usuariosService.getAll() fallaba con 403 para un Aprendiz
+      // (ese endpoint es solo Admin/Instructor — restricción correcta),
+      // TODA la página de detalle del proyecto se caía: ni el proyecto, ni
+      // fases, ni tareas, ni equipo, ni mensajes se llegaban a mostrar,
+      // aunque esas 7 llamadas sí hubieran funcionado bien. Un Aprendiz
+      // nunca podía abrir el detalle de su propio proyecto.
+      const resultados = await Promise.allSettled([
         proyectosService.getById(id),
         fasesService.getByProyecto(id),
         tareasService.getByProyecto(id),
@@ -87,19 +90,30 @@ export default function ProyectoDetallePage() {
         usuariosService.getAll(),
         reunionesService.getByProyecto(id),
       ]);
-      setProyecto(pRes.data.data);
-      const fasesData = fRes.data.data || [];
-      setFases(fasesData);
-      setTareas(tRes.data.data || []);
-      setEquipo(eRes.data.data || []);
-      setMensajes(mRes.data.data || []);
-      setRepos(rRes.data.data || []);
-      setUsuarios(uRes.data.data || []);
-      setReuniones(reunRes.data.data || []);
+      const [pRes, fRes, tRes, eRes, mRes, rRes, uRes, reunRes] = resultados;
 
+      if (pRes.status !== 'fulfilled') {
+        setError('No se pudo cargar el proyecto');
+        return;
+      }
+      setProyecto(pRes.value.data.data);
+      const fasesData = fRes.status === 'fulfilled' ? (fRes.value.data.data || []) : [];
+      setFases(fasesData);
+      setTareas(tRes.status === 'fulfilled' ? (tRes.value.data.data || []) : []);
+      setEquipo(eRes.status === 'fulfilled' ? (eRes.value.data.data || []) : []);
+      setMensajes(mRes.status === 'fulfilled' ? (mRes.value.data.data || []) : []);
+      setRepos(rRes.status === 'fulfilled' ? (rRes.value.data.data || []) : []);
+      // Un Aprendiz no puede listar todos los usuarios (403 esperado); en
+      // ese caso simplemente queda una lista vacía, sin tumbar el resto.
+      setUsuarios(uRes.status === 'fulfilled' ? (uRes.value.data.data || []) : []);
+      setReuniones(reunRes.status === 'fulfilled' ? (reunRes.value.data.data || []) : []);
+
+      // NUEVO: los entregables se consultan por fase (GET /entregables/:id_fase),
+      // así que se piden todos en paralelo y se combinan en una sola lista
+      // (cada entregable ya trae su id_fase para saber a cuál pertenece).
       if (fasesData.length > 0) {
-        const entRes = await Promise.all(fasesData.map(f => entregablesService.getByFase(f.id_fase)));
-        setEntregables(entRes.flatMap(r => r.data.data || []));
+        const entRes = await Promise.allSettled(fasesData.map(f => entregablesService.getByFase(f.id_fase)));
+        setEntregables(entRes.filter(r => r.status === 'fulfilled').flatMap(r => r.value.data.data || []));
       } else {
         setEntregables([]);
       }
@@ -110,10 +124,11 @@ export default function ProyectoDetallePage() {
     }
   }
 
+  // NUEVO: recarga solo la lista de entregables (tras crear uno nuevo)
   async function recargarEntregables() {
     if (fases.length === 0) { setEntregables([]); return; }
-    const entRes = await Promise.all(fases.map(f => entregablesService.getByFase(f.id_fase)));
-    setEntregables(entRes.flatMap(r => r.data.data || []));
+    const entRes = await Promise.allSettled(fases.map(f => entregablesService.getByFase(f.id_fase)));
+    setEntregables(entRes.filter(r => r.status === 'fulfilled').flatMap(r => r.value.data.data || []));
   }
 
   useEffect(() => { cargar(); }, [id]);
@@ -123,87 +138,31 @@ export default function ProyectoDetallePage() {
     }
   }, [tab, mensajes]);
 
-  // ── Fase CRUD ────────────────────────────────────
-  function abrirNuevaFase() {
-    setEditFaseSel(null);
-    setFormFase({ nombre_fase:'', descripcion:'', fecha_inicio:'', fecha_fin:'' });
-    setSaveError(''); setModalFase(true);
-  }
-  function abrirEditarFase(f) {
-    setEditFaseSel(f);
-    setFormFase({
-      nombre_fase: f.nombre_fase || '',
-      descripcion: f.descripcion || '',
-      fecha_inicio: f.fecha_inicio ? f.fecha_inicio.substring(0,10) : '',
-      fecha_fin: f.fecha_fin ? f.fecha_fin.substring(0,10) : '',
-    });
-    setSaveError(''); setModalFase(true);
-  }
-  async function guardarFase(e) {
+  // ── Crear Fase ────────────────────────────────────
+  async function crearFase(e) {
     e.preventDefault(); setSaving(true); setSaveError('');
     try {
-      if (editFaseSel) {
-        await fasesService.update(editFaseSel.id_fase, formFase);
-      } else {
-        await fasesService.create({ ...formFase, id_proyecto: id });
-      }
+      await fasesService.create({ ...formFase, id_proyecto: id });
       setModalFase(false);
       const r = await fasesService.getByProyecto(id);
       setFases(r.data.data || []);
-    } catch (err) { setSaveError(err.response?.data?.message || 'Error guardando fase'); }
+    } catch (err) { setSaveError(err.response?.data?.message || 'Error'); }
     finally { setSaving(false); }
   }
-  async function eliminarFase(idFase) {
-    if (!confirm('¿Eliminar esta fase? Se eliminarán también sus entregables.')) return;
-    try {
-      await fasesService.remove(idFase);
-      const r = await fasesService.getByProyecto(id);
-      setFases(r.data.data || []);
-      await recargarEntregables();
-    } catch (err) { alert(err.response?.data?.message || 'Error eliminando fase'); }
-  }
 
-  // ── Tarea CRUD ───────────────────────────────────
-  function abrirNuevaTarea() {
-    setEditTareaSel(null);
-    setFormTarea({ titulo:'', descripcion:'', prioridad:'Media', fecha_vencimiento:'', id_asignado:'' });
-    setSaveError(''); setModalTarea(true);
-  }
-  function abrirEditarTarea(t) {
-    setEditTareaSel(t);
-    setFormTarea({
-      titulo: t.titulo || '',
-      descripcion: t.descripcion || '',
-      prioridad: t.prioridad || 'Media',
-      fecha_vencimiento: t.fecha_vencimiento ? t.fecha_vencimiento.substring(0,10) : '',
-      id_asignado: String(t.id_asignado || ''),
-    });
-    setSaveError(''); setModalTarea(true);
-  }
-  async function guardarTarea(e) {
+  // ── Crear Tarea ───────────────────────────────────
+  async function crearTarea(e) {
     e.preventDefault(); setSaving(true); setSaveError('');
     try {
-      if (editTareaSel) {
-        await tareasService.update(editTareaSel.id_tarea, formTarea);
-      } else {
-        await tareasService.create({ ...formTarea, id_proyecto: id });
-      }
+      await tareasService.create({ ...formTarea, id_proyecto: id });
       setModalTarea(false);
       const r = await tareasService.getByProyecto(id);
       setTareas(r.data.data || []);
-    } catch (err) { setSaveError(err.response?.data?.message || 'Error guardando tarea'); }
+    } catch (err) { setSaveError(err.response?.data?.message || 'Error'); }
     finally { setSaving(false); }
   }
-  async function eliminarTarea(idTarea) {
-    if (!confirm('¿Eliminar esta tarea?')) return;
-    try {
-      await tareasService.remove(idTarea);
-      const r = await tareasService.getByProyecto(id);
-      setTareas(r.data.data || []);
-    } catch (err) { alert(err.response?.data?.message || 'Error eliminando tarea'); }
-  }
 
-  // ── Equipo CRUD ──────────────────────────────────
+  // ── Agregar a equipo ──────────────────────────────
   async function crearEquipo(e) {
     e.preventDefault(); setSaving(true); setSaveError('');
     try {
@@ -214,133 +173,20 @@ export default function ProyectoDetallePage() {
     } catch (err) { setSaveError(err.response?.data?.message || 'Error'); }
     finally { setSaving(false); }
   }
-  async function removerEquipo(idEquipo) {
-    if (!confirm('¿Remover a este usuario del equipo?')) return;
-    try {
-      await equiposService.remove(idEquipo);
-      const r = await equiposService.getByProyecto(id);
-      setEquipo(r.data.data || []);
-    } catch (err) { alert(err.response?.data?.message || 'Error removiendo miembro'); }
-  }
 
-  // ── Repositorio CRUD ─────────────────────────────
-  function abrirNuevoRepo() {
-    setEditRepoSel(null);
-    setFormRepo({ url_github:'', rama_principal:'main' });
-    setSaveError(''); setModalRepo(true);
-  }
-  function abrirEditarRepo(r) {
-    setEditRepoSel(r);
-    setFormRepo({ url_github: r.url_github || '', rama_principal: r.rama_principal || 'main' });
-    setSaveError(''); setModalRepo(true);
-  }
-  async function guardarRepo(e) {
+  // ── Crear Repositorio ─────────────────────────────
+  async function crearRepo(e) {
     e.preventDefault(); setSaving(true); setSaveError('');
     try {
-      if (editRepoSel) {
-        await repositoriosService.update(editRepoSel.id_repositorio, formRepo);
-      } else {
-        await repositoriosService.create({ ...formRepo, id_proyecto: id });
-      }
+      await repositoriosService.create({ ...formRepo, id_proyecto: id });
       setModalRepo(false);
       const r = await repositoriosService.getByProyecto(id);
       setRepos(r.data.data || []);
     } catch (err) { setSaveError(err.response?.data?.message || 'Error'); }
     finally { setSaving(false); }
   }
-  async function eliminarRepo(idRepo) {
-    if (!confirm('¿Desvincular este repositorio?')) return;
-    try {
-      await repositoriosService.remove(idRepo);
-      const r = await repositoriosService.getByProyecto(id);
-      setRepos(r.data.data || []);
-    } catch (err) { alert(err.response?.data?.message || 'Error'); }
-  }
 
-  // ── Entregable CRUD ──────────────────────────────
-  function abrirNuevoEntregable() {
-    setEditEntregableSel(null);
-    setFormEntregable({ nombre:'', descripcion:'', fecha_entrega:'', url_drive:'', version:'1.0', id_fase: fases[0]?.id_fase || '' });
-    setSaveError(''); setModalEntregable(true);
-  }
-  function abrirEditarEntregable(en) {
-    setEditEntregableSel(en);
-    setFormEntregable({
-      nombre: en.nombre || '',
-      descripcion: en.descripcion || '',
-      fecha_entrega: en.fecha_entrega ? en.fecha_entrega.substring(0,10) : '',
-      url_drive: en.url_drive || '',
-      version: en.version || '1.0',
-      id_fase: en.id_fase || '',
-    });
-    setSaveError(''); setModalEntregable(true);
-  }
-  async function guardarEntregable(e) {
-    e.preventDefault(); setSaving(true); setSaveError('');
-    try {
-      if (editEntregableSel) {
-        await entregablesService.update(editEntregableSel.id_entregable, formEntregable);
-      } else {
-        await entregablesService.create(formEntregable);
-      }
-      setModalEntregable(false);
-      await recargarEntregables();
-    } catch (err) { setSaveError(err.response?.data?.message || 'Error'); }
-    finally { setSaving(false); }
-  }
-  async function eliminarEntregable(idEntregable) {
-    if (!confirm('¿Eliminar este entregable?')) return;
-    try {
-      await entregablesService.remove(idEntregable);
-      await recargarEntregables();
-    } catch (err) { alert(err.response?.data?.message || 'Error'); }
-  }
-
-  // ── Reunión CRUD ─────────────────────────────────
-  function abrirNuevaReunion() {
-    setEditReunionSel(null);
-    setFormReunion({ titulo:'', descripcion:'', fecha_reunion:'', lugar:'' });
-    setSaveError(''); setModalReunion(true);
-  }
-  function abrirEditarReunion(r) {
-    setEditReunionSel(r);
-    let fechaStr = '';
-    if (r.fecha_reunion) {
-      const d = new Date(r.fecha_reunion);
-      fechaStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,16);
-    }
-    setFormReunion({
-      titulo: r.titulo || '',
-      descripcion: r.descripcion || '',
-      fecha_reunion: fechaStr,
-      lugar: r.lugar || '',
-    });
-    setSaveError(''); setModalReunion(true);
-  }
-  async function guardarReunion(e) {
-    e.preventDefault(); setSaving(true); setSaveError('');
-    try {
-      if (editReunionSel) {
-        await reunionesService.update(editReunionSel.id_reunion, formReunion);
-      } else {
-        await reunionesService.create({ ...formReunion, id_proyecto: id });
-      }
-      setModalReunion(false);
-      const r = await reunionesService.getByProyecto(id);
-      setReuniones(r.data.data || []);
-    } catch (err) { setSaveError(err.response?.data?.message || 'Error'); }
-    finally { setSaving(false); }
-  }
-  async function cancelarReunion(idReunion) {
-    if (!confirm('¿Cancelar esta reunión?')) return;
-    try {
-      await reunionesService.remove(idReunion);
-      const r = await reunionesService.getByProyecto(id);
-      setReuniones(r.data.data || []);
-    } catch (err) { alert(err.response?.data?.message || 'Error'); }
-  }
-
-  // ── Mensajes ─────────────────────────────────────
+  // ── Enviar mensaje ────────────────────────────────
   async function enviarMensaje(e) {
     e.preventDefault();
     if (!msgTexto.trim()) return;
@@ -352,6 +198,7 @@ export default function ProyectoDetallePage() {
     } catch (err) { console.error(err); }
   }
 
+  // ── Actualizar estado de tarea ────────────────────
   async function actualizarEstadoTarea(idTarea, estado) {
     try {
       await tareasService.update(idTarea, { estado });
@@ -360,11 +207,44 @@ export default function ProyectoDetallePage() {
     } catch (err) { console.error(err); }
   }
 
-  // ── Modal Detalle Entregable ──────────────────────
+  // ── NUEVO: Crear Entregable ───────────────────────
+  async function crearEntregable(e) {
+    e.preventDefault(); setSaving(true); setSaveError('');
+    try {
+      await entregablesService.create(formEntregable);
+      setModalEntregable(false);
+      await recargarEntregables();
+    } catch (err) { setSaveError(err.response?.data?.message || 'Error'); }
+    finally { setSaving(false); }
+  }
+
+  // ── NUEVO: Crear Reunión ───────────────────────────
+  async function crearReunion(e) {
+    e.preventDefault(); setSaving(true); setSaveError('');
+    try {
+      await reunionesService.create({ ...formReunion, id_proyecto: id });
+      setModalReunion(false);
+      const r = await reunionesService.getByProyecto(id);
+      setReuniones(r.data.data || []);
+    } catch (err) { setSaveError(err.response?.data?.message || 'Error'); }
+    finally { setSaving(false); }
+  }
+
+  // ── NUEVO: Cancelar reunión ────────────────────────
+  async function cancelarReunion(idReunion) {
+    if (!confirm('¿Cancelar esta reunión?')) return;
+    try {
+      await reunionesService.remove(idReunion);
+      const r = await reunionesService.getByProyecto(id);
+      setReuniones(r.data.data || []);
+    } catch (err) { alert(err.response?.data?.message || 'Error'); }
+  }
+
+  // ── NUEVO: Abrir el detalle de un entregable (comentarios/archivos/evaluación) ──
   async function abrirDetalleEntregable(entregable) {
     setEntregableSel(entregable);
     setNuevoComentario('');
-    setFormArchivo({ nombre_archivo:'', ruta_archivo:'' });
+    setArchivoSubiendo(false);
     setFormEvaluacion({ calificacion:'', comentarios:'' });
     setDetalleError('');
     setModalDetalle(true);
@@ -380,6 +260,7 @@ export default function ProyectoDetallePage() {
     } catch (err) { console.error(err); }
   }
 
+  // ── NUEVO: Agregar comentario (RN-015) ────────────
   async function agregarComentario(e) {
     e.preventDefault();
     if (!nuevoComentario.trim()) return;
@@ -391,35 +272,49 @@ export default function ProyectoDetallePage() {
     } catch (err) { setDetalleError(err.response?.data?.message || 'Error al comentar'); }
   }
 
-  async function eliminarComentario(idComentario) {
-    if (!confirm('¿Eliminar este comentario?')) return;
-    try {
-      await comentariosService.remove(idComentario);
-      const r = await comentariosService.getByEntregable(entregableSel.id_entregable);
-      setComentarios(r.data.data || []);
-    } catch (err) { setDetalleError(err.response?.data?.message || 'Error al eliminar comentario'); }
-  }
+  // ── Subir un archivo real (NUEVO — reemplaza el formulario manual
+  //    de nombre+ruta de texto que existía antes) ──
+  const TIPOS_ARCHIVO_PERMITIDOS = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+  const TAMANO_MAXIMO_MB = 10;
 
-  async function agregarArchivo(e) {
-    e.preventDefault();
-    if (!formArchivo.nombre_archivo || !formArchivo.ruta_archivo) return;
+  async function subirArchivo(e) {
+    const archivo = e.target.files?.[0];
+    e.target.value = ''; // permite volver a elegir el mismo archivo después
+    if (!archivo) return;
+    setDetalleError('');
+
+    if (!TIPOS_ARCHIVO_PERMITIDOS.includes(archivo.type)) {
+      setDetalleError('Solo se permiten archivos PDF, JPG, PNG o WEBP');
+      return;
+    }
+    if (archivo.size > TAMANO_MAXIMO_MB * 1024 * 1024) {
+      setDetalleError(`El archivo supera el tamaño máximo permitido (${TAMANO_MAXIMO_MB} MB)`);
+      return;
+    }
+
+    setArchivoSubiendo(true);
     try {
-      await archivosService.create({ ...formArchivo, id_entregable: entregableSel.id_entregable });
-      setFormArchivo({ nombre_archivo:'', ruta_archivo:'' });
+      await archivosService.upload(entregableSel.id_entregable, archivo);
       const r = await archivosService.getByEntregable(entregableSel.id_entregable);
       setArchivosEnt(r.data.data || []);
-    } catch (err) { setDetalleError(err.response?.data?.message || 'Error al adjuntar archivo'); }
+    } catch (err) {
+      setDetalleError(err.response?.data?.message || 'Error al subir el archivo');
+    } finally {
+      setArchivoSubiendo(false);
+    }
   }
 
-  async function eliminarArchivo(idArchivo) {
+  // ── NUEVO: Borrar un archivo (también borra el binario en el servidor) ──
+  async function borrarArchivo(idArchivo) {
     if (!confirm('¿Eliminar este archivo?')) return;
     try {
       await archivosService.remove(idArchivo);
       const r = await archivosService.getByEntregable(entregableSel.id_entregable);
       setArchivosEnt(r.data.data || []);
-    } catch (err) { setDetalleError(err.response?.data?.message || 'Error al eliminar archivo'); }
+    } catch (err) { setDetalleError(err.response?.data?.message || 'Error al eliminar el archivo'); }
   }
 
+  // ── NUEVO: Calificar entregable (RN-016: solo si el proyecto está "En Revisión") ──
   async function calificarEntregable(e) {
     e.preventDefault(); setDetalleError('');
     try {
@@ -513,7 +408,7 @@ export default function ProyectoDetallePage() {
           <div>
             {canEdit && (
               <div style={{ marginBottom:16 }}>
-                <button className="btn btn-primary" onClick={abrirNuevaFase}>
+                <button className="btn btn-primary" onClick={() => { setFormFase({nombre_fase:'',descripcion:'',fecha_inicio:'',fecha_fin:''}); setSaveError(''); setModalFase(true); }}>
                   + Nueva fase
                 </button>
               </div>
@@ -522,22 +417,12 @@ export default function ProyectoDetallePage() {
               <div className="card"><div className="empty-state"><div className="empty-state-icon">📂</div><h3>Sin fases</h3><p>Agrega la primera fase del proyecto.</p></div></div>
             ) : fases.map(f => (
               <div key={f.id_fase} className="card" style={{ marginBottom:12 }}>
-                <div className="card-header" style={{ justifyContent:'space-between' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    <span>📂</span>
-                    <strong>{f.nombre_fase}</strong>
-                  </div>
-                  <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <span style={{ fontSize:12, color:'var(--slate-500)' }}>
-                      {formatFecha(f.fecha_inicio)} → {formatFecha(f.fecha_fin)}
-                    </span>
-                    {canEdit && (
-                      <div style={{ display:'flex', gap:6 }}>
-                        <button className="btn btn-secondary btn-sm" onClick={() => abrirEditarFase(f)}>✏️ Editar</button>
-                        <button className="btn btn-danger btn-sm" onClick={() => eliminarFase(f.id_fase)}>🗑️ Eliminar</button>
-                      </div>
-                    )}
-                  </div>
+                <div className="card-header">
+                  <span>📂</span>
+                  <strong>{f.nombre_fase}</strong>
+                  <span style={{ marginLeft:'auto', fontSize:12, color:'var(--slate-500)' }}>
+                    {formatFecha(f.fecha_inicio)} → {formatFecha(f.fecha_fin)}
+                  </span>
                 </div>
                 <div className="card-body">
                   {f.descripcion && <p style={{ fontSize:13, color:'var(--slate-600)', marginBottom:12 }}>{f.descripcion}</p>}
@@ -548,7 +433,7 @@ export default function ProyectoDetallePage() {
           </div>
         )}
 
-        {/* ─────── ENTREGABLES ─────────────────────── */}
+        {/* ─────── ENTREGABLES (NUEVO) ─────────────── */}
         {tab === 'Entregables' && (
           <div>
             {canEdit && (
@@ -557,7 +442,7 @@ export default function ProyectoDetallePage() {
                   className="btn btn-primary"
                   disabled={fases.length === 0}
                   title={fases.length === 0 ? 'Primero crea al menos una fase' : ''}
-                  onClick={abrirNuevoEntregable}
+                  onClick={() => { setFormEntregable({nombre:'',descripcion:'',fecha_entrega:'',url_drive:'',version:'1.0',id_fase: fases[0]?.id_fase || ''}); setSaveError(''); setModalEntregable(true); }}
                 >
                   + Nuevo entregable
                 </button>
@@ -571,7 +456,7 @@ export default function ProyectoDetallePage() {
                   <table>
                     <thead><tr>
                       <th>Entregable</th><th>Fase</th><th>Entrega</th>
-                      <th>Estado</th><th>Versión</th><th>Acciones</th>
+                      <th>Estado</th><th>Versión</th><th></th>
                     </tr></thead>
                     <tbody>
                       {entregables.map(en => {
@@ -584,17 +469,9 @@ export default function ProyectoDetallePage() {
                             <td>{estadoBadge(en.estado)}</td>
                             <td>{en.version || '—'}</td>
                             <td>
-                              <div style={{ display:'flex', gap:6 }}>
-                                <button className="btn btn-secondary btn-sm" onClick={() => abrirDetalleEntregable(en)}>
-                                  💬 Ver detalle
-                                </button>
-                                {canEdit && (
-                                  <>
-                                    <button className="btn btn-secondary btn-sm" onClick={() => abrirEditarEntregable(en)}>✏️</button>
-                                    <button className="btn btn-danger btn-sm" onClick={() => eliminarEntregable(en.id_entregable)}>🗑️</button>
-                                  </>
-                                )}
-                              </div>
+                              <button className="btn btn-secondary btn-sm" onClick={() => abrirDetalleEntregable(en)}>
+                                💬 Ver detalle
+                              </button>
                             </td>
                           </tr>
                         );
@@ -612,7 +489,7 @@ export default function ProyectoDetallePage() {
           <div>
             {canEdit && (
               <div style={{ marginBottom:16 }}>
-                <button className="btn btn-primary" onClick={abrirNuevaTarea}>
+                <button className="btn btn-primary" onClick={() => { setFormTarea({titulo:'',descripcion:'',prioridad:'Media',fecha_vencimiento:'',id_asignado:''}); setSaveError(''); setModalTarea(true); }}>
                   + Nueva tarea
                 </button>
               </div>
@@ -626,7 +503,7 @@ export default function ProyectoDetallePage() {
                     <thead><tr>
                       <th>Tarea</th><th>Prioridad</th><th>Estado</th>
                       <th>Asignado</th><th>Vencimiento</th><th>Avance</th>
-                      {canEdit && <th>Acciones</th>}
+                      {canEdit && <th></th>}
                     </tr></thead>
                     <tbody>
                       {tareas.map(t => (
@@ -639,20 +516,16 @@ export default function ProyectoDetallePage() {
                           <td style={{ minWidth:120 }}><ProgressBar value={parseFloat(t.porcentaje_avance)||0} /></td>
                           {canEdit && (
                             <td>
-                              <div style={{ display:'flex', gap:6, alignItems:'center' }}>
-                                <select
-                                  className="form-select"
-                                  value={t.estado || ''}
-                                  style={{ fontSize:11, padding:'4px 6px' }}
-                                  onChange={e => actualizarEstadoTarea(t.id_tarea, e.target.value)}
-                                >
-                                  {['Pendiente','En curso','Completada','Cancelada'].map(s => (
-                                    <option key={s} value={s}>{s}</option>
-                                  ))}
-                                </select>
-                                <button className="btn btn-secondary btn-sm" onClick={() => abrirEditarTarea(t)}>✏️</button>
-                                <button className="btn btn-danger btn-sm" onClick={() => eliminarTarea(t.id_tarea)}>🗑️</button>
-                              </div>
+                              <select
+                                className="form-select"
+                                value={t.estado || ''}
+                                style={{ fontSize:11, padding:'4px 6px' }}
+                                onChange={e => actualizarEstadoTarea(t.id_tarea, e.target.value)}
+                              >
+                                {['Pendiente','En curso','Completada','Cancelada'].map(s => (
+                                  <option key={s} value={s}>{s}</option>
+                                ))}
+                              </select>
                             </td>
                           )}
                         </tr>
@@ -681,7 +554,7 @@ export default function ProyectoDetallePage() {
               <div className="card">
                 <div className="table-wrap">
                   <table>
-                    <thead><tr><th>Nombre</th><th>Correo</th><th>Rol sistema</th><th>Rol en proyecto</th>{canEdit && <th>Acciones</th>}</tr></thead>
+                    <thead><tr><th>Nombre</th><th>Correo</th><th>Rol sistema</th><th>Rol en proyecto</th></tr></thead>
                     <tbody>
                       {equipo.map(m => (
                         <tr key={m.id_equipo}>
@@ -689,13 +562,6 @@ export default function ProyectoDetallePage() {
                           <td>{m.correo}</td>
                           <td><span className="badge badge-blue">{m.rol}</span></td>
                           <td>{m.rol_en_equipo || '—'}</td>
-                          {canEdit && (
-                            <td>
-                              <button className="btn btn-danger btn-sm" onClick={() => removerEquipo(m.id_equipo)}>
-                                🗑️ Remover
-                              </button>
-                            </td>
-                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -755,7 +621,7 @@ export default function ProyectoDetallePage() {
           <div>
             {canEdit && (
               <div style={{ marginBottom:16 }}>
-                <button className="btn btn-primary" onClick={abrirNuevoRepo}>
+                <button className="btn btn-primary" onClick={() => { setFormRepo({url_github:'',rama_principal:'main'}); setSaveError(''); setModalRepo(true); }}>
                   + Vincular repositorio
                 </button>
               </div>
@@ -771,29 +637,21 @@ export default function ProyectoDetallePage() {
                       Rama: <strong>{r.rama_principal}</strong> · Actualizado: {formatFecha(r.ultima_actualizacion)}
                     </div>
                   </div>
-                  <div style={{ display:'flex', gap:6 }}>
-                    <a href={r.url_github} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
-                      Abrir ↗
-                    </a>
-                    {canEdit && (
-                      <>
-                        <button className="btn btn-secondary btn-sm" onClick={() => abrirEditarRepo(r)}>✏️ Editar</button>
-                        <button className="btn btn-danger btn-sm" onClick={() => eliminarRepo(r.id_repositorio)}>🗑️ Desvincular</button>
-                      </>
-                    )}
-                  </div>
+                  <a href={r.url_github} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
+                    Abrir ↗
+                  </a>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* ─────── REUNIONES ────────────────────────── */}
+        {/* ─────── REUNIONES (NUEVO) ────────────────── */}
         {tab === 'Reuniones' && (
           <div>
             {canEdit && (
               <div style={{ marginBottom:16 }}>
-                <button className="btn btn-primary" onClick={abrirNuevaReunion}>
+                <button className="btn btn-primary" onClick={() => { setFormReunion({titulo:'',descripcion:'',fecha_reunion:'',lugar:''}); setSaveError(''); setModalReunion(true); }}>
                   + Programar reunión
                 </button>
               </div>
@@ -811,10 +669,9 @@ export default function ProyectoDetallePage() {
                     {r.descripcion && <p style={{ fontSize:13, color:'var(--slate-600)', marginTop:6 }}>{r.descripcion}</p>}
                   </div>
                   {canEdit && (
-                    <div style={{ display:'flex', gap:6 }}>
-                      <button className="btn btn-secondary btn-sm" onClick={() => abrirEditarReunion(r)}>✏️ Editar</button>
-                      <button className="btn btn-danger btn-sm" onClick={() => cancelarReunion(r.id_reunion)}>Cancelar</button>
-                    </div>
+                    <button className="btn btn-danger btn-sm" onClick={() => cancelarReunion(r.id_reunion)}>
+                      Cancelar
+                    </button>
                   )}
                 </div>
               </div>
@@ -825,9 +682,9 @@ export default function ProyectoDetallePage() {
 
       {/* ─── Modal Fase ────────────────────────────── */}
       <FormModal
-        open={modalFase} title={editFaseSel ? 'Editar fase' : 'Nueva fase'}
+        open={modalFase} title="Nueva fase"
         onClose={() => setModalFase(false)}
-        onSubmit={guardarFase} saving={saving} error={saveError}
+        onSubmit={crearFase} saving={saving} error={saveError}
       >
         <div className="form-group">
           <label className="form-label">Nombre de la fase *</label>
@@ -855,9 +712,9 @@ export default function ProyectoDetallePage() {
 
       {/* ─── Modal Tarea ───────────────────────────── */}
       <FormModal
-        open={modalTarea} title={editTareaSel ? 'Editar tarea' : 'Nueva tarea'}
+        open={modalTarea} title="Nueva tarea"
         onClose={() => setModalTarea(false)}
-        onSubmit={guardarTarea} saving={saving} error={saveError}
+        onSubmit={crearTarea} saving={saving} error={saveError}
       >
         <div className="form-group">
           <label className="form-label">Título *</label>
@@ -887,8 +744,8 @@ export default function ProyectoDetallePage() {
           <label className="form-label">Asignar a *</label>
           <select className="form-select" value={formTarea.id_asignado}
             onChange={e=>setFormTarea({...formTarea,id_asignado:e.target.value})} required>
-            <option value="">Seleccionar usuario</option>
-            {usuarios.map(u=>(
+            <option value="">Seleccionar aprendiz</option>
+            {usuarios.filter(u=>u.rol === 'Aprendiz').map(u=>(
               <option key={u.id_usuario} value={u.id_usuario}>
                 {u.nombres} {u.apellidos} ({u.rol})
               </option>
@@ -907,8 +764,8 @@ export default function ProyectoDetallePage() {
           <label className="form-label">Usuario *</label>
           <select className="form-select" value={formEquip.id_usuario}
             onChange={e=>setFormEquip({...formEquip,id_usuario:e.target.value})} required>
-            <option value="">Seleccionar usuario</option>
-            {usuarios.filter(u=>!equipo.find(e=>e.id_usuario===u.id_usuario)).map(u=>(
+            <option value="">Seleccionar aprendiz</option>
+            {usuarios.filter(u=>u.rol === 'Aprendiz' && !equipo.find(e=>e.id_usuario===u.id_usuario)).map(u=>(
               <option key={u.id_usuario} value={u.id_usuario}>
                 {u.nombres} {u.apellidos} ({u.rol})
               </option>
@@ -924,9 +781,9 @@ export default function ProyectoDetallePage() {
 
       {/* ─── Modal Repositorio ─────────────────────── */}
       <FormModal
-        open={modalRepo} title={editRepoSel ? 'Editar repositorio' : 'Vincular repositorio'}
+        open={modalRepo} title="Vincular repositorio"
         onClose={() => setModalRepo(false)}
-        onSubmit={guardarRepo} saving={saving} error={saveError}
+        onSubmit={crearRepo} saving={saving} error={saveError}
       >
         <div className="form-group">
           <label className="form-label">URL de GitHub *</label>
@@ -941,11 +798,11 @@ export default function ProyectoDetallePage() {
         </div>
       </FormModal>
 
-      {/* ─── Modal Entregable ──────────────────────── */}
+      {/* ─── Modal Entregable (NUEVO) ──────────────── */}
       <FormModal
-        open={modalEntregable} title={editEntregableSel ? 'Editar entregable' : 'Nuevo entregable'}
+        open={modalEntregable} title="Nuevo entregable"
         onClose={() => setModalEntregable(false)}
-        onSubmit={guardarEntregable} saving={saving} error={saveError}
+        onSubmit={crearEntregable} saving={saving} error={saveError}
       >
         <div className="form-group">
           <label className="form-label">Fase *</label>
@@ -985,11 +842,11 @@ export default function ProyectoDetallePage() {
         </div>
       </FormModal>
 
-      {/* ─── Modal Reunión ─────────────────────────── */}
+      {/* ─── Modal Reunión (NUEVO) ─────────────────── */}
       <FormModal
-        open={modalReunion} title={editReunionSel ? 'Editar reunión' : 'Programar reunión'}
+        open={modalReunion} title="Programar reunión"
         onClose={() => setModalReunion(false)}
-        onSubmit={guardarReunion} saving={saving} error={saveError}
+        onSubmit={crearReunion} saving={saving} error={saveError}
       >
         <div className="form-group">
           <label className="form-label">Título *</label>
@@ -1015,7 +872,8 @@ export default function ProyectoDetallePage() {
         </div>
       </FormModal>
 
-      {/* ─── Modal Detalle de Entregable ──────────── */}
+      {/* ─── Modal Detalle de Entregable (NUEVO) ────
+          Comentarios (RN-015) · Archivos · Evaluación (RN-016)      ─── */}
       {modalDetalle && entregableSel && (
         <div className="modal-overlay" onClick={() => setModalDetalle(false)}>
           <div className="modal" onClick={e=>e.stopPropagation()} style={{ maxWidth:560 }}>
@@ -1031,18 +889,11 @@ export default function ProyectoDetallePage() {
               <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:12 }}>
                 {comentarios.length === 0 && <p style={{fontSize:12,color:'var(--slate-500)'}}>Sin comentarios todavía.</p>}
                 {comentarios.map(c => (
-                  <div key={c.id_comentario} style={{ background:'var(--slate-100)', borderRadius:8, padding:'8px 10px', display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
-                    <div>
-                      <div style={{ fontSize:11, color:'var(--slate-500)', marginBottom:2 }}>
-                        {c.autor_nombre} ({c.autor_rol}) · {new Date(c.fecha_comentario).toLocaleString('es-CO')}
-                      </div>
-                      <div style={{ fontSize:13 }}>{c.contenido}</div>
+                  <div key={c.id_comentario} style={{ background:'var(--slate-100)', borderRadius:8, padding:'8px 10px' }}>
+                    <div style={{ fontSize:11, color:'var(--slate-500)', marginBottom:2 }}>
+                      {c.autor_nombre} ({c.autor_rol}) · {new Date(c.fecha_comentario).toLocaleString('es-CO')}
                     </div>
-                    {(c.id_usuario === usuario.id || esAdmin) && (
-                      <button className="btn btn-ghost btn-sm" style={{ padding:'2px 6px', color:'var(--red-600)' }} onClick={() => eliminarComentario(c.id_comentario)} title="Eliminar comentario">
-                        🗑️
-                      </button>
-                    )}
+                    <div style={{ fontSize:13 }}>{c.contenido}</div>
                   </div>
                 ))}
               </div>
@@ -1052,32 +903,35 @@ export default function ProyectoDetallePage() {
                 <button type="submit" className="btn btn-primary btn-sm" disabled={!nuevoComentario.trim()}>Enviar</button>
               </form>
 
-              {/* Archivos */}
+              {/* Archivos (NUEVO: subida real de binarios) */}
               <h4 style={{ fontSize:13, marginBottom:8 }}>📎 Archivos</h4>
               <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:12 }}>
                 {archivosEnt.length === 0 && <p style={{fontSize:12,color:'var(--slate-500)'}}>Sin archivos adjuntos.</p>}
                 {archivosEnt.map(a => (
                   <div key={a.id_archivo} style={{ fontSize:12, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                    <span>📄 <a href={a.ruta_archivo} target="_blank" rel="noreferrer" style={{ textDecoration:'underline', color:'var(--blue-600)' }}>{a.nombre_archivo}</a></span>
-                    <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                    <a href={a.ruta_archivo} target="_blank" rel="noopener noreferrer" style={{ color:'var(--green-700)', textDecoration:'none' }}>
+                      📄 {a.nombre_archivo}
+                    </a>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                       <span style={{ color:'var(--slate-500)' }}>{formatFecha(a.fecha_subida)}</span>
-                      {canEdit && (
-                        <button className="btn btn-ghost btn-sm" style={{ padding:'2px 4px', color:'var(--red-600)' }} onClick={() => eliminarArchivo(a.id_archivo)} title="Eliminar archivo">
-                          🗑️
-                        </button>
-                      )}
+                      <button type="button" onClick={() => borrarArchivo(a.id_archivo)}
+                        style={{ background:'none', border:'none', color:'var(--red-600)', cursor:'pointer', fontSize:12 }}>
+                        Eliminar
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
-              <form onSubmit={agregarArchivo} style={{ display:'flex', gap:8, marginBottom:20 }}>
-                <input className="form-input" style={{ flex:1 }} placeholder="Nombre del archivo"
-                  value={formArchivo.nombre_archivo} onChange={e=>setFormArchivo({...formArchivo,nombre_archivo:e.target.value})} />
-                <input className="form-input" style={{ flex:1 }} placeholder="Ruta o URL"
-                  value={formArchivo.ruta_archivo} onChange={e=>setFormArchivo({...formArchivo,ruta_archivo:e.target.value})} />
-                <button type="submit" className="btn btn-primary btn-sm"
-                  disabled={!formArchivo.nombre_archivo || !formArchivo.ruta_archivo}>Adjuntar</button>
-              </form>
+              <div style={{ marginBottom:20 }}>
+                <label className="btn btn-secondary btn-sm" style={{ cursor: archivoSubiendo ? 'not-allowed' : 'pointer', opacity: archivoSubiendo ? 0.6 : 1 }}>
+                  {archivoSubiendo ? 'Subiendo…' : '📤 Adjuntar archivo'}
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" style={{ display:'none' }}
+                    disabled={archivoSubiendo} onChange={subirArchivo} />
+                </label>
+                <span style={{ fontSize:11, color:'var(--slate-500)', marginLeft:8 }}>
+                  PDF, JPG, PNG o WEBP · máx. 10 MB
+                </span>
+              </div>
 
               {/* Evaluación — RN-016 */}
               <h4 style={{ fontSize:13, marginBottom:8 }}>📝 Evaluación</h4>
@@ -1126,7 +980,7 @@ export default function ProyectoDetallePage() {
 function InfoRow({ label, value }) {
   return (
     <div style={{ display:'flex', gap:12, marginBottom:10, alignItems:'flex-start' }}>
-      <span style={{ fontSize:11, fontWeight:700, color:'var(--slate-500)', textTransform:'uppercase', letterSpacing:'.04em', width:90, flexShrink:0, paddingTop:2 }}>{label}</span>
+      <span style={{ fontFamily:'var(--font-mono)', fontSize:11, fontWeight:500, color:'var(--slate-500)', letterSpacing:'.01em', width:90, flexShrink:0, paddingTop:2 }}>{label}</span>
       <div style={{ flex:1, fontSize:13, color:'var(--slate-800)' }}>{value}</div>
     </div>
   );
