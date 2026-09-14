@@ -108,6 +108,8 @@ ISC. Uso académico/formativo.
 
 La documentación completa está en [`docs/`](docs/), incluyendo RF/RNF, reglas de negocio, historias de usuario, API, seguridad, arquitectura y deuda técnica.
 
+- **Matriz de trazabilidad** (RF → RN → CU → HU → endpoint real → estado verificado): [`docs/01-requisitos/matriz-trazabilidad.md`](docs/01-requisitos/matriz-trazabilidad.md)
+
 ### Nota de lockfiles
 
 El repositorio mantiene `pnpm-lock.yaml`. Si se modifica alguna versión del manifiesto, regenera el lockfile con `pnpm install` antes del merge. La imagen Docker acepta temporalmente `--no-frozen-lockfile` para facilitar el primer build; en CI la política es `--frozen-lockfile`.
