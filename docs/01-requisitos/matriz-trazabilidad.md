@@ -34,38 +34,38 @@ código real en la rama `test` al momento de escribir esto):
 
 | RF | RN | CU | HU | Endpoint(s) reales | Estado |
 |---|---|---|---|---|---|
-| RF1.1 Registro de usuarios | RN-008 | — | HU-01 | `POST /auth/register` | ✅ |
-| RF1.2 Autenticación segura | RN-006, RNF3.1 | CU-001 | HU-02 | `POST /auth/login` (JWT + bcrypt + rate limit) | ✅ |
-| RF1.3 Gestión de roles | RN-005, RN-025 | — | HU-03 | `GET/PUT/DELETE /usuarios`, `POST /auth/users` (solo Admin) | ✅ |
-| RF1.4 Recuperación de contraseña | — | — | HU-04 | `POST /auth/password-reset/request`, `/confirm` | ✅ |
+| RF1.1 Registro de usuarios | RN-008 | — | HU-13 | `POST /auth/register` | ✅ |
+| RF1.2 Autenticación segura | RN-006, RNF3.1 | CU-001 | HU-14 | `POST /auth/login` (JWT + bcrypt + rate limit) | ✅ |
+| RF1.3 Gestión de roles | RN-005, RN-025 | — | HU-15 | `GET/PUT/DELETE /usuarios`, `POST /auth/users` (solo Admin) | ✅ |
+| RF1.4 Recuperación de contraseña | — | — | HU-16 | `POST /auth/password-reset/request`, `/confirm` | ✅ |
 
 ### RF2 — Gestión de Proyectos
 
 | RF | RN | CU | HU | Endpoint(s) reales | Estado |
 |---|---|---|---|---|---|
-| RF2.1 Creación de proyectos | RN-004, RN-011 | CU-002 | HU-05 | `POST /proyectos` | ✅ |
-| RF2.2 Asignación de integrantes | RN-001 | CU-003 | HU-06 | `POST/GET /equipos` (solo Aprendices, validado) | ✅ |
-| RF2.3 Definición de entregables | RN-019 | CU-007 | HU-07 | `POST/GET /entregables`, `/fases` | ✅ |
-| RF2.4 Control de versiones (historial) | RN-026 | — | HU-08 | `GET /historial` | ✅ |
-| RF2.5 Estado del proyecto | RN-013, RN-014 | CU-011 | HU-09 | `GET /proyectos/:id` | ✅ |
+| RF2.1 Creación de proyectos | RN-004, RN-011 | CU-002 | HU-17 | `POST /proyectos` | ✅ |
+| RF2.2 Asignación de integrantes | RN-001 | CU-003 | HU-18 | `POST/GET /equipos` (solo Aprendices, validado) | ✅ |
+| RF2.3 Definición de entregables | RN-019 | CU-007 | HU-19 | `POST/GET /entregables`, `/fases` | ✅ |
+| RF2.4 Control de versiones (historial) | RN-026 | — | HU-20 | `GET /historial` | ✅ |
+| RF2.5 Estado del proyecto | RN-013, RN-014 | CU-011 | HU-21 | `GET /proyectos/:id` | ✅ |
 
 ### RF3 — Seguimiento y Evaluación
 
 | RF | RN | CU | HU | Endpoint(s) reales | Estado |
 |---|---|---|---|---|---|
-| RF3.1 Medición de progreso | — | — | HU-10 | `GET /agenda/:id_proyecto/calendario`, `/timeline` | ✅ |
-| RF3.2 Trazabilidad (historial de actividad) | RN-026 | — | HU-11 | `GET /historial` | ✅ |
-| RF3.3 Retroalimentación y calificación | RN-015, RN-016 | CU-005 | HU-12 | `POST/GET/PUT /evaluaciones`, `/comentarios` | ✅ |
-| RF3.4 Alertas y notificaciones | RN-023 | CU-009 (parcial) | HU-13 | `alerts.service.js` (job interno cada hora) + `GET /notificaciones` | ✅ |
+| RF3.1 Medición de progreso | — | — | HU-22 / HU-32 | `GET /agenda/:id_proyecto/calendario`, `/timeline` | ✅ |
+| RF3.2 Trazabilidad (historial de actividad) | RN-026 | — | HU-20 | `GET /historial` | ✅ |
+| RF3.3 Retroalimentación y calificación | RN-015, RN-016 | CU-005 | HU-24 | `POST/GET/PUT /evaluaciones`, `/comentarios` | ✅ |
+| RF3.4 Alertas y notificaciones | RN-023 | CU-009 (parcial) | HU-25 | `alerts.service.js` (job interno cada hora) + `GET /notificaciones` | ✅ |
 
 ### RF4 — Comunicación y Colaboración
 
 | RF | RN | CU | HU | Endpoint(s) reales | Estado |
 |---|---|---|---|---|---|
-| RF4.1 Mensajería interna | — | CU-008 | HU-14 | `POST/GET /mensajes` | ✅ |
-| RF4.2 Comentarios en tareas/entregables | RN-015 | — | HU-15 | `POST/GET /comentarios` | ✅ |
-| RF4.3 Comunicación docente-aprendiz | — | CU-008 | HU-14 | mismo canal de `/mensajes` (no hay canal separado) | ✅ |
-| RF4.4 Notificaciones en tiempo real | RN-021 | CU-009 | HU-16 | `GET/PUT /notificaciones` — **persistentes, no push en vivo** | 🟡 |
+| RF4.1 Mensajería interna | — | CU-008 | HU-26 | `POST/GET /mensajes` | ✅ |
+| RF4.2 Comentarios en tareas/entregables | RN-015 | — | HU-23 / HU-27 | `POST/GET /comentarios` | ✅ |
+| RF4.3 Comunicación docente-aprendiz | — | CU-008 | HU-26 | mismo canal de `/mensajes` (no hay canal separado) | ✅ |
+| RF4.4 Notificaciones en tiempo real | RN-021 | CU-009 | HU-28 | `GET/PUT /notificaciones` — **persistentes, no push en vivo** | 🟡 |
 
 > **RF4.4 en detalle:** las notificaciones se generan y se guardan correctamente
 > (ej. al programar una reunión, RN-021), pero el usuario debe recargar o
@@ -76,18 +76,18 @@ código real en la rama `test` al momento de escribir esto):
 
 | RF | RN | CU | HU | Endpoint(s) reales | Estado |
 |---|---|---|---|---|---|
-| RF5.1 Asignación de tareas | RN-017 | CU-006 | HU-17 | `POST /tareas` | ✅ |
-| RF5.2 Seguimiento de tareas | — | CU-006 | HU-18 | `PUT /tareas/:id`, `POST /entregas/tarea/:id` (+ `/upload`) | ✅ |
-| RF5.3 Calendario de actividades | — | — | HU-10 | `GET /agenda/:id_proyecto/calendario` | ✅ |
-| RF5.4 Línea de tiempo | — | — | HU-10 | `GET /agenda/:id_proyecto/timeline` | ✅ |
+| RF5.1 Asignación de tareas | RN-017 | CU-006 | HU-29 | `POST /tareas` | ✅ |
+| RF5.2 Seguimiento de tareas | — | CU-006 | HU-30 | `PUT /tareas/:id`, `POST /entregas/tarea/:id` (+ `/upload`) | ✅ |
+| RF5.3 Calendario de actividades | — | — | HU-22 / HU-32 | `GET /agenda/:id_proyecto/calendario` | ✅ |
+| RF5.4 Línea de tiempo | — | — | HU-22 / HU-32 | `GET /agenda/:id_proyecto/timeline` | ✅ |
 
 ### RF6 — Integración y Almacenamiento
 
 | RF | RN | CU | HU | Endpoint(s) reales | Estado |
 |---|---|---|---|---|---|
-| RF6.1 Integración con GitHub | — | — | HU-19 | `POST/GET/PUT/DELETE /github-integration`, `POST/GET /repositorios` | 🟡 |
-| RF6.2 Almacenamiento en la nube | — | — | *(sin HU asignada)* | `POST /archivos/upload/:id`, `/entregas/tarea/:id/upload` | 🟡 |
-| RF6.3 Exportación de reportes | — | CU-010 | *(sin HU asignada)* | — | ⬜ |
+| RF6.1 Integración con GitHub | — | — | HU-33 | `POST/GET/PUT/DELETE /github-integration`, `POST/GET /repositorios` | 🟡 |
+| RF6.2 Almacenamiento en la nube | — | — | HU-34 | `POST /archivos/upload/:id`, `/entregas/tarea/:id/upload` | 🟡 |
+| RF6.3 Exportación de reportes | — | CU-010 | HU-35 | — | ⬜ |
 
 > **RF6.1 en detalle:** se guarda usuario/token de GitHub y la URL del
 > repositorio, pero el sistema no consume la API de GitHub todavía (no
@@ -97,8 +97,9 @@ código real en la rama `test` al momento de escribir esto):
 > volumen persistente), pero es **almacenamiento local**, no una integración
 > con un proveedor cloud (Google Drive/S3) como pedía el RF originalmente.
 >
-> **RF6.3 y CU-010:** ninguno de los dos tiene código ni HU asociada — es
-> el único requisito funcional completamente sin empezar.
+> **RF6.3 en detalle:** sin código ni endpoint todavía — es el único
+> requisito funcional completamente sin empezar (HU-35 está documentada
+> pero no construida).
 
 ---
 
@@ -132,34 +133,15 @@ arquitectura o de proceso. Se documenta cómo se verificó cada uno, no solo si 
 
 | Categoría | Hecho ✅ | Parcial 🟡 | Pendiente ⬜ | Total |
 |---|---|---|---|---|
-| Requisitos Funcionales (RF) | 17 | 4 | 1 | 22 |
-| Requisitos No Funcionales (RNF) | 6 | 4 | 6 | 16 |
+| Requisitos Funcionales (RF) | 20 | 3 | 1 | 24 |
+| Requisitos No Funcionales (RNF) | 5 | 4 | 7 | 16 |
 
-**Cobertura funcional real: 77% completo, 18% parcial, 5% sin iniciar.**
+**Cobertura funcional real: 83% completo, 12.5% parcial, 4% sin iniciar.**
 
 Los 2 pendientes funcionales que quedan por decisión propia del equipo
 (no por olvido): **RF6.3 exportación de reportes** y la porción de
 **tiempo real** de RF4.4 — ambos documentados desde hace varias sesiones
 en `docs/07-deuda-tecnica.md` como trabajo futuro, no como omisiones.
-
----
-
-## 4. Historias de Usuario sin RF6.2/RF6.3 asignada
-
-`docs/01-requisitos/historias-usuario/historias-usuario.md` llega hasta
-HU-19 y no tiene una historia dedicada para RF6.2 (almacenamiento) ni
-RF6.3 (reportes). Se sugiere, si el equipo retoma esa documentación:
-
-```
-HU-20 | Como aprendiz quiero adjuntar un archivo real a mi entrega para
-        respaldar mi trabajo. | RF6.2
-HU-21 | Como instructor quiero exportar el avance de un proyecto en PDF
-        o Excel para compartirlo fuera del sistema. | RF6.3
-```
-
-No se agregaron directamente al archivo original para no tomar esa
-decisión de numeración por el equipo — queda como sugerencia en esta
-matriz.
 
 ---
 
