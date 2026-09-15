@@ -98,7 +98,7 @@ Usar commits convencionales a partir de esta versión y vincular cambios con Git
 
 Implementado: autenticación, roles, proyectos, equipos, tareas, fases, entregables, comentarios, evaluaciones, reuniones, mensajes, notificaciones, historial, calendario, línea de tiempo y recuperación de contraseña.
 
-Aplazado: almacenamiento cloud, exportación PDF/Excel, tiempo real mediante WebSocket y cobertura automatizada extensa.
+Aplazado: almacenamiento cloud, exportación PDF/Excel, tiempo real mediante WebSocket, Proyección Profesional y cobertura automatizada extensa.
 
 ## Licencia
 
@@ -107,8 +107,6 @@ ISC. Uso académico/formativo.
 ## Documentación
 
 La documentación completa está en [`docs/`](docs/), incluyendo RF/RNF, reglas de negocio, historias de usuario, API, seguridad, arquitectura y deuda técnica.
-
-- **Matriz de trazabilidad** (RF → RN → CU → HU → endpoint real → estado verificado): [`docs/01-requisitos/matriz-trazabilidad.md`](docs/01-requisitos/matriz-trazabilidad.md)
 
 ### Nota de lockfiles
 

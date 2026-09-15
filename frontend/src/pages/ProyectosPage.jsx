@@ -24,14 +24,23 @@ export default function ProyectosPage() {
   async function cargar() {
     setLoading(true);
     try {
-      const [pRes, uRes] = await Promise.all([
+      // NUEVO: antes se usaba Promise.all(), así que si /usuarios fallaba
+      // (esperado para un Aprendiz: ese endpoint es solo Admin/Instructor)
+      // TODA la carga se rechazaba, incluyendo los proyectos que sí habían
+      // llegado bien — la página quedaba en "Sin proyectos" para cualquier
+      // aprendiz, aunque sí tuviera proyectos asignados. Con
+      // Promise.allSettled(), cada llamada se resuelve de forma
+      // independiente.
+      const [pRes, uRes] = await Promise.allSettled([
         proyectosService.getAll(),
         usuariosService.getAll(),
       ]);
-      setProyectos(pRes.data.data || []);
-      setInstructores((uRes.data.data || []).filter(u =>
-        u.rol === 'Instructor' || u.rol === 'Administrador'
-      ));
+      setProyectos(pRes.status === 'fulfilled' ? (pRes.value.data.data || []) : []);
+      setInstructores(
+        uRes.status === 'fulfilled'
+          ? (uRes.value.data.data || []).filter(u => u.rol === 'Instructor' || u.rol === 'Administrador')
+          : []
+      );
     } catch (err) {
       console.error(err);
     } finally {
@@ -125,7 +134,7 @@ export default function ProyectosPage() {
                     className="btn btn-secondary btn-sm"
                     onClick={() => navigate(`/proyectos/${p.id_proyecto}`)}
                   >
-                    Ver detalles →
+                    Ver detalles
                   </button>
                 </div>
               </div>

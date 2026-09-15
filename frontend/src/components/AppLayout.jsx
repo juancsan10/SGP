@@ -50,7 +50,7 @@ export default function AppLayout() {
         {/* Logo */}
         <div className="sidebar-brand">
           <div className="sidebar-brand-logo">
-            <div className="sidebar-brand-icon">🎓</div>
+            <div className="sidebar-brand-icon">S</div>
             <div className="sidebar-brand-text">
               <h2>SGP SENA</h2>
               <span>Gestión de Proyectos</span>

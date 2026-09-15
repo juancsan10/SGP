@@ -73,7 +73,14 @@ export default function ProyectoDetallePage() {
   async function cargar() {
     setLoading(true);
     try {
-      const [pRes, fRes, tRes, eRes, mRes, rRes, uRes, reunRes] = await Promise.all([
+      // CORREGIDO (bug crítico): antes esto usaba Promise.all(), así que
+      // cuando usuariosService.getAll() fallaba con 403 para un Aprendiz
+      // (ese endpoint es solo Admin/Instructor — restricción correcta),
+      // TODA la página de detalle del proyecto se caía: ni el proyecto, ni
+      // fases, ni tareas, ni equipo, ni mensajes se llegaban a mostrar,
+      // aunque esas 7 llamadas sí hubieran funcionado bien. Un Aprendiz
+      // nunca podía abrir el detalle de su propio proyecto.
+      const resultados = await Promise.allSettled([
         proyectosService.getById(id),
         fasesService.getByProyecto(id),
         tareasService.getByProyecto(id),
@@ -81,24 +88,32 @@ export default function ProyectoDetallePage() {
         mensajesService.getByProyecto(id),
         repositoriosService.getByProyecto(id),
         usuariosService.getAll(),
-        reunionesService.getByProyecto(id), // NUEVO
+        reunionesService.getByProyecto(id),
       ]);
-      setProyecto(pRes.data.data);
-      const fasesData = fRes.data.data || [];
+      const [pRes, fRes, tRes, eRes, mRes, rRes, uRes, reunRes] = resultados;
+
+      if (pRes.status !== 'fulfilled') {
+        setError('No se pudo cargar el proyecto');
+        return;
+      }
+      setProyecto(pRes.value.data.data);
+      const fasesData = fRes.status === 'fulfilled' ? (fRes.value.data.data || []) : [];
       setFases(fasesData);
-      setTareas(tRes.data.data || []);
-      setEquipo(eRes.data.data || []);
-      setMensajes(mRes.data.data || []);
-      setRepos(rRes.data.data || []);
-      setUsuarios(uRes.data.data || []);
-      setReuniones(reunRes.data.data || []); // NUEVO
+      setTareas(tRes.status === 'fulfilled' ? (tRes.value.data.data || []) : []);
+      setEquipo(eRes.status === 'fulfilled' ? (eRes.value.data.data || []) : []);
+      setMensajes(mRes.status === 'fulfilled' ? (mRes.value.data.data || []) : []);
+      setRepos(rRes.status === 'fulfilled' ? (rRes.value.data.data || []) : []);
+      // Un Aprendiz no puede listar todos los usuarios (403 esperado); en
+      // ese caso simplemente queda una lista vacía, sin tumbar el resto.
+      setUsuarios(uRes.status === 'fulfilled' ? (uRes.value.data.data || []) : []);
+      setReuniones(reunRes.status === 'fulfilled' ? (reunRes.value.data.data || []) : []);
 
       // NUEVO: los entregables se consultan por fase (GET /entregables/:id_fase),
       // así que se piden todos en paralelo y se combinan en una sola lista
       // (cada entregable ya trae su id_fase para saber a cuál pertenece).
       if (fasesData.length > 0) {
-        const entRes = await Promise.all(fasesData.map(f => entregablesService.getByFase(f.id_fase)));
-        setEntregables(entRes.flatMap(r => r.data.data || []));
+        const entRes = await Promise.allSettled(fasesData.map(f => entregablesService.getByFase(f.id_fase)));
+        setEntregables(entRes.filter(r => r.status === 'fulfilled').flatMap(r => r.value.data.data || []));
       } else {
         setEntregables([]);
       }
@@ -112,8 +127,8 @@ export default function ProyectoDetallePage() {
   // NUEVO: recarga solo la lista de entregables (tras crear uno nuevo)
   async function recargarEntregables() {
     if (fases.length === 0) { setEntregables([]); return; }
-    const entRes = await Promise.all(fases.map(f => entregablesService.getByFase(f.id_fase)));
-    setEntregables(entRes.flatMap(r => r.data.data || []));
+    const entRes = await Promise.allSettled(fases.map(f => entregablesService.getByFase(f.id_fase)));
+    setEntregables(entRes.filter(r => r.status === 'fulfilled').flatMap(r => r.value.data.data || []));
   }
 
   useEffect(() => { cargar(); }, [id]);
@@ -965,7 +980,7 @@ export default function ProyectoDetallePage() {
 function InfoRow({ label, value }) {
   return (
     <div style={{ display:'flex', gap:12, marginBottom:10, alignItems:'flex-start' }}>
-      <span style={{ fontSize:11, fontWeight:700, color:'var(--slate-500)', textTransform:'uppercase', letterSpacing:'.04em', width:90, flexShrink:0, paddingTop:2 }}>{label}</span>
+      <span style={{ fontFamily:'var(--font-mono)', fontSize:11, fontWeight:500, color:'var(--slate-500)', letterSpacing:'.01em', width:90, flexShrink:0, paddingTop:2 }}>{label}</span>
       <div style={{ flex:1, fontSize:13, color:'var(--slate-800)' }}>{value}</div>
     </div>
   );

@@ -67,7 +67,7 @@ export default function DashboardPage() {
           <p className="page-subtitle">Aquí tienes un resumen de tus proyectos</p>
         </div>
         <button className="btn btn-primary" onClick={() => navigate('/proyectos')}>
-          Ver todos los proyectos →
+          Ver todos los proyectos
         </button>
       </div>
 
