@@ -1,0 +1,83 @@
+# Diagrama UML - Sistema de Gestión de Proyectos
+
+A continuación se presenta el diagrama de clases UML para el sistema de gestión de proyectos de estudiantes, instructores y programas de formación.
+
+```plantuml
+@startuml
+' ------------------
+' Clases
+' ------------------
+
+class ProgramaFormacion {
+    +id_programa : int
+    +nombre_programa : String
+    +nivel_formacion : String
+}
+
+class Estudiante {
+    +id_estudiante : int
+    +nombre : String
+    +apellido : String
+    +correo : String
+    +identificacion : String
+    +id_programa : int
+}
+
+class Proyecto {
+    +id_proyecto : int
+    +titulo : String
+    +descripcion : String
+    +fecha_inicio : Date
+    +fecha_fin : Date
+    +estado : String
+    +id_estudiante : int
+    +id_instructor : int
+}
+
+class Instructor {
+    +id_instructor : int
+    +nombre : String
+    +apellido : String
+    +correo : String
+    +especialidad : String
+}
+
+class Seguimiento {
+    +id_seguimiento : int
+    +id_proyecto : int
+    +fecha_seguimiento : Date
+    +observaciones : String
+    +avance : float
+    +estado_recomendado : String
+}
+
+class Entrega {
+    +id_entrega : int
+    +id_proyecto : int
+    +fecha_entrega : Date
+    +tipo_entrega : String
+    +calificacion : float
+}
+
+class Usuario {
+    +id_usuario : int
+    +nombre_usuario : String
+    +contraseña : String
+    +rol : String
+    +id_estudiante : int
+    +id_instructor : int
+}
+
+' ------------------
+' Relaciones
+' ------------------
+
+ProgramaFormacion "1" --> "0..*" Estudiante : tiene >
+Estudiante "1" --> "0..*" Proyecto : realiza >
+Instructor "1" --> "0..*" Proyecto : guía >
+Proyecto "1" --> "0..*" Seguimiento : tiene >
+Proyecto "1" --> "0..*" Entrega : genera >
+Usuario "0..1" --> "0..1" Estudiante : asociado >
+Usuario "0..1" --> "0..1" Instructor : asociado >
+
+

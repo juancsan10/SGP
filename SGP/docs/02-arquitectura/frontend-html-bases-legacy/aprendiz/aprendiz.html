@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENA Proyectos – Aprendiz</title>
+  <link rel="stylesheet" href="aprendiz.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">SENA Proyectos</div>
+  <button class="nav-item active" onclick="nav('inicio')"><span class="ni">📊</span> Inicio</button>
+  <button class="nav-item" onclick="nav('proyectos')"><span class="ni">🗂️</span> Proyectos</button>
+  <button class="nav-item" onclick="nav('tareas')"><span class="ni">✅</span> Tareas</button>
+  <button class="nav-item" onclick="nav('entregables')"><span class="ni">📦</span> Entregables</button>
+  <button class="nav-item" onclick="nav('calificaciones')"><span class="ni">⭐</span> Calificaciones</button>
+  <button class="nav-item" onclick="nav('sprints')"><span class="ni">🏃</span> Sprints</button>
+  <button class="nav-item" onclick="nav('equipo')"><span class="ni">👥</span> Mi Equipo</button>
+  <button class="nav-item" onclick="nav('anuncios')"><span class="ni">📢</span> Anuncios</button>
+  <button class="nav-item" onclick="nav('chat')"><span class="ni">💬</span> Chat</button>
+  <button class="nav-item" onclick="nav('configuracion')"><span class="ni">⚙️</span> Configuración</button>
+</aside>
+
+<div class="topbar">
+  <div class="topbar-brand">SENA Proyectos</div>
+  <div class="topbar-nav">
+    <button onclick="nav('inicio')" class="active" id="tnav-inicio">Inicio</button>
+    <button onclick="nav('proyectos')" id="tnav-proyectos">Proyectos</button>
+    <button onclick="nav('tareas')" id="tnav-tareas">Tareas</button>
+    <button onclick="nav('chat')" id="tnav-chat">Mensajes</button>
+    <button onclick="nav('configuracion')" id="tnav-configuracion">Perfil</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- INICIO -->
+  <div class="section active" id="sec-inicio">
+    <div class="page-title">Bienvenido al Sistema</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Proyectos Activos</div><div class="stat-val">2</div></div>
+      <div class="stat-card"><div class="stat-label">Tareas Pendientes</div><div class="stat-val">5</div></div>
+      <div class="stat-card"><div class="stat-label">Entregas Próximas</div><div class="stat-val">3</div></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="sec-title" style="margin-top:0">Mis Proyectos</div>
+        <div class="proj-card">
+          <div class="proj-name">Sistema Gestión SENA</div>
+          <div class="proj-desc">Plataforma para gestión de proyectos académicos</div>
+          <span class="badge bg">En Desarrollo</span>
+          <div class="prog-label" style="margin-top:8px"><span>Mi avance</span><span>68%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:68%;background:#39A900"></div></div>
+          <div style="margin-top:6px;font-size:11.5px;color:#888">Ficha 2758401 · Instructor: Miguel Ramírez</div>
+        </div>
+        <div class="proj-card">
+          <div class="proj-name">App Móvil ADSO</div>
+          <div class="proj-desc">Aplicación para seguimiento de tareas</div>
+          <span class="badge bb">Finalizado</span>
+          <div class="prog-label" style="margin-top:8px"><span>Mi avance</span><span>100%</span></div>
+          <div class="prog-bar"><div class="prog-fill" style="width:100%;background:#1a73e8"></div></div>
+          <div style="margin-top:6px;font-size:11.5px;color:#888">Ficha 2758401 · Instructor: Miguel Ramírez</div>
+        </div>
+        <div class="sec-title">Tareas recientes</div>
+        <div class="card"><div class="card-body">
+          <div class="trow"><div class="chk done">✓</div><div class="tinfo"><div class="tname">Diseño de base de datos</div><div class="tsub">Sprint 3 · Entregado</div></div><span class="badge bg">Listo</span></div>
+          <div class="trow"><div class="chk"></div><div class="tinfo"><div class="tname">Implementar módulo de login</div><div class="tsub">Vence 28 mar</div></div><span class="badge bo">Pendiente</span></div>
+          <div class="trow"><div class="chk"></div><div class="tinfo"><div class="tname">Mockups pantallas principales</div><div class="tsub">Vence 29 mar</div></div><span class="badge bo">Pendiente</span></div>
+        </div></div>
+      </div>
+      <div>
+        <div class="card"><div class="card-head">📦 Próximas Entregas</div><div class="card-body">
+          <div class="srow"><div><div class="name">Sprint 3 – Módulo Login</div><div class="sub">Sistema Gestión SENA</div></div><span style="font-size:11.5px;font-weight:700;color:#e53935">Mañana</span></div>
+          <div class="srow"><div><div class="name">Mockups UI</div><div class="sub">Sistema Gestión SENA</div></div><span style="font-size:11.5px;color:#f57c00;font-weight:600">29 mar</span></div>
+          <div class="srow"><div><div class="name">Documentación API</div><div class="sub">Sistema Gestión SENA</div></div><span style="font-size:11.5px;color:#888">1 abr</span></div>
+        </div></div>
+        <div class="card"><div class="card-head">⭐ Mis Calificaciones</div><div class="card-body">
+          <div class="srow"><div><div class="name">Diagrama ER</div><div class="sub">App Móvil ADSO</div></div><div class="nota ng">4.8</div></div>
+          <div class="srow"><div><div class="name">Casos de Uso</div><div class="sub">App Móvil ADSO</div></div><div class="nota ng">4.5</div></div>
+          <div class="srow"><div><div class="name">Sprint 2 – Backend</div><div class="sub">Gestión SENA</div></div><div class="nota no">3.8</div></div>
+        </div></div>
+        <div class="card"><div class="card-head">📅 Próximos Eventos</div><div class="card-body">
+          <div class="erow"><div class="ebox"><div class="ed">27</div><div class="em">Mar</div></div><div><div class="etitle">Jurado Final</div><div class="esub">8:00 am · Sala 301</div></div></div>
+          <div class="erow"><div class="ebox"><div class="ed">28</div><div class="em">Mar</div></div><div><div class="etitle">Entrega Sprint 3</div><div class="esub">11:59 pm · Plataforma</div></div></div>
+          <div class="erow"><div class="ebox"><div class="ed">8</div><div class="em">Abr</div></div><div><div class="etitle">Cierre Etapa Lectiva</div><div class="esub">Ficha 2758401</div></div></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROYECTOS -->
+  <div class="section" id="sec-proyectos">
+    <div class="page-title">Mis Proyectos</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="proj-card">
+        <div class="proj-name">Sistema Gestión SENA</div>
+        <div class="proj-desc">Plataforma para gestión de proyectos académicos</div>
+        <span class="badge bg">En Desarrollo</span>
+        <div class="prog-label" style="margin-top:10px"><span>Avance general</span><span>68%</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:68%;background:#39A900"></div></div>
+        <div style="margin-top:8px;font-size:11.5px;color:#888">Ficha 2758401 · Instructor: Miguel Ramírez · 6 integrantes</div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn-primary" style="font-size:11.5px;padding:5px 12px" onclick="nav('tareas')">Ver tareas</button>
+          <button class="btn-sec" style="font-size:11.5px;padding:5px 12px" onclick="nav('entregables')">Entregables</button>
+        </div>
+      </div>
+      <div class="proj-card">
+        <div class="proj-name">App Móvil ADSO</div>
+        <div class="proj-desc">Aplicación para seguimiento de tareas</div>
+        <span class="badge bb">Finalizado</span>
+        <div class="prog-label" style="margin-top:10px"><span>Avance general</span><span>100%</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:100%;background:#1a73e8"></div></div>
+        <div style="margin-top:8px;font-size:11.5px;color:#888">Ficha 2758401 · Instructor: Miguel Ramírez · 5 integrantes</div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn-primary" style="font-size:11.5px;padding:5px 12px" onclick="nav('calificaciones')">Ver notas</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAREAS -->
+  <div class="section" id="sec-tareas">
+    <div class="page-title">Mis Tareas</div>
+    <div class="card">
+      <div class="card-head">Todas las tareas</div>
+      <div class="card-body">
+        <div class="trow"><div class="chk done" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''">✓</div><div class="tinfo"><div class="tname">Diseño de base de datos – Sprint 3</div><div class="tsub">Sistema Gestión SENA · Entregado</div></div><span class="badge bg">Listo</span></div>
+        <div class="trow"><div class="chk" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><div class="tinfo"><div class="tname">Implementar módulo de login</div><div class="tsub">Sistema Gestión SENA · Vence 28 mar</div></div><span class="badge bo">Pendiente</span></div>
+        <div class="trow"><div class="chk" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><div class="tinfo"><div class="tname">Mockups pantallas principales</div><div class="tsub">Sistema Gestión SENA · Vence 29 mar</div></div><span class="badge bo">Pendiente</span></div>
+        <div class="trow"><div class="chk" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''"></div><div class="tinfo"><div class="tname">Documentación técnica API REST</div><div class="tsub">Sistema Gestión SENA · Vence 1 abr</div></div><span class="badge bgr">Sin iniciar</span></div>
+        <div class="trow"><div class="chk done" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''">✓</div><div class="tinfo"><div class="tname">Diagrama de casos de uso</div><div class="tsub">App Móvil ADSO · Entregado</div></div><span class="badge bg">Listo</span></div>
+        <div class="trow"><div class="chk done" onclick="this.classList.toggle('done');this.textContent=this.classList.contains('done')?'✓':''">✓</div><div class="tinfo"><div class="tname">Diagrama ER – Base de datos</div><div class="tsub">App Móvil ADSO · Entregado</div></div><span class="badge bg">Listo</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENTREGABLES -->
+  <div class="section" id="sec-entregables">
+    <div class="page-title">Mis Entregables</div>
+    <div class="two-col">
+      <div>
+        <div class="card"><div class="card-head">Historial de entregas</div>
+          <div class="card-body" style="padding:0 16px">
+            <table class="tbl">
+              <thead><tr><th>Entregable</th><th>Proyecto</th><th>Fecha</th><th>Estado</th></tr></thead>
+              <tbody>
+                <tr><td><b>Diagrama ER</b></td><td>App Móvil</td><td>18 mar</td><td><span class="badge bg">Calificado</span></td></tr>
+                <tr><td><b>Casos de Uso</b></td><td>App Móvil</td><td>15 mar</td><td><span class="badge bg">Calificado</span></td></tr>
+                <tr><td><b>Sprint 2 – Backend</b></td><td>Gestión SENA</td><td>10 mar</td><td><span class="badge bg">Calificado</span></td></tr>
+                <tr><td><b>Mockups v1</b></td><td>Gestión SENA</td><td>5 mar</td><td><span class="badge bg">Calificado</span></td></tr>
+                <tr><td><b>Sprint 3 – Login</b></td><td>Gestión SENA</td><td>28 mar</td><td><span class="badge bo">Pendiente</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="card"><div class="card-head">📤 Subir entregable</div><div class="card-body">
+          <div class="form-group"><label class="form-label">Proyecto</label>
+            <select class="form-select"><option>Sistema Gestión SENA</option><option>App Móvil ADSO</option></select></div>
+          <div class="form-group"><label class="form-label">Nombre del entregable</label>
+            <input class="form-input" placeholder="Ej: Sprint 3 – Módulo login"></div>
+          <div class="form-group"><label class="form-label">Descripción</label>
+            <input class="form-input" placeholder="Breve descripción"></div>
+          <div class="form-group"><label class="form-label">Archivo</label>
+            <input class="form-input" type="file"></div>
+          <button class="btn-primary" onclick="alert('Entregable subido correctamente')">Subir entregable</button>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALIFICACIONES -->
+  <div class="section" id="sec-calificaciones">
+    <div class="page-title">Mis Calificaciones</div>
+    <div class="card"><div class="card-body" style="padding:0 16px">
+      <table class="tbl">
+        <thead><tr><th>Entregable</th><th>Proyecto</th><th>Fecha</th><th>Nota</th><th>Retroalimentación</th></tr></thead>
+        <tbody>
+          <tr><td><b>Diagrama ER</b></td><td>App Móvil</td><td>20 mar</td><td><span class="nota ng" style="display:inline-flex">4.8</span></td><td style="color:#555;font-size:12px">Excelente diseño, normalización correcta</td></tr>
+          <tr><td><b>Casos de Uso</b></td><td>App Móvil</td><td>17 mar</td><td><span class="nota ng" style="display:inline-flex">4.5</span></td><td style="color:#555;font-size:12px">Buena cobertura de actores</td></tr>
+          <tr><td><b>Sprint 2 – Backend</b></td><td>Gestión SENA</td><td>12 mar</td><td><span class="nota no" style="display:inline-flex">3.8</span></td><td style="color:#555;font-size:12px">Falta manejo de errores en endpoints</td></tr>
+          <tr><td><b>Mockups v1</b></td><td>Gestión SENA</td><td>7 mar</td><td><span class="nota nb" style="display:inline-flex">4.2</span></td><td style="color:#555;font-size:12px">Muy buen diseño, mejorar responsive</td></tr>
+        </tbody>
+      </table>
+    </div></div>
+    <div style="margin-top:14px;background:#fff;border-radius:10px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">Promedio general</div>
+      <div style="font-size:36px;font-weight:700;color:#39A900">4.3</div>
+      <div style="font-size:12px;color:#888">Sobre 5.0 · 4 entregables calificados</div>
+    </div>
+  </div>
+
+  <!-- SPRINTS -->
+  <div class="section" id="sec-sprints">
+    <div class="page-title">Sprints</div>
+    <div class="sprint"><div class="sprint-head"><div class="sprint-name">Sprint 3 – Módulo de autenticación</div><span class="badge bo">En curso</span></div>
+      <div class="prog-label"><span>Progreso</span><span>60%</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:60%;background:#f57c00"></div></div>
+      <div style="font-size:11.5px;color:#888;margin-top:6px">Inicio: 20 mar · Fin: 28 mar · 3/5 tareas completadas</div>
+    </div>
+    <div class="sprint"><div class="sprint-head"><div class="sprint-name">Sprint 4 – API REST y documentación</div><span class="badge bgr">Por iniciar</span></div>
+      <div class="prog-label"><span>Progreso</span><span>0%</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:0%;background:#9e9e9e"></div></div>
+      <div style="font-size:11.5px;color:#888;margin-top:6px">Inicio: 29 mar · Fin: 10 abr · 0/6 tareas completadas</div>
+    </div>
+    <div class="sprint" style="border-left:3px solid #39A900"><div class="sprint-head"><div class="sprint-name">Sprint 2 – Backend y base de datos</div><span class="badge bg">Finalizado</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:100%;background:#39A900"></div></div>
+      <div style="font-size:11.5px;color:#888;margin-top:6px">Finalizado el 19 mar · 5/5 tareas completadas</div>
+    </div>
+  </div>
+
+  <!-- EQUIPO -->
+  <div class="section" id="sec-equipo">
+    <div class="page-title">Mi Equipo</div>
+    <div class="card"><div class="card-head">Integrantes – Sistema Gestión SENA</div><div class="card-body">
+      <div class="teammate"><div class="t-avatar">CN</div><div><div class="t-name">Carlos Niño</div><div class="t-role">Líder de proyecto</div></div><div class="online-dot on"></div></div>
+      <div class="teammate"><div class="t-avatar">LP</div><div><div class="t-name">Laura Peña</div><div class="t-role">Backend developer</div></div><div class="online-dot on"></div></div>
+      <div class="teammate"><div class="t-avatar">JM</div><div><div class="t-name">Juan Mora</div><div class="t-role">Frontend developer</div></div><div class="online-dot off"></div></div>
+      <div class="teammate"><div class="t-avatar">SR</div><div><div class="t-name">Sofía Ramos</div><div class="t-role">Analista QA</div></div><div class="online-dot on"></div></div>
+      <div class="teammate"><div class="t-avatar">DV</div><div><div class="t-name">Diego Vargas</div><div class="t-role">Base de datos</div></div><div class="online-dot off"></div></div>
+      <div class="teammate"><div class="t-avatar" style="background:#39A900">Yo</div><div><div class="t-name">Mi perfil</div><div class="t-role">Frontend developer</div></div><div class="online-dot on"></div></div>
+    </div></div>
+  </div>
+
+  <!-- ANUNCIOS -->
+  <div class="section" id="sec-anuncios">
+    <div class="page-title">Anuncios del Instructor</div>
+    <div class="anuncio"><div class="an-titulo">Recordatorio: entrega Sprint 3 – mañana a las 11:59 pm</div><div class="an-meta">Instructor Miguel Ramírez · Hace 2 horas</div><div class="an-texto">Recuerden subir todos los archivos en la plataforma antes de la medianoche. Adjuntar el repositorio de GitHub y el documento de evidencias.</div></div>
+    <div class="anuncio warn"><div class="an-titulo">Cambio de aula: clase del jueves pasa a Sala 205</div><div class="an-meta">Instructor Miguel Ramírez · Ayer</div><div class="an-texto">Por disponibilidad del espacio, la sesión del jueves 27 se traslada a la Sala 205. Horario sin cambios: 7:00 am a 10:00 am.</div></div>
+    <div class="anuncio"><div class="an-titulo">Material de apoyo: guía de API REST disponible</div><div class="an-meta">Instructor Miguel Ramírez · Hace 3 días</div><div class="an-texto">Subí al drive compartido la guía de buenas prácticas para API REST. Será base para el Sprint 4. Revísenla antes del jueves.</div></div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="section" id="sec-chat">
+    <div class="page-title">Chat del Equipo</div>
+    <div class="card"><div class="card-head">Sistema Gestión SENA – Grupo</div>
+      <div class="card-body">
+        <div class="chat-wrap">
+          <div class="chat-msgs" id="chatMsgs">
+            <div class="msg other"><div class="msg-avatar">LP</div><div><div class="msg-bubble">Hola! ¿Ya revisaron el repositorio que compartí?</div><div class="msg-time">10:30 am</div></div></div>
+            <div class="msg mine"><div class="msg-avatar" style="background:#39A900">Yo</div><div><div class="msg-bubble">Sí, lo vi. Hay un conflicto en el branch de login</div><div class="msg-time">10:32 am</div></div></div>
+            <div class="msg other"><div class="msg-avatar">CN</div><div><div class="msg-bubble">Ya lo resolví. Hagan pull antes de seguir trabajando</div><div class="msg-time">10:35 am</div></div></div>
+            <div class="msg other"><div class="msg-avatar">MR</div><div><div class="msg-bubble">Instructor: Recuerden la entrega es mañana a las 11:59 pm</div><div class="msg-time">11:00 am</div></div></div>
+          </div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chatInput" placeholder="Escribe un mensaje..." onkeydown="if(event.key==='Enter')sendMsg()">
+            <button class="chat-send" onclick="sendMsg()">Enviar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIGURACION -->
+  <div class="section" id="sec-configuracion">
+    <div class="page-title">Configuración</div>
+    <div class="two-col">
+      <div>
+        <div class="card"><div class="card-head">Datos personales</div><div class="card-body">
+          <div class="form-group"><label class="form-label">Nombre completo</label><input class="form-input" value="Juan Pérez"></div>
+          <div class="form-group"><label class="form-label">Correo electrónico</label><input class="form-input" value="juan.perez@sena.edu.co"></div>
+          <div class="form-group"><label class="form-label">Número de documento</label><input class="form-input" value="1020304050"></div>
+          <div class="form-group"><label class="form-label">Ficha</label><input class="form-input" value="2758401" readonly></div>
+          <button class="btn-primary" onclick="alert('Datos guardados')">Guardar cambios</button>
+        </div></div>
+      </div>
+      <div>
+        <div class="card"><div class="card-head">Seguridad</div><div class="card-body">
+          <div class="form-group"><label class="form-label">Contraseña actual</label><input class="form-input" type="password"></div>
+          <div class="form-group"><label class="form-label">Nueva contraseña</label><input class="form-input" type="password"></div>
+          <div class="form-group"><label class="form-label">Confirmar contraseña</label><input class="form-input" type="password"></div>
+          <button class="btn-primary" onclick="alert('Contraseña actualizada')">Cambiar contraseña</button>
+        </div></div>
+        <div class="card" style="margin-top:14px"><div class="card-head">Notificaciones</div><div class="card-body">
+          <div class="srow"><div class="name">Nuevos anuncios</div><input type="checkbox" checked></div>
+          <div class="srow"><div class="name">Recordatorio de entregas</div><input type="checkbox" checked></div>
+          <div class="srow"><div class="name">Mensajes del chat</div><input type="checkbox" checked></div>
+          <div class="srow"><div class="name">Calificaciones publicadas</div><input type="checkbox" checked></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+  <script src="aprendiz.js"></script>
+</body>
+</html>

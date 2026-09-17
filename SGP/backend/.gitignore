@@ -1,0 +1,10 @@
+node_modules
+.env
+venv/
+package-lock.json
+yarn.lock
+
+# NUEVO: carpeta de archivos subidos por los usuarios (multer). En Docker
+# vive en un volumen aparte (ver docker-compose.yml); si se corre local
+# sin Docker, esta carpeta se crea sola y no debe versionarse.
+uploads/

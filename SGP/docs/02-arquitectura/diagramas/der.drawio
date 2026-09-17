@@ -1,0 +1,16 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="SGP-SENA ERD">
+    <mxGraphModel>
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="roles" value="ROLES|id_rol PK|nombre" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="180" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="usuarios" value="USUARIOS|id_usuario PK|id_rol FK" vertex="1" parent="1">
+          <mxGeometry x="260" y="20" width="220" height="100" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

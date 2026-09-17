@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENA Proyectos – Instructor</title>
+  <link rel="stylesheet" href="instructor.css">
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">SENA Proyectos</div>
+  <button class="nav-item active" onclick="nav('inicio')"><span class="ni">📊</span> Inicio</button>
+  <button class="nav-item" onclick="nav('fichas')"><span class="ni">📋</span> Fichas</button>
+  <button class="nav-item" onclick="nav('proyectos')"><span class="ni">🗂️</span> Proyectos</button>
+  <button class="nav-item" onclick="nav('aprendices')"><span class="ni">👥</span> Aprendices</button>
+  <button class="nav-item" onclick="nav('calificaciones')"><span class="ni">⭐</span> Calificaciones</button>
+  <button class="nav-item" onclick="nav('cronograma')"><span class="ni">📅</span> Cronograma</button>
+  <button class="nav-item" onclick="nav('anuncios')"><span class="ni">📢</span> Anuncios</button>
+  <button class="nav-item" onclick="nav('mensajes')"><span class="ni">💬</span> Mensajes</button>
+  <button class="nav-item" onclick="nav('reportes')"><span class="ni">📈</span> Reportes</button>
+  <button class="nav-item" onclick="nav('configuracion')"><span class="ni">⚙️</span> Configuración</button>
+</aside>
+
+<div class="topbar">
+  <div class="topbar-brand">SENA Proyectos</div>
+  <div class="topbar-nav">
+    <button onclick="nav('inicio')" class="active" id="tnav-inicio">Inicio</button>
+    <button onclick="nav('proyectos')" id="tnav-proyectos">Proyectos</button>
+    <button onclick="nav('aprendices')" id="tnav-aprendices">Aprendices</button>
+    <button onclick="nav('mensajes')" id="tnav-mensajes">Mensajes</button>
+    <button onclick="nav('configuracion')" id="tnav-configuracion">Perfil</button>
+    <span class="topbar-role">Instructor</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- INICIO -->
+  <div class="section active" id="sec-inicio">
+    <div class="page-title">Bienvenido al Sistema</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Fichas Asignadas</div><div class="stat-val">3</div></div>
+      <div class="stat-card"><div class="stat-label">Entregables Pendientes</div><div class="stat-val">7</div></div>
+      <div class="stat-card"><div class="stat-label">Proyectos Activos</div><div class="stat-val">12</div></div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="sec-title" style="margin-top:0">Mis Proyectos</div>
+        <div class="proj-card"><div class="proj-name">Sistema Gestión SENA</div><div class="proj-desc">Plataforma para gestión de proyectos académicos</div><span class="badge bg">En Desarrollo</span><div class="prog-label" style="margin-top:8px"><span>Progreso</span><span>68%</span></div><div class="prog-bar"><div class="prog-fill" style="width:68%;background:#39A900"></div></div><div style="margin-top:6px;font-size:11.5px;color:#888">Ficha 2758401 · 6 aprendices</div></div>
+        <div class="proj-card"><div class="proj-name">App Móvil ADSO</div><div class="proj-desc">Aplicación para seguimiento de tareas</div><span class="badge bb">Finalizado</span><div class="prog-label" style="margin-top:8px"><span>Progreso</span><span>100%</span></div><div class="prog-bar"><div class="prog-fill" style="width:100%;background:#1a73e8"></div></div><div style="margin-top:6px;font-size:11.5px;color:#888">Ficha 2758401 · 5 aprendices</div></div>
+        <div class="proj-card"><div class="proj-name">Portal Web Inventarios</div><div class="proj-desc">Sistema de control de inventarios</div><span class="badge bo">En Revisión</span><div class="prog-label" style="margin-top:8px"><span>Progreso</span><span>85%</span></div><div class="prog-bar"><div class="prog-fill" style="width:85%;background:#F57C00"></div></div><div style="margin-top:6px;font-size:11.5px;color:#888">Ficha 2841022 · 7 aprendices</div></div>
+      </div>
+      <div>
+        <div class="card"><div class="card-head">📝 Por Calificar</div><div class="card-body">
+          <div class="srow"><div><div class="name">Sprint 3 – Base de Datos</div><div class="sub">Ficha 2758401 · 6 entregas</div></div><span style="font-size:11.5px;font-weight:700;color:#e53935">Hoy</span></div>
+          <div class="srow"><div><div class="name">Diagrama ER</div><div class="sub">Ficha 2841022 · 5 entregas</div></div><span style="font-size:11.5px;font-weight:700;color:#e53935">Mañana</span></div>
+          <div class="srow"><div><div class="name">Mockups UI</div><div class="sub">Ficha 2758401 · 4 entregas</div></div><span style="font-size:11.5px;color:#F57C00;font-weight:600">28 mar</span></div>
+        </div></div>
+        <div class="card"><div class="card-head">⚠️ Aprendices en Riesgo</div><div class="card-body">
+          <div class="srow"><div><div class="name">Ana Torres</div><div class="sub">Sin entregas · Ficha 2758401</div></div><span class="badge br">Crítico</span></div>
+          <div class="srow"><div><div class="name">Luis García</div><div class="sub">Bajo rendimiento · 2841022</div></div><span class="badge bo">Alerta</span></div>
+          <div class="srow"><div><div class="name">Camila Ruiz</div><div class="sub">Ausentismo · Ficha 2905115</div></div><span class="badge br">Crítico</span></div>
+        </div></div>
+        <div class="card"><div class="card-head">📅 Eventos</div><div class="card-body">
+          <div class="erow"><div class="ebox"><div class="ed">27</div><div class="em">Mar</div></div><div><div class="etitle">Jurado F.2758401</div><div class="esub">8:00 am · Sala 301</div></div></div>
+          <div class="erow"><div class="ebox"><div class="ed">2</div><div class="em">Abr</div></div><div><div class="etitle">Visita Coordinación</div><div class="esub">10:00 am · Auditorio</div></div></div>
+          <div class="erow"><div class="ebox"><div class="ed">8</div><div class="em">Abr</div></div><div><div class="etitle">Cierre Lectiva 2905115</div><div class="esub">Todo el día</div></div></div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FICHAS -->
+  <div class="section" id="sec-fichas">
+    <div class="page-title">Mis Fichas</div>
+    <div class="card"><div class="card-body" style="padding:0 16px">
+      <table class="tbl">
+        <thead><tr><th>Ficha</th><th>Programa</th><th>Aprendices</th><th>Proyectos</th><th>Fase</th><th>Acciones</th></tr></thead>
+        <tbody>
+          <tr><td><b>2758401</b></td><td>ADSO · Bogotá</td><td>28</td><td>4</td><td><span class="badge bg">Lectiva</span></td><td><button class="btn-primary" style="font-size:11px;padding:4px 10px" onclick="nav('aprendices')">Ver aprendices</button></td></tr>
+          <tr><td><b>2841022</b></td><td>ADSO · Bogotá</td><td>30</td><td>5</td><td><span class="badge bg">Lectiva</span></td><td><button class="btn-primary" style="font-size:11px;padding:4px 10px" onclick="nav('aprendices')">Ver aprendices</button></td></tr>
+          <tr><td><b>2905115</b></td><td>ADSO · Bogotá</td><td>26</td><td>3</td><td><span class="badge bo">Práctica</span></td><td><button class="btn-primary" style="font-size:11px;padding:4px 10px" onclick="nav('aprendices')">Ver aprendices</button></td></tr>
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+
+  <!-- PROYECTOS -->
+  <div class="section" id="sec-proyectos">
+    <div class="page-title">Proyectos</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="proj-card"><div class="proj-name">Sistema Gestión SENA</div><div class="proj-desc">Plataforma para gestión de proyectos académicos</div><span class="badge bg">En Desarrollo</span><div class="prog-label" style="margin-top:8px"><span>Progreso</span><span>68%</span></div><div class="prog-bar"><div class="prog-fill" style="width:68%;background:#39A900"></div></div><div style="margin-top:6px;font-size:11.5px;color:#888">Ficha 2758401 · 6 aprendices</div><div style="margin-top:8px"><button class="btn-primary" style="font-size:11px;padding:4px 10px" onclick="nav('calificaciones')">Calificar</button></div></div>
+      <div class="proj-card"><div class="proj-name">App Móvil ADSO</div><div class="proj-desc">Aplicación para seguimiento de tareas</div><span class="badge bb">Finalizado</span><div class="prog-label" style="margin-top:8px"><span>Progreso</span><span>100%</span></div><div class="prog-bar"><div class="prog-fill" style="width:100%;background:#1a73e8"></div></div><div style="margin-top:6px;font-size:11.5px;color:#888">Ficha 2758401 · 5 aprendices</div></div>
+      <div class="proj-card"><div class="proj-name">Portal Web Inventarios</div><div class="proj-desc">Control de inventarios empresa cliente</div><span class="badge bo">En Revisión</span><div class="prog-label" style="margin-top:8px"><span>Progreso</span><span>85%</span></div><div class="prog-bar"><div class="prog-fill" style="width:85%;background:#F57C00"></div></div><div style="margin-top:6px;font-size:11.5px;color:#888">Ficha 2841022 · 7 aprendices</div><div style="margin-top:8px"><button class="btn-primary" style="font-size:11px;padding:4px 10px" onclick="nav('calificaciones')">Calificar</button></div></div>
+      <div class="proj-card"><div class="proj-name">Sistema Facturación Electrónica</div><div class="proj-desc">Módulo DIAN</div><span class="badge bgr">Planeación</span><div class="prog-label" style="margin-top:8px"><span>Progreso</span><span>12%</span></div><div class="prog-bar"><div class="prog-fill" style="width:12%;background:#9e9e9e"></div></div><div style="margin-top:6px;font-size:11.5px;color:#888">Ficha 2905115 · 8 aprendices</div></div>
+    </div>
+  </div>
+
+  <!-- APRENDICES -->
+  <div class="section" id="sec-aprendices">
+    <div class="page-title">Aprendices</div>
+    <div class="card"><div class="card-body" style="padding:0 16px">
+      <table class="tbl">
+        <thead><tr><th>Aprendiz</th><th>Ficha</th><th>Entregas</th><th>Nota prom.</th><th>Estado</th></tr></thead>
+        <tbody>
+          <tr><td><b>Carlos Niño</b></td><td>2758401</td><td>8/8</td><td>4.6</td><td><span class="badge bg">Al día</span></td></tr>
+          <tr><td><b>Laura Peña</b></td><td>2758401</td><td>7/8</td><td>4.1</td><td><span class="badge bg">Al día</span></td></tr>
+          <tr><td><b>Ana Torres</b></td><td>2758401</td><td>4/8</td><td>3.0</td><td><span class="badge br">Crítico</span></td></tr>
+          <tr><td><b>Luis García</b></td><td>2841022</td><td>6/8</td><td>3.5</td><td><span class="badge bo">Alerta</span></td></tr>
+          <tr><td><b>Camila Ruiz</b></td><td>2905115</td><td>3/8</td><td>2.8</td><td><span class="badge br">Crítico</span></td></tr>
+          <tr><td><b>Pedro Salcedo</b></td><td>2758401</td><td>6/8</td><td>3.7</td><td><span class="badge bo">Alerta</span></td></tr>
+          <tr><td><b>María Cárdenas</b></td><td>2841022</td><td>8/8</td><td>4.9</td><td><span class="badge bg">Al día</span></td></tr>
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+
+  <!-- CALIFICACIONES -->
+  <div class="section" id="sec-calificaciones">
+    <div class="page-title">Calificaciones</div>
+    <div class="two-col">
+      <div class="card"><div class="card-head">Registrar calificación</div><div class="card-body">
+        <div class="form-group"><label class="form-label">Ficha</label><select class="form-select"><option>2758401</option><option>2841022</option><option>2905115</option></select></div>
+        <div class="form-group"><label class="form-label">Aprendiz</label><select class="form-select"><option>Carlos Niño</option><option>Laura Peña</option><option>Ana Torres</option><option>Luis García</option></select></div>
+        <div class="form-group"><label class="form-label">Entregable</label><select class="form-select"><option>Sprint 3 – Base de Datos</option><option>Diagrama ER</option><option>Mockups UI</option></select></div>
+        <div class="form-group"><label class="form-label">Nota (0.0 – 5.0)</label><input class="form-input" type="number" min="0" max="5" step="0.1" placeholder="Ej: 4.5"></div>
+        <div class="form-group"><label class="form-label">Retroalimentación</label><input class="form-input" placeholder="Comentario para el aprendiz"></div>
+        <button class="btn-primary" onclick="alert('Calificación guardada correctamente')">Guardar calificación</button>
+      </div></div>
+      <div class="card"><div class="card-head">Últimas calificaciones</div><div class="card-body">
+        <div class="srow"><div><div class="name">Carlos Niño – Sprint 3</div><div class="sub">2758401 · Hace 1 hora</div></div><b>4.8</b></div>
+        <div class="srow"><div><div class="name">Laura Peña – Diagrama ER</div><div class="sub">2758401 · Hace 2 horas</div></div><b>4.2</b></div>
+        <div class="srow"><div><div class="name">María Cárdenas – Mockups</div><div class="sub">2841022 · Ayer</div></div><b>4.9</b></div>
+        <div class="srow"><div><div class="name">Luis García – Sprint 2</div><div class="sub">2841022 · Ayer</div></div><b>3.5</b></div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- CRONOGRAMA -->
+  <div class="section" id="sec-cronograma">
+    <div class="page-title">Cronograma</div>
+    <div class="card"><div class="card-body" style="padding:0 16px">
+      <table class="tbl">
+        <thead><tr><th>Fecha</th><th>Evento</th><th>Ficha</th><th>Lugar</th><th>Tipo</th></tr></thead>
+        <tbody>
+          <tr><td><b>27 mar</b></td><td>Jurado Proyectos</td><td>2758401</td><td>Sala 301</td><td><span class="badge bb">Jurado</span></td></tr>
+          <tr><td><b>28 mar</b></td><td>Cierre Sprint 3</td><td>2758401</td><td>Plataforma</td><td><span class="badge bo">Entrega</span></td></tr>
+          <tr><td><b>2 abr</b></td><td>Visita Coordinación</td><td>Todas</td><td>Auditorio</td><td><span class="badge bgr">Institucional</span></td></tr>
+          <tr><td><b>8 abr</b></td><td>Cierre Etapa Lectiva</td><td>2905115</td><td>-</td><td><span class="badge bg">Cierre</span></td></tr>
+          <tr><td><b>10 abr</b></td><td>Inicio Sprint 4</td><td>2758401</td><td>Aula 205</td><td><span class="badge bg">Sprint</span></td></tr>
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+
+  <!-- ANUNCIOS -->
+  <div class="section" id="sec-anuncios">
+    <div class="page-title">Anuncios</div>
+    <div class="anuncio-form"><div style="font-size:13px;font-weight:700;margin-bottom:10px">Crear nuevo anuncio</div>
+      <div class="form-group"><label class="form-label">Título</label><input class="form-input" placeholder="Título del anuncio"></div>
+      <div class="form-group"><label class="form-label">Mensaje</label><input class="form-input" placeholder="Contenido del anuncio"></div>
+      <div class="form-group"><label class="form-label">Dirigido a</label><select class="form-select"><option>Todas las fichas</option><option>Ficha 2758401</option><option>Ficha 2841022</option><option>Ficha 2905115</option></select></div>
+      <button class="btn-primary" onclick="alert('Anuncio publicado')">Publicar anuncio</button>
+    </div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px">Anuncios publicados</div>
+    <div class="proj-card" style="border-left:4px solid #F57C00"><div class="proj-name">Recordatorio: entrega Sprint 3 – mañana</div><div style="font-size:11px;color:#888;margin-bottom:6px">Ficha 2758401 · Hace 2 horas</div><div style="font-size:12.5px;color:#444">Recuerden subir todos los archivos antes de la medianoche. Adjuntar repositorio y evidencias.</div></div>
+    <div class="proj-card" style="border-left:4px solid #F57C00"><div class="proj-name">Cambio de aula: clase del jueves → Sala 205</div><div style="font-size:11px;color:#888;margin-bottom:6px">Todas las fichas · Ayer</div><div style="font-size:12.5px;color:#444">Por disponibilidad del espacio, la sesión del jueves se traslada a la Sala 205.</div></div>
+  </div>
+
+  <!-- MENSAJES -->
+  <div class="section" id="sec-mensajes">
+    <div class="page-title">Mensajes</div>
+    <div class="card"><div class="card-head">Chat – Ficha 2758401</div><div class="card-body">
+      <div class="chat-wrap">
+        <div class="chat-msgs" id="chatMsgsI">
+          <div class="msg other"><div class="msg-avatar">CN</div><div><div class="msg-bubble">Instructor, ¿el jurado es el martes o el miércoles?</div><div class="msg-time">9:10 am</div></div></div>
+          <div class="msg mine"><div class="msg-avatar" style="background:#F57C00">MR</div><div><div class="msg-bubble">El jurado es el martes 27 a las 8am en la Sala 301</div><div class="msg-time">9:15 am</div></div></div>
+          <div class="msg other"><div class="msg-avatar">LP</div><div><div class="msg-bubble">¿Cuánto tiempo tenemos para exponer?</div><div class="msg-time">9:17 am</div></div></div>
+          <div class="msg mine"><div class="msg-avatar" style="background:#F57C00">MR</div><div><div class="msg-bubble">15 minutos por grupo + 5 de preguntas</div><div class="msg-time">9:20 am</div></div></div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chatInputI" placeholder="Escribe un mensaje..." onkeydown="if(event.key==='Enter')sendMsgI()">
+          <button class="chat-send" onclick="sendMsgI()">Enviar</button>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- REPORTES -->
+  <div class="section" id="sec-reportes">
+    <div class="page-title">Reportes</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+      <div class="stat-card"><div class="stat-label">Promedio general</div><div class="stat-val" style="color:#39A900">4.1</div></div>
+      <div class="stat-card"><div class="stat-label">Tasa de entrega</div><div class="stat-val" style="color:#1a73e8">82%</div></div>
+      <div class="stat-card"><div class="stat-label">Aprendices en riesgo</div><div class="stat-val" style="color:#e53935">5</div></div>
+    </div>
+    <div class="card"><div class="card-head">Resumen por ficha</div><div class="card-body" style="padding:0 16px">
+      <table class="tbl">
+        <thead><tr><th>Ficha</th><th>Aprendices</th><th>Promedio</th><th>Entregas OK</th><th>En riesgo</th></tr></thead>
+        <tbody>
+          <tr><td><b>2758401</b></td><td>28</td><td>4.2</td><td>87%</td><td><span class="badge br">2</span></td></tr>
+          <tr><td><b>2841022</b></td><td>30</td><td>4.0</td><td>80%</td><td><span class="badge bo">1</span></td></tr>
+          <tr><td><b>2905115</b></td><td>26</td><td>3.8</td><td>76%</td><td><span class="badge br">2</span></td></tr>
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+
+  <!-- CONFIGURACION -->
+  <div class="section" id="sec-configuracion">
+    <div class="page-title">Configuración</div>
+    <div class="two-col">
+      <div class="card"><div class="card-head">Datos del instructor</div><div class="card-body">
+        <div class="form-group"><label class="form-label">Nombre completo</label><input class="form-input" value="Miguel Ramírez"></div>
+        <div class="form-group"><label class="form-label">Correo</label><input class="form-input" value="m.ramirez@sena.edu.co"></div>
+        <div class="form-group"><label class="form-label">Especialidad</label><input class="form-input" value="Análisis y Desarrollo de Software"></div>
+        <button class="btn-primary" onclick="alert('Datos guardados')">Guardar cambios</button>
+      </div></div>
+      <div class="card"><div class="card-head">Seguridad</div><div class="card-body">
+        <div class="form-group"><label class="form-label">Contraseña actual</label><input class="form-input" type="password"></div>
+        <div class="form-group"><label class="form-label">Nueva contraseña</label><input class="form-input" type="password"></div>
+        <div class="form-group"><label class="form-label">Confirmar</label><input class="form-input" type="password"></div>
+        <button class="btn-primary" onclick="alert('Contraseña actualizada')">Cambiar contraseña</button>
+      </div></div>
+    </div>
+  </div>
+
+</div>
+  <script src="instructor.js"></script>
+</body>
+</html>
