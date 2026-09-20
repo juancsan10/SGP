@@ -88,15 +88,6 @@ export default function LoginPage() {
   }
 
   return (
-<<<<<<< Updated upstream
-    <div style={styles.page}>
-      <div style={styles.card}>
-        {/* Encabezado */}
-        <div style={styles.header}>
-          <div style={styles.logo}>S</div>
-          <h1 style={styles.title}>SGP SENA</h1>
-          <p style={styles.subtitle}>Sistema de Gestión de Proyectos</p>
-=======
     <div className={`sgp-login ${mounted ? 'is-mounted' : ''}`}>
       <section className="sgp-login__hero">
         <div className="sgp-login__grid" aria-hidden="true" />
@@ -127,7 +118,6 @@ export default function LoginPage() {
               Historial completo, sin perder ni un detalle
             </li>
           </ul>
->>>>>>> Stashed changes
         </div>
 
         <div className="sgp-login__scene" aria-hidden="true">
@@ -291,87 +281,6 @@ export default function LoginPage() {
           </details>
         </form>
 
-<<<<<<< Updated upstream
-        {/* Ayuda rápida con credenciales de prueba */}
-        <button type="button" className="btn btn-ghost" style={{width:'100%',marginTop:8}} onClick={()=>setResetOpen(v=>!v)}>¿Olvidaste tu contraseña?</button>
-        {resetOpen && <form onSubmit={async(e)=>{e.preventDefault();setResetMsg('');try{const r=await passwordService.request(form.correo);setResetMsg(r.data.data?.reset_url ? `Enlace: ${r.data.data.reset_url}` : r.data.message);}catch(err){setResetMsg(err.response?.data?.message||'No fue posible generar el enlace');}}} style={{marginTop:12,display:'flex',flexDirection:'column',gap:8}}>
-          <input className="form-input" type="email" placeholder="Tu correo" value={form.correo} onChange={e=>setForm({...form,correo:e.target.value})} required/>
-          <button className="btn btn-secondary" type="submit">Generar enlace</button>
-          {resetMsg && <small style={{wordBreak:'break-word'}}>{resetMsg}</small>}
-        </form>}
-
-        <div style={styles.hint}>
-<<<<<<< HEAD
-          <strong>Cuentas de demo (BD de ejemplo):</strong><br />
-          Admin: diana.rios@sgpsena.local · Instructor: laura.gomez@sgpsena.local<br />
-          Aprendiz: carlos.herrera@sgpsena.local<br />
-          Contraseña: Sena2026*
-=======
-          <div style={styles.hintLabel}>📌 Cuentas de demo</div>
-          <div style={styles.hintRow}><span>Admin</span><code style={styles.hintCode}>diana.rios@sgpsena.local</code></div>
-          <div style={styles.hintRow}><span>Instructor</span><code style={styles.hintCode}>laura.gomez@sgpsena.local</code></div>
-          <div style={styles.hintRow}><span>Aprendiz</span><code style={styles.hintCode}>carlos.herrera@sgpsena.local</code></div>
-          <div style={styles.hintRow}><span>Contraseña</span><code style={styles.hintCode}>Sena2026*</code></div>
->>>>>>> origin/test
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const styles = {
-  page: {
-    minHeight: '100vh',
-    background: 'var(--slate-900)',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 16,
-  },
-  card: {
-    background: 'var(--white)',
-    borderRadius: 'var(--radius-lg)',
-    boxShadow: 'var(--shadow-lg)',
-    padding: '40px 32px',
-    width: '100%', maxWidth: 400,
-  },
-  header: {
-    textAlign: 'center', marginBottom: 28,
-  },
-  logo: {
-    width: 52, height: 52, margin: '0 auto 16px',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 24, fontWeight: 800, color: 'var(--white)',
-    borderRadius: 'var(--radius-md)',
-    background: 'var(--green-600)',
-  },
-  title: {
-    fontFamily: 'var(--font-display)',
-    fontSize: 26, fontWeight: 800, color: 'var(--slate-900)',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 13, color: 'var(--slate-500)',
-  },
-  form: {
-    display: 'flex', flexDirection: 'column', gap: 16,
-  },
-  hint: {
-    marginTop: 20, padding: '14px 16px',
-    background: 'var(--slate-50)',
-    borderRadius: 'var(--radius-sm)',
-  },
-  hintLabel: {
-    fontSize: 11.5, fontWeight: 700, color: 'var(--slate-700)',
-    marginBottom: 8,
-  },
-  hintRow: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    fontSize: 11.5, color: 'var(--slate-500)', padding: '3px 0',
-  },
-  hintCode: {
-    fontSize: 11, fontWeight: 600, color: 'var(--slate-700)',
-  },
-};
-=======
         <p className="sgp-login__panel-foot">
           ¿Problemas para ingresar? Escríbele a tu instructor o al soporte del centro.
         </p>
@@ -379,4 +288,3 @@ const styles = {
     </div>
   );
 }
->>>>>>> Stashed changes
