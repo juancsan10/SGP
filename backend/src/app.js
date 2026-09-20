@@ -11,6 +11,11 @@ const { UPLOAD_DIR } = require('./middlewares/upload.middleware');
 
 const app = express();
 
+// Detrás de nginx (docker-compose) todas las peticiones llegan desde la IP del
+// contenedor del frontend. Con "trust proxy" Express usa X-Forwarded-For y el
+// rate limit cuenta por cliente real en vez de compartirse entre todos.
+app.set('trust proxy', 1);
+
 // ─── Middlewares ────────────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
