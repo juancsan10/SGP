@@ -142,7 +142,9 @@
   position: relative;
   z-index: 1;
   flex: 1;
-  min-height: 300px;
+  /* Debe ser >= a la altura de .sgp-login__scene-inner (380px); con menos, los
+     personajes se salen por abajo y tapan los botones de rol en pantallas bajas. */
+  min-height: 380px;
   margin: 1.5rem 0 0.5rem;
   opacity: 0;
 }

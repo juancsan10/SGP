@@ -4,18 +4,22 @@ services:
     container_name: sgp_sena_db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Falta DB_ROOT_PASSWORD - copia .env.example a .env y editalo}
+      MYSQL_DATABASE: ${DB_NAME:-SistemaGestionProyectosSENA}
+      MYSQL_USER: ${DB_USER:-sgp_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD - copia .env.example a .env y editalo}
     volumes:
       - db_data:/var/lib/mysql
       - ./database/docker-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      # -h 127.0.0.1 fuerza TCP. Con "localhost" mysqladmin usa el socket, que
+      # tambien responde durante el arranque temporal de la imagen (mientras aun
+      # corre 001_schema.sql), y el backend arrancaria antes de tiempo.
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 40s
 
   backend:
     build: ./backend
@@ -26,12 +30,12 @@ services:
       NODE_ENV: production
       DB_HOST: db
       DB_PORT: 3306
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
+      DB_NAME: ${DB_NAME:-SistemaGestionProyectosSENA}
+      DB_USER: ${DB_USER:-sgp_user}
+      DB_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD - copia .env.example a .env y editalo}
+      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET - copia .env.example a .env y define uno de 32+ caracteres}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-2h}
-      FRONTEND_URL: ${FRONTEND_URL}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
     volumes:
       # NUEVO: persiste los archivos subidos por los usuarios (multer,
       # ver backend/src/middlewares/upload.middleware.js) entre reinicios

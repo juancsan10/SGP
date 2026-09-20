@@ -29,8 +29,8 @@ Plataforma web para administrar, hacer seguimiento y controlar proyectos formati
 
 ## Arranque completo
 
-1. Copia `.env.example` a `.env`.
-2. Cambia `DB_ROOT_PASSWORD`, `DB_PASSWORD` y `JWT_SECRET` por valores propios. `JWT_SECRET` debe tener al menos 32 caracteres.
+1. Copia `.env.example` a `.env` (PowerShell: `Copy-Item .env.example .env`; Git Bash: `cp .env.example .env`). El archivo `.env` no viene en el repositorio: sin él, Docker Compose se detiene con un mensaje indicando qué variable falta.
+2. Cambia `DB_ROOT_PASSWORD`, `DB_PASSWORD` y `JWT_SECRET` por valores propios. `JWT_SECRET` debe tener al menos 32 caracteres. No cambies `DB_NAME` (el esquema crea la base con ese nombre) y evita `$`, `#`, comillas y espacios en los valores.
 3. Ejecuta:
 
 ```bash
