@@ -21,3 +21,4 @@ Thumbs.db
 # Backups locales de base de datos
 database/backups/*
 !database/backups/.gitkeep
+.env
