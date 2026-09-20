@@ -443,8 +443,14 @@
   pointer-events: none;
 }
 
-.sgp-login__card.has-error {
-  animation: sgp-shake 0.4s ease;
+/* La tarjeta nace con opacity:0 y solo se hace visible por el "forwards" de
+   sgp-rise. Si aquí se reemplazara la animación por sgp-shake, se perdería ese
+   estado final y el formulario desaparecería al fallar el login. Por eso se
+   conservan ambas animaciones. */
+.is-mounted .sgp-login__card.has-error {
+  animation:
+    sgp-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.18s forwards,
+    sgp-shake 0.4s ease;
 }
 
 .sgp-login__card-head {

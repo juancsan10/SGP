@@ -23,8 +23,12 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Token expirado → redirigir al login
-    if (error.response?.status === 401) {
+    // Token expirado → redirigir al login.
+    // Excepción: un 401 en el propio login (credenciales inválidas) NO debe
+    // recargar la página, o se pierde el mensaje de error y la reacción de
+    // los personajes en LoginPage.
+    const esPeticionLogin = error.config?.url?.includes('/auth/login');
+    if (error.response?.status === 401 && !esPeticionLogin) {
       localStorage.removeItem('sgp_token');
       localStorage.removeItem('sgp_usuario');
       window.location.href = '/login';
