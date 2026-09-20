@@ -38,11 +38,11 @@ El servidor queda disponible en `http://localhost:3000`, con la API base en `htt
 
 | Correo | Rol | Contraseña |
 |---|---|---|
-| juan@mail.com | Administrador | 123 |
-| maria@mail.com | Instructor | 123 |
-| luis@mail.com | Instructor | 123 |
-| carlos@mail.com | Aprendiz | 123 |
-| ana@mail.com | Aprendiz | 123 |
+| diana.rios@sgpsena.local | Administrador | Sena2026* |
+| laura.gomez@sgpsena.local | Instructor | Sena2026* |
+| miguel.torres@sgpsena.local | Instructor | Sena2026* |
+| carlos.herrera@sgpsena.local | Aprendiz | Sena2026* |
+| juan.martinez@sgpsena.local | Aprendiz | Sena2026* |
 
 Más detalle en [`database/README_seedjs.md`](database/README_seedjs.md).
 

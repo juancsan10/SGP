@@ -45,7 +45,7 @@ node database/seed.js
    - `repositorios` (links de GitHub por proyecto)
 
 4. **Seguridad en contraseñas**
-   No se guardan en texto plano: se usa `bcrypt.hash('123', 10)` para simular
+   No se guardan en texto plano: se usa `bcrypt.hash('Sena2026*', 10)` para simular
    el comportamiento real de autenticación del sistema.
 
 5. **Resumen final en consola**
@@ -54,13 +54,17 @@ node database/seed.js
 
 ## Cuentas de prueba generadas
 
-| Correo             | Rol            | Contraseña |
-|---------------------|----------------|------------|
-| juan@mail.com        | Administrador  | 123        |
-| maria@mail.com       | Instructor     | 123        |
-| luis@mail.com        | Instructor     | 123        |
-| carlos@mail.com      | Aprendiz       | 123        |
-| ana@mail.com          | Aprendiz       | 123        |
+| Correo                        | Rol            | Contraseña |
+|-------------------------------|----------------|------------|
+| diana.rios@sgpsena.local      | Administrador  | Sena2026*  |
+| laura.gomez@sgpsena.local     | Instructor     | Sena2026*  |
+| miguel.torres@sgpsena.local   | Instructor     | Sena2026*  |
+| carlos.herrera@sgpsena.local  | Aprendiz       | Sena2026*  |
+| juan.martinez@sgpsena.local   | Aprendiz       | Sena2026*  |
+
+(El seed crea 10 usuarios en total; ver `seed.js`.)
+
+**Con Docker:** `docker compose exec backend node database/seed.js`
 
 ## Por qué existe este script
 

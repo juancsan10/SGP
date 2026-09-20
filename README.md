@@ -37,7 +37,15 @@ Plataforma web para administrar, hacer seguimiento y controlar proyectos formati
 docker compose up -d --build
 ```
 
-4. Abre `http://localhost:5173`.
+4. Carga los datos de ejemplo (usuarios, proyectos, tareas). La base de datos arranca vacía, así que sin este paso no existe ninguna cuenta para iniciar sesión:
+
+```bash
+docker compose exec backend node database/seed.js
+```
+
+   El seed vacía las tablas antes de insertar; ejecútalo solo en entornos de demo/desarrollo.
+
+5. Abre `http://localhost:5173` e inicia sesión con una de las [cuentas de prueba](#cuentas-de-prueba).
 
 El Compose levanta tres servicios: MySQL, backend y frontend. No se requiere instalar Node, pnpm ni MySQL en la máquina para ejecutar la entrega.
 
@@ -51,17 +59,21 @@ El backend responde en `http://localhost:3000/` y el frontend en `http://localho
 
 Si un puerto está ocupado, cambia `BACKEND_PORT` en `.env` o libera el puerto 5173 del host para el frontend.
 
+Para reiniciar desde cero (borra la base de datos y los archivos subidos): `docker compose down -v` y vuelve a levantar.
+
 ## Cuentas de prueba
 
-Después de ejecutar el seed de desarrollo (`backend/database/seed.js`) se dispone de:
+Después de ejecutar el seed (paso 4 del arranque) se dispone de:
 
 | Cuenta | Rol | Contraseña |
 |---|---|---|
-| juan@mail.com | Administrador | 123 |
-| maria@mail.com | Instructor | 123 |
-| luis@mail.com | Instructor | 123 |
-| carlos@mail.com | Aprendiz | 123 |
-| ana@mail.com | Aprendiz | 123 |
+| diana.rios@sgpsena.local | Administrador | Sena2026* |
+| laura.gomez@sgpsena.local | Instructor | Sena2026* |
+| miguel.torres@sgpsena.local | Instructor | Sena2026* |
+| carlos.herrera@sgpsena.local | Aprendiz | Sena2026* |
+| juan.martinez@sgpsena.local | Aprendiz | Sena2026* |
+
+El seed crea 10 usuarios en total (1 administrador, 2 instructores y 7 aprendices); la lista completa está en `backend/database/seed.js`.
 
 > Para producción, las contraseñas de demostración deben sustituirse.
 
