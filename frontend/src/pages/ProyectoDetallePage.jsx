@@ -12,7 +12,9 @@ import {
   entregablesService, usuariosService,
   comentariosService, archivosService, evaluacionesService, reunionesService, // NUEVOS
 } from '../services/api.js';
-import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha } from '../components/helpers.jsx';
+import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha, Pagination } from '../components/helpers.jsx';
+
+const LIMITE_ENTREGABLES = 8; // NUEVO: tamaño de página para la pestaña Entregables
 
 // NUEVO: se agregan las pestañas "Entregables" (RF3.3/RF4.2/RF6.2 — antes el
 // servicio ya existía pero nunca se usaba en esta página) y "Reuniones"
@@ -57,6 +59,8 @@ export default function ProyectoDetallePage() {
   const [modalEntregable, setModalEntregable] = useState(false); // NUEVO
   const [modalReunion,    setModalReunion]    = useState(false); // NUEVO
   const [modalDetalle,    setModalDetalle]    = useState(false); // NUEVO: comentarios+archivos+evaluación
+  const [offsetEntregables, setOffsetEntregables] = useState(0); // NUEVO: paginación de la pestaña Entregables
+  const [offsetTareasTab, setOffsetTareasTab] = useState(0); // NUEVO: paginación de la pestaña Tareas
 
   // NUEVO: solicitud de eliminación de equipo (Instructor pide, Admin resuelve)
   const [modalSolicitarBaja, setModalSolicitarBaja] = useState(null); // miembro seleccionado o null
@@ -537,7 +541,7 @@ export default function ProyectoDetallePage() {
                       <th>Estado</th><th>Versión</th><th></th>
                     </tr></thead>
                     <tbody>
-                      {entregables.map(en => {
+                      {entregables.slice(offsetEntregables, offsetEntregables + LIMITE_ENTREGABLES).map(en => {
                         const fase = fases.find(f => f.id_fase === en.id_fase);
                         return (
                           <tr key={en.id_entregable}>
@@ -556,6 +560,10 @@ export default function ProyectoDetallePage() {
                       })}
                     </tbody>
                   </table>
+                </div>
+                {/* NUEVO: paginación numerada */}
+                <div style={{ padding:'12px 16px 0' }}>
+                  <Pagination total={entregables.length} limit={LIMITE_ENTREGABLES} offset={offsetEntregables} onChange={setOffsetEntregables} />
                 </div>
               </div>
             )}
@@ -584,7 +592,7 @@ export default function ProyectoDetallePage() {
                       {canCreate && <th></th>}
                     </tr></thead>
                     <tbody>
-                      {tareas.map(t => (
+                      {tareas.slice(offsetTareasTab, offsetTareasTab + LIMITE_ENTREGABLES).map(t => (
                         <tr key={t.id_tarea}>
                           <td><strong>{t.titulo}</strong><div style={{fontSize:11,color:'var(--slate-500)'}}>{t.descripcion}</div></td>
                           <td>{prioridadBadge(t.prioridad)}</td>
@@ -612,6 +620,10 @@ export default function ProyectoDetallePage() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+                {/* NUEVO: paginación numerada */}
+                <div style={{ padding:'12px 16px 0' }}>
+                  <Pagination total={tareas.length} limit={LIMITE_ENTREGABLES} offset={offsetTareasTab} onChange={setOffsetTareasTab} />
                 </div>
               </div>
             )}

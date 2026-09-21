@@ -6,7 +6,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { proyectosService, usuariosService } from '../services/api.js';
-import { estadoBadge, ProgressBar, LoadingCenter, EmptyState, formatFecha } from '../components/helpers.jsx';
+import { estadoBadge, ProgressBar, LoadingCenter, EmptyState, formatFecha, Pagination } from '../components/helpers.jsx';
+
+const LIMITE = 6; // NUEVO: tamaño de página (paginación aplicada a todos los roles)
 
 export default function ProyectosPage() {
   const { esAdmin, esInstructor, usuario } = useAuth();
@@ -20,6 +22,7 @@ export default function ProyectosPage() {
   const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState('');
   const [filtro,      setFiltro]      = useState('');
+  const [offset,      setOffset]      = useState(0); // NUEVO: paginación
 
   async function cargar() {
     setLoading(true);
@@ -49,6 +52,7 @@ export default function ProyectosPage() {
   }
 
   useEffect(() => { cargar(); }, []);
+  useEffect(() => { setOffset(0); }, [filtro]); // NUEVO: al filtrar, vuelve a la página 1
 
   function abrirModal() {
     setForm({
@@ -77,6 +81,8 @@ export default function ProyectosPage() {
     p.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
     (p.instructor || '').toLowerCase().includes(filtro.toLowerCase())
   );
+  // NUEVO: paginación del lado del cliente (no hay endpoint paginado aún para este listado)
+  const proyectosPagina = proyectosFiltrados.slice(offset, offset + LIMITE);
 
   if (loading) return <><PageHeader /><LoadingCenter /></>;
 
@@ -113,8 +119,9 @@ export default function ProyectosPage() {
             )}
           />
         ) : (
+          <>
           <div className="projects-grid">
-            {proyectosFiltrados.map(p => (
+            {proyectosPagina.map(p => (
               <div key={p.id_proyecto} className="project-card">
                 <div className="project-card-header">
                   <div>
@@ -140,6 +147,9 @@ export default function ProyectosPage() {
               </div>
             ))}
           </div>
+          {/* NUEVO: paginación numerada, igual patrón que Usuarios */}
+          <Pagination total={proyectosFiltrados.length} limit={LIMITE} offset={offset} onChange={setOffset} />
+          </>
         )}
       </div>
 

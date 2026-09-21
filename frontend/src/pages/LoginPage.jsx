@@ -96,7 +96,7 @@ export default function LoginPage() {
           <div className="sgp-login__mark">
             <span className="sgp-login__mark-glyph">SGP</span>
           </div>
-          <h1 className="sgp-login__headline">Abre tu bitácora de proyecto</h1>
+          <h1 className="sgp-login__headline">Abre tu Proyecto SENA</h1>
           <p className="sgp-login__subhead">
             Cada fase, tarea y entrega queda registrada en un solo lugar, con su
             avance y su historia completa, para que el trabajo de convertir una
@@ -145,7 +145,23 @@ export default function LoginPage() {
             </div>
             <div className="sgp-login__chip sgp-login__chip--c">
               <span className="sgp-login__chip-dot sgp-login__chip-dot--mint" />
+              Mensaje de tu instructor
+            </div>
+            <div className="sgp-login__chip sgp-login__chip--c">
+              <span className="sgp-login__chip-dot sgp-login__chip-dot--mint" />
+              Git - Hub actualizado
+            </div>
+            <div className="sgp-login__chip sgp-login__chip--c">
+              <span className="sgp-login__chip-dot sgp-login__chip-dot--mint" />
               Nuevo comentario
+            </div>
+            <div className="sgp-login__chip sgp-login__chip--c">
+              <span className="sgp-login__chip-dot sgp-login__chip-dot--mint" />
+              API - Rest conectada
+            </div>
+            <div className="sgp-login__chip sgp-login__chip--c">
+              <span className="sgp-login__chip-dot sgp-login__chip-dot--mint" />
+              Reunión de equipo
             </div>
           </div>
         </div>
@@ -153,10 +169,11 @@ export default function LoginPage() {
         <ul className="sgp-login__roles" aria-label="Perfiles disponibles">
           <li>Aprendiz</li>
           <li>Instructor</li>
-          <li>Administrador</li>
         </ul>
 
         <p className="sgp-login__hero-foot">SENA · Análisis y Desarrollo de Software</p>
+        <p className="sgp-login__hero-foot">© 2026 Todos los derechos reservados</p>
+        <p className="sgp-login__hero-foot"> R U |3 L O X I L Studios</p>
       </section>
 
       <section className="sgp-login__panel">
@@ -167,7 +184,7 @@ export default function LoginPage() {
         >
           <div className="sgp-login__card-head">
             <h2>Bienvenido de vuelta</h2>
-            <p>Ingresa con tu correo institucional para continuar tu bitácora.</p>
+            <p>Ingresa con tu correo institucional para continuar tu Proyecto <SENA></SENA>.</p>
           </div>
 
           <label className="sgp-field">

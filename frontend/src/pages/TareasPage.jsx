@@ -24,6 +24,7 @@ function TareasAprendiz() {
   const [loading, setLoading] = useState(true);
   const [filtro,  setFiltro]  = useState('');
   const [estado,  setEstado]  = useState('');
+  const [offset,  setOffset]  = useState(0); // NUEVO: paginación
 
   useEffect(() => {
     async function cargar() {
@@ -49,6 +50,7 @@ function TareasAprendiz() {
     }
     cargar();
   }, []);
+  useEffect(() => { setOffset(0); }, [filtro, estado]); // NUEVO: vuelve a la página 1 al filtrar
 
   const tareasFiltradas = tareas.filter(t => {
     const matchTexto = t.titulo.toLowerCase().includes(filtro.toLowerCase()) ||
@@ -57,6 +59,7 @@ function TareasAprendiz() {
     const matchEstado = !estado || t.estado === estado;
     return matchTexto && matchEstado;
   });
+  const tareasPagina = tareasFiltradas.slice(offset, offset + LIMITE); // NUEVO
 
   if (loading) return (
     <div>
@@ -114,7 +117,7 @@ function TareasAprendiz() {
                   </tr>
                 </thead>
                 <tbody>
-                  {tareasFiltradas.map(t => (
+                  {tareasPagina.map(t => (
                     <tr key={t.id_tarea}>
                       <td>
                         <strong>{t.titulo}</strong>
@@ -142,6 +145,10 @@ function TareasAprendiz() {
                   ))}
                 </tbody>
               </table>
+            </div>
+            {/* NUEVO: paginación numerada */}
+            <div style={{ padding:'0 4px' }}>
+              <Pagination total={tareasFiltradas.length} limit={LIMITE} offset={offset} onChange={setOffset} />
             </div>
           </div>
         )}

@@ -8,12 +8,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { notificacionesService } from '../services/api.js';
-import { LoadingCenter, EmptyState } from '../components/helpers.jsx';
+import { LoadingCenter, EmptyState, Pagination } from '../components/helpers.jsx';
+
+const LIMITE = 10; // NUEVO: tamaño de página
 
 export default function NotificacionesPage() {
   const { usuario, esAdmin } = useAuth();
   const [notifs,  setNotifs]  = useState([]);
   const [loading, setLoading] = useState(true);
+  const [offset,  setOffset]  = useState(0); // NUEVO: paginación
 
   // NUEVO — solo Administrador: crear notificación
   const [modalCrear, setModalCrear] = useState(false);
@@ -65,6 +68,7 @@ export default function NotificacionesPage() {
   }
 
   const noLeidas = notifs.filter(n => !n.leida).length;
+  const notifsPagina = notifs.slice(offset, offset + LIMITE); // NUEVO: página actual
 
   const tipoIcon = {
     mensaje: '💬',
@@ -117,7 +121,7 @@ export default function NotificacionesPage() {
           />
         ) : (
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-            {notifs.map(n => (
+            {notifsPagina.map(n => (
               <div
                 key={n.id_notificacion}
                 className="card"
@@ -158,6 +162,8 @@ export default function NotificacionesPage() {
             ))}
           </div>
         )}
+        {/* NUEVO: paginación numerada */}
+        <Pagination total={notifs.length} limit={LIMITE} offset={offset} onChange={setOffset} />
       </div>
 
       {/* NUEVO — solo Administrador: crear notificación para un rol o usuario */}
