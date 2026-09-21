@@ -24,6 +24,12 @@ export default function ProyectoDetallePage() {
   const navigate = useNavigate();
   const { esAdmin, esInstructor, usuario } = useAuth();
   const canEdit  = esAdmin || esInstructor;
+  // NUEVO: a diferencia de canEdit, canCreate NO incluye al Administrador —
+  // el Admin supervisa (edita estado de tareas, califica, cancela reuniones)
+  // pero nunca crea la estructura operativa del proyecto (fases, entregables,
+  // tareas, equipo, repositorios, reuniones). Coincide exactamente con la
+  // restricción que ya aplica el backend (requireInstructorOwner).
+  const canCreate = esInstructor;
 
   const [tab,       setTab]       = useState('Resumen');
   const [proyecto,  setProyecto]  = useState(null);
@@ -40,6 +46,7 @@ export default function ProyectoDetallePage() {
 
   // ── Mensajes ──────────────────────────────────────
   const [msgTexto,  setMsgTexto]  = useState('');
+  const [msgError,  setMsgError]  = useState(''); // NUEVO: muestra el rechazo del glosario de palabras prohibidas
   const mensajesEndRef = useRef(null);
 
   // ── Modales rápidos ───────────────────────────────
@@ -50,6 +57,13 @@ export default function ProyectoDetallePage() {
   const [modalEntregable, setModalEntregable] = useState(false); // NUEVO
   const [modalReunion,    setModalReunion]    = useState(false); // NUEVO
   const [modalDetalle,    setModalDetalle]    = useState(false); // NUEVO: comentarios+archivos+evaluación
+
+  // NUEVO: solicitud de eliminación de equipo (Instructor pide, Admin resuelve)
+  const [modalSolicitarBaja, setModalSolicitarBaja] = useState(null); // miembro seleccionado o null
+  const [motivoBaja, setMotivoBaja] = useState('');
+  const [enviandoBaja, setEnviandoBaja] = useState(false);
+  const [solicitudesEquipo, setSolicitudesEquipo] = useState([]);
+  const [resolviendoSolicitud, setResolviendoSolicitud] = useState(null);
 
   const [formFase,  setFormFase]  = useState({ nombre_fase:'', descripcion:'', fecha_inicio:'', fecha_fin:'' });
   const [formTarea, setFormTarea] = useState({ titulo:'', descripcion:'', prioridad:'Media', fecha_vencimiento:'', id_asignado:'' });
@@ -174,6 +188,42 @@ export default function ProyectoDetallePage() {
     finally { setSaving(false); }
   }
 
+  // NUEVO: Instructor solicita eliminar a un aprendiz del equipo (no lo
+  // borra directo — el backend crea una solicitud que un Admin resuelve).
+  async function solicitarBaja(e) {
+    e.preventDefault(); setEnviandoBaja(true); setSaveError('');
+    try {
+      await equiposService.remove(modalSolicitarBaja.id_equipo, motivoBaja);
+      setModalSolicitarBaja(null);
+      setMotivoBaja('');
+    } catch (err) { setSaveError(err.response?.data?.message || 'No se pudo enviar la solicitud'); }
+    finally { setEnviandoBaja(false); }
+  }
+
+  // NUEVO: Admin carga las solicitudes pendientes y las filtra a este proyecto.
+  async function cargarSolicitudesEquipo() {
+    try {
+      const r = await equiposService.listSolicitudes('Pendiente');
+      setSolicitudesEquipo((r.data.data || []).filter(s => Number(s.id_proyecto) === Number(id)));
+    } catch (err) { console.error(err); }
+  }
+
+  // NUEVO: Admin aprueba o rechaza una solicitud.
+  async function resolverSolicitud(idSolicitud, aprobar) {
+    setResolviendoSolicitud(idSolicitud);
+    try {
+      await equiposService.resolverSolicitud(idSolicitud, aprobar);
+      await cargarSolicitudesEquipo();
+      const r = await equiposService.getByProyecto(id);
+      setEquipo(r.data.data || []);
+    } catch (err) { setSaveError(err.response?.data?.message || 'No se pudo resolver la solicitud'); }
+    finally { setResolviendoSolicitud(null); }
+  }
+
+  useEffect(() => {
+    if (tab === 'Equipo' && esAdmin) cargarSolicitudesEquipo();
+  }, [tab, esAdmin, id]); // eslint-disable-line
+
   // ── Crear Repositorio ─────────────────────────────
   async function crearRepo(e) {
     e.preventDefault(); setSaving(true); setSaveError('');
@@ -186,16 +236,44 @@ export default function ProyectoDetallePage() {
     finally { setSaving(false); }
   }
 
+  // NUEVO — solo Administrador: habilitar/deshabilitar y semáforo de repos.
+  const [repoActualizando, setRepoActualizando] = useState(null);
+  async function toggleRepoActivo(repo) {
+    setRepoActualizando(repo.id_repositorio);
+    try {
+      await repositoriosService.toggleEstado(repo.id_repositorio, !repo.activo);
+      const r = await repositoriosService.getByProyecto(id);
+      setRepos(r.data.data || []);
+    } catch (err) { setSaveError(err.response?.data?.message || 'Error'); }
+    finally { setRepoActualizando(null); }
+  }
+  async function cambiarSemaforo(repo, estado) {
+    if (estado === repo.estado_semaforo) return;
+    setRepoActualizando(repo.id_repositorio);
+    try {
+      await repositoriosService.setSemaforo(repo.id_repositorio, estado);
+      const r = await repositoriosService.getByProyecto(id);
+      setRepos(r.data.data || []);
+    } catch (err) { setSaveError(err.response?.data?.message || 'Error'); }
+    finally { setRepoActualizando(null); }
+  }
+
   // ── Enviar mensaje ────────────────────────────────
   async function enviarMensaje(e) {
     e.preventDefault();
     if (!msgTexto.trim()) return;
+    setMsgError('');
     try {
       await mensajesService.create({ contenido: msgTexto, id_proyecto: id });
       setMsgTexto('');
       const r = await mensajesService.getByProyecto(id);
       setMensajes(r.data.data || []);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      // NUEVO: antes este error se tragaba en silencio — si el mensaje
+      // tenía una palabra del glosario prohibido, el usuario nunca se
+      // enteraba de por qué no se envió.
+      setMsgError(err.response?.data?.message || 'No se pudo enviar el mensaje');
+    }
   }
 
   // ── Actualizar estado de tarea ────────────────────
@@ -406,7 +484,7 @@ export default function ProyectoDetallePage() {
         {/* ─────── FASES ───────────────────────────── */}
         {tab === 'Fases' && (
           <div>
-            {canEdit && (
+            {canCreate && (
               <div style={{ marginBottom:16 }}>
                 <button className="btn btn-primary" onClick={() => { setFormFase({nombre_fase:'',descripcion:'',fecha_inicio:'',fecha_fin:''}); setSaveError(''); setModalFase(true); }}>
                   + Nueva fase
@@ -436,7 +514,7 @@ export default function ProyectoDetallePage() {
         {/* ─────── ENTREGABLES (NUEVO) ─────────────── */}
         {tab === 'Entregables' && (
           <div>
-            {canEdit && (
+            {canCreate && (
               <div style={{ marginBottom:16 }}>
                 <button
                   className="btn btn-primary"
@@ -487,7 +565,7 @@ export default function ProyectoDetallePage() {
         {/* ─────── TAREAS ──────────────────────────── */}
         {tab === 'Tareas' && (
           <div>
-            {canEdit && (
+            {canCreate && (
               <div style={{ marginBottom:16 }}>
                 <button className="btn btn-primary" onClick={() => { setFormTarea({titulo:'',descripcion:'',prioridad:'Media',fecha_vencimiento:'',id_asignado:''}); setSaveError(''); setModalTarea(true); }}>
                   + Nueva tarea
@@ -503,7 +581,7 @@ export default function ProyectoDetallePage() {
                     <thead><tr>
                       <th>Tarea</th><th>Prioridad</th><th>Estado</th>
                       <th>Asignado</th><th>Vencimiento</th><th>Avance</th>
-                      {canEdit && <th></th>}
+                      {canCreate && <th></th>}
                     </tr></thead>
                     <tbody>
                       {tareas.map(t => (
@@ -514,7 +592,9 @@ export default function ProyectoDetallePage() {
                           <td>{t.asignado_nombre}</td>
                           <td>{formatFecha(t.fecha_vencimiento)}</td>
                           <td style={{ minWidth:120 }}><ProgressBar value={parseFloat(t.porcentaje_avance)||0} /></td>
-                          {canEdit && (
+                          {/* CORREGIDO: el administrador solo supervisa tareas — ya
+                              no puede editar su estado, solo el instructor responsable. */}
+                          {canCreate && (
                             <td>
                               <select
                                 className="form-select"
@@ -541,20 +621,46 @@ export default function ProyectoDetallePage() {
         {/* ─────── EQUIPO ──────────────────────────── */}
         {tab === 'Equipo' && (
           <div>
-            {canEdit && (
+            {canCreate && (
               <div style={{ marginBottom:16 }}>
                 <button className="btn btn-primary" onClick={() => { setFormEquip({id_usuario:'',rol_en_equipo:''}); setSaveError(''); setModalEquip(true); }}>
                   + Agregar miembro
                 </button>
               </div>
             )}
+
+            {/* NUEVO — solo Administrador: solicitudes pendientes de este proyecto */}
+            {esAdmin && solicitudesEquipo.length > 0 && (
+              <div className="card" style={{ marginBottom:16, borderLeft:'4px solid var(--amber-500)' }}>
+                <div className="card-body">
+                  <div style={{ fontWeight:700, marginBottom:10 }}>⚠️ Solicitudes de eliminación pendientes</div>
+                  {solicitudesEquipo.map(s => (
+                    <div key={s.id_solicitud} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'10px 0', borderTop:'1px solid var(--slate-100)' }}>
+                      <div>
+                        <div style={{ fontSize:13 }}><strong>{s.nombre_afectado}</strong> (cc {s.identificacion_afectado})</div>
+                        <div style={{ fontSize:12, color:'var(--slate-500)' }}>Solicitada por {s.nombre_instructor}{s.motivo ? ` · ${s.motivo}` : ''}</div>
+                      </div>
+                      <div style={{ display:'flex', gap:8 }}>
+                        <button className="btn btn-secondary btn-sm" disabled={resolviendoSolicitud === s.id_solicitud}
+                          onClick={() => resolverSolicitud(s.id_solicitud, false)}>Rechazar</button>
+                        <button className="btn btn-danger btn-sm" disabled={resolviendoSolicitud === s.id_solicitud}
+                          onClick={() => resolverSolicitud(s.id_solicitud, true)}>
+                          {resolviendoSolicitud === s.id_solicitud ? 'Procesando…' : 'Aprobar'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {equipo.length === 0 ? (
               <div className="card"><div className="empty-state"><div className="empty-state-icon">👥</div><h3>Sin miembros en el equipo</h3></div></div>
             ) : (
               <div className="card">
                 <div className="table-wrap">
                   <table>
-                    <thead><tr><th>Nombre</th><th>Correo</th><th>Rol sistema</th><th>Rol en proyecto</th></tr></thead>
+                    <thead><tr><th>Nombre</th><th>Correo</th><th>Rol sistema</th><th>Rol en proyecto</th>{esInstructor && <th></th>}</tr></thead>
                     <tbody>
                       {equipo.map(m => (
                         <tr key={m.id_equipo}>
@@ -562,6 +668,15 @@ export default function ProyectoDetallePage() {
                           <td>{m.correo}</td>
                           <td><span className="badge badge-blue">{m.rol}</span></td>
                           <td>{m.rol_en_equipo || '—'}</td>
+                          {/* NUEVO: el instructor ya no borra directo — solicita la
+                              eliminación y un administrador la aprueba o rechaza. */}
+                          {esInstructor && (
+                            <td>
+                              <button className="btn btn-secondary btn-sm" onClick={() => { setModalSolicitarBaja(m); setMotivoBaja(''); setSaveError(''); }}>
+                                Solicitar baja
+                              </button>
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -601,7 +716,9 @@ export default function ProyectoDetallePage() {
                 <div ref={mensajesEndRef} />
               </div>
             </div>
-            <form onSubmit={enviarMensaje} style={{ display:'flex', gap:10 }}>
+            <form onSubmit={enviarMensaje} style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {msgError && <div className="alert alert-error">{msgError}</div>}
+              <div style={{ display:'flex', gap:10 }}>
               <input
                 className="form-input"
                 value={msgTexto}
@@ -612,6 +729,7 @@ export default function ProyectoDetallePage() {
               <button type="submit" className="btn btn-primary" disabled={!msgTexto.trim()}>
                 Enviar ✉️
               </button>
+              </div>
             </form>
           </div>
         )}
@@ -619,7 +737,7 @@ export default function ProyectoDetallePage() {
         {/* ─────── REPOSITORIOS ────────────────────── */}
         {tab === 'Repositorios' && (
           <div>
-            {canEdit && (
+            {canCreate && (
               <div style={{ marginBottom:16 }}>
                 <button className="btn btn-primary" onClick={() => { setFormRepo({url_github:'',rama_principal:'main'}); setSaveError(''); setModalRepo(true); }}>
                   + Vincular repositorio
@@ -628,28 +746,58 @@ export default function ProyectoDetallePage() {
             )}
             {repos.length === 0 ? (
               <div className="card"><div className="empty-state"><div className="empty-state-icon">📁</div><h3>Sin repositorios vinculados</h3></div></div>
-            ) : repos.map(r => (
-              <div key={r.id_repositorio} className="card" style={{ marginBottom:12 }}>
-                <div className="card-body" style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            ) : repos.map(r => {
+              const semaforoInfo = {
+                verde:   { color: 'var(--green-600)', label: 'Cumple' },
+                amarillo:{ color: 'var(--amber-500)',  label: 'Observación' },
+                rojo:    { color: 'var(--red-600)',    label: 'Incumplimiento' },
+              }[r.estado_semaforo || 'verde'];
+              return (
+              <div key={r.id_repositorio} className="card" style={{ marginBottom:12, opacity: r.activo === 0 ? 0.6 : 1 }}>
+                <div className="card-body" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12 }}>
                   <div>
-                    <div style={{ fontWeight:700, marginBottom:4 }}>🔗 {r.url_github}</div>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                      {/* NUEVO: semáforo de cumplimiento de reglas de negocio */}
+                      <span title={semaforoInfo.label} style={{ width:10, height:10, borderRadius:'50%', background: semaforoInfo.color, display:'inline-block', flexShrink:0 }} />
+                      <span style={{ fontWeight:700 }}>🔗 {r.url_github}</span>
+                      {r.activo === 0 && <span className="badge badge-slate">Deshabilitado</span>}
+                    </div>
                     <div style={{ fontSize:12, color:'var(--slate-500)' }}>
-                      Rama: <strong>{r.rama_principal}</strong> · Actualizado: {formatFecha(r.ultima_actualizacion)}
+                      Rama: <strong>{r.rama_principal}</strong> · Actualizado: {formatFecha(r.ultima_actualizacion)} · {semaforoInfo.label}
                     </div>
                   </div>
-                  <a href={r.url_github} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
-                    Abrir ↗
-                  </a>
+                  <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                    {/* NUEVO — solo Administrador: cambiar semáforo y habilitar/deshabilitar */}
+                    {esAdmin && (
+                      <>
+                        <select className="form-select" style={{ width:150 }} value={r.estado_semaforo || 'verde'}
+                          disabled={repoActualizando === r.id_repositorio}
+                          onChange={e => cambiarSemaforo(r, e.target.value)}>
+                          <option value="verde">🟢 Cumple</option>
+                          <option value="amarillo">🟡 Observación</option>
+                          <option value="rojo">🔴 Incumplimiento</option>
+                        </select>
+                        <button className="btn btn-secondary btn-sm" disabled={repoActualizando === r.id_repositorio}
+                          onClick={() => toggleRepoActivo(r)}>
+                          {r.activo === 0 ? 'Habilitar' : 'Deshabilitar'}
+                        </button>
+                      </>
+                    )}
+                    <a href={r.url_github} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
+                      Abrir ↗
+                    </a>
+                  </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
         {/* ─────── REUNIONES (NUEVO) ────────────────── */}
         {tab === 'Reuniones' && (
           <div>
-            {canEdit && (
+            {canCreate && (
               <div style={{ marginBottom:16 }}>
                 <button className="btn btn-primary" onClick={() => { setFormReunion({titulo:'',descripcion:'',fecha_reunion:'',lugar:''}); setSaveError(''); setModalReunion(true); }}>
                   + Programar reunión
@@ -776,6 +924,22 @@ export default function ProyectoDetallePage() {
           <label className="form-label">Rol en el proyecto</label>
           <input className="form-input" placeholder="Ej: Líder técnico" value={formEquip.rol_en_equipo}
             onChange={e=>setFormEquip({...formEquip,rol_en_equipo:e.target.value})} />
+        </div>
+      </FormModal>
+
+      {/* ─── Modal Solicitar baja de equipo (NUEVO) ──── */}
+      <FormModal
+        open={!!modalSolicitarBaja} title={`Solicitar baja de ${modalSolicitarBaja?.nombre_usuario || ''}`}
+        onClose={() => setModalSolicitarBaja(null)}
+        onSubmit={solicitarBaja} saving={enviandoBaja} error={saveError}
+      >
+        <p style={{ fontSize:13, color:'var(--slate-600)', marginBottom:8 }}>
+          Esto no elimina al aprendiz de inmediato — se envía como solicitud para que un administrador la apruebe o la rechace.
+        </p>
+        <div className="form-group">
+          <label className="form-label">Motivo (opcional)</label>
+          <textarea className="form-textarea" placeholder="Ej: bajo desempeño, falta de comunicación con el equipo…"
+            value={motivoBaja} onChange={e=>setMotivoBaja(e.target.value)} />
         </div>
       </FormModal>
 

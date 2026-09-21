@@ -75,7 +75,12 @@ export const proyectosService = {
 export const equiposService = {
   getByProyecto: (idProy)  => api.get(`/equipos/${idProy}`),
   create:        (data)    => api.post('/equipos', data),
-  remove:        (id)      => api.delete(`/equipos/${id}`),
+  // CORREGIDO: ahora acepta un motivo — si quien llama es Instructor, el
+  // backend crea una solicitud en vez de borrar directo (202, no 200).
+  remove:        (id, motivo) => api.delete(`/equipos/${id}`, { data: { motivo } }),
+  // NUEVO — solo Administrador: gestión de solicitudes de eliminación.
+  listSolicitudes:    (estado = 'Pendiente') => api.get('/equipos/solicitudes/listar', { params: { estado } }),
+  resolverSolicitud:  (id, aprobar, observacion_admin) => api.put(`/equipos/solicitudes/${id}/resolver`, { aprobar, observacion_admin }),
 };
 
 // ── Fases ─────────────────────────────────────────────
@@ -97,6 +102,8 @@ export const entregablesService = {
 // ── Tareas ────────────────────────────────────────────
 export const tareasService = {
   getByProyecto: (idProy)  => api.get(`/tareas/${idProy}`),
+  // NUEVO — Administrador/Instructor: listado global con filtros.
+  getAllAdmin: (params = {}) => api.get('/tareas', { params }),
   create:        (data)    => api.post('/tareas', data),
   update:        (id, data)=> api.put(`/tareas/${id}`, data),
   remove:        (id)      => api.delete(`/tareas/${id}`),
@@ -113,6 +120,8 @@ export const notificacionesService = {
   getByUsuario:     (idUsr)  => api.get(`/notificaciones/${idUsr}`),
   marcarLeida:      (id)     => api.put(`/notificaciones/${id}`),
   marcarTodasLeidas:(idUsr)  => api.put(`/notificaciones/leer-todas/${idUsr}`),
+  // NUEVO — solo Administrador: notificar a un usuario puntual o a un rol completo.
+  broadcast: (data) => api.post('/notificaciones/broadcast', data),
 };
 
 // ── Repositorios ──────────────────────────────────────
@@ -120,12 +129,17 @@ export const repositoriosService = {
   getByProyecto: (idProy)  => api.get(`/repositorios/${idProy}`),
   create:        (data)    => api.post('/repositorios', data),
   update:        (id, data)=> api.put(`/repositorios/${id}`, data),
+  // NUEVO — solo Administrador: habilitar/deshabilitar y semáforo.
+  toggleEstado: (id, activo) => api.put(`/repositorios/${id}/estado`, { activo }),
+  setSemaforo:  (id, estado_semaforo, observacion) => api.put(`/repositorios/${id}/semaforo`, { estado_semaforo, observacion }),
 };
 
 // ── Historial ─────────────────────────────────────────
 export const historialService = {
-  getAll:     ()       => api.get('/historial'),
+  getAll:     (params = {}) => api.get('/historial', { params }),
   getByTabla: (tabla)  => api.get(`/historial/${tabla}`),
+  // NUEVO — solo Administrador: dashboard consolidado.
+  getEstadisticas: () => api.get('/historial/estadisticas/dashboard'),
 };
 
 // ── Comentarios (NUEVO — RN-015) ───────────────────────
@@ -155,6 +169,8 @@ export const archivosService = {
 // ── Evaluaciones (NUEVO — RN-016) ──────────────────────
 export const entregasService = {
   getByTarea: (idTarea) => api.get(`/entregas/tarea/${idTarea}`),
+  // NUEVO — Administrador/Instructor: listado global de supervisión.
+  getAllAdmin: (params = {}) => api.get('/entregas', { params }),
   submit: (idTarea,data) => api.post(`/entregas/tarea/${idTarea}`,data),
   review: (idTarea,data) => api.put(`/entregas/tarea/${idTarea}/revision`,data),
   // NUEVO: sube el binario real de la entrega. Igual que en archivosService,

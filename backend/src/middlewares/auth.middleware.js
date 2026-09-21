@@ -105,9 +105,13 @@ const requireInstructorOwner = (resource='project') => async (req,res,next) => {
 
 // Administrador/instructor responsable: cualquier tarea del proyecto.
 // Aprendiz: únicamente su propia tarea asignada.
+// CORREGIDO: se quita el bypass de Administrador. La sección Tareas del
+// rol Admin es "no crea, solo supervisa y observa" — tampoco edita.
 const requireTaskEditor = async (req,res,next) => {
   try {
-    if (req.user?.rol === 'Administrador') return next();
+    if (req.user?.rol === 'Administrador') {
+      return res.status(403).json({success:false,message:'El administrador solo supervisa las tareas, no puede modificarlas.'});
+    }
 
     const taskId = req.params.id;
     if (!taskId) return res.status(400).json({success:false,message:'Identificador de tarea requerido'});
@@ -136,19 +140,26 @@ const requireTaskEditor = async (req,res,next) => {
   }
 };
 
+// CORREGIDO: se quita el bypass de Administrador — la sección Entregas
+// del rol Admin es "no edita ni crea, solo supervisa". Solo el aprendiz
+// dueño de la tarea puede entregar o corregir su propia entrega.
 const requireTaskOwnerOrAdmin = async (req,res,next) => {
   try {
-    if (req.user?.rol === 'Administrador') return next();
     const [rows] = await db.query('SELECT id_asignado FROM tareas WHERE id_tarea=?', [req.params.id]);
     if (!rows.length) return res.status(404).json({success:false,message:'Tarea no encontrada'});
     if (req.user?.rol === 'Aprendiz' && Number(rows[0].id_asignado) === Number(req.user.id)) return next();
+    if (req.user?.rol === 'Administrador') {
+      return res.status(403).json({success:false,message:'El administrador solo supervisa las entregas, no puede crearlas ni editarlas.'});
+    }
     return res.status(403).json({success:false,message:'Solo el aprendiz asignado puede realizar o corregir esta entrega'});
   } catch (err) { next(err); }
 };
 
+// CORREGIDO: se quita el bypass de Administrador. La sección Entregas del
+// rol Admin es de solo supervisión ("no edita ni crea") — únicamente el
+// instructor responsable puede revisar/calificar una entrega.
 const requireTaskDeliveryReview = async (req,res,next) => {
   try {
-    if (req.user?.rol === 'Administrador') return next();
     if (req.user?.rol !== 'Instructor') return res.status(403).json({success:false,message:'Solo el instructor responsable puede revisar entregas'});
     const [rows] = await db.query('SELECT p.id_proyecto FROM tareas t JOIN proyectos p ON p.id_proyecto=t.id_proyecto WHERE t.id_tarea=? AND p.id_instructor=?',[req.params.id,req.user.id]);
     if (!rows.length) return res.status(403).json({success:false,message:'Solo el instructor responsable puede revisar esta entrega'});

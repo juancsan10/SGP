@@ -1,10 +1,126 @@
+// =====================================================
+// pages/EntregasPage.jsx
+// Aprendiz: entrega/corrige sus tareas (sin cambios).
+// Instructor: revisa/califica entregas (sin cambios).
+// Administrador: solo supervisión de solo lectura, con
+// búsqueda por cc y paginación — ya NO puede revisar,
+// el backend rechaza esa acción para este rol (NUEVO).
+// =====================================================
 import { useEffect, useState } from 'react';
 import { proyectosService, tareasService, entregasService } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import { LoadingCenter, EmptyState, formatFecha } from '../components/helpers.jsx';
+import { LoadingCenter, EmptyState, formatFecha, estadoBadge, Pagination } from '../components/helpers.jsx';
 
 export default function EntregasPage() {
-  const { usuario, esAdmin, esInstructor, esAprendiz } = useAuth();
+  const { esAdmin } = useAuth();
+  return esAdmin ? <EntregasSupervisionAdmin /> : <EntregasOperativas />;
+}
+
+// ── Administrador: solo lectura, listado global (NUEVO) ─────────
+const LIMITE = 10;
+function EntregasSupervisionAdmin() {
+  const [entregas, setEntregas] = useState([]);
+  const [meta, setMeta] = useState({ total: 0, limit: LIMITE, offset: 0 });
+  const [loading, setLoading] = useState(true);
+  const [cc, setCc] = useState('');
+  const [proyecto, setProyecto] = useState('');
+  const [estado, setEstado] = useState('');
+  const [offset, setOffset] = useState(0);
+
+  async function cargar() {
+    setLoading(true);
+    try {
+      const params = { limit: LIMITE, offset };
+      if (cc) params.cc = cc;
+      if (proyecto) params.proyecto = proyecto;
+      if (estado) params.estado = estado;
+      const r = await entregasService.getAllAdmin(params);
+      setEntregas(r.data.data || []);
+      setMeta(r.data.meta || { total: 0, limit: LIMITE, offset: 0 });
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  }
+
+  useEffect(() => { cargar(); }, [offset, estado]); // eslint-disable-line
+  useEffect(() => { setOffset(0); }, [cc, proyecto, estado]);
+  useEffect(() => {
+    const t = setTimeout(() => { if (offset === 0) cargar(); }, 350);
+    return () => clearTimeout(t);
+  }, [cc, proyecto]); // eslint-disable-line
+
+  if (loading && entregas.length === 0) return (
+    <div>
+      <div className="page-header"><div className="page-header-left"><h1 className="page-title">Entregas</h1></div></div>
+      <LoadingCenter />
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="page-header">
+        <div className="page-header-left">
+          <h1 className="page-title">Entregas</h1>
+          <p className="page-subtitle">Supervisión de todos los proyectos · {meta.total} entrega(s)</p>
+        </div>
+      </div>
+      <div className="page-body">
+        <div style={{ display:'flex', gap:12, marginBottom:20, flexWrap:'wrap' }}>
+          <input className="form-input" style={{ maxWidth:220 }} placeholder="🔍  cc aprendiz o instructor…"
+            value={cc} onChange={e => setCc(e.target.value.replace(/[^A-Za-z0-9.-]/g, ''))} />
+          <input className="form-input" style={{ maxWidth:220 }} placeholder="Nombre del proyecto…"
+            value={proyecto} onChange={e => setProyecto(e.target.value)} />
+          <select className="form-select" value={estado} onChange={e=>setEstado(e.target.value)} style={{ maxWidth:190 }}>
+            <option value="">Todos los estados</option>
+            {['Entregada','Requiere corrección','Corregida','En revisión','Aprobada'].map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          {(cc || proyecto || estado) && (
+            <button className="btn btn-ghost" onClick={() => { setCc(''); setProyecto(''); setEstado(''); }}>
+              Limpiar filtros ×
+            </button>
+          )}
+        </div>
+
+        {entregas.length === 0 ? (
+          <EmptyState icon="📤" titulo="Sin entregas" desc="No hay entregas que coincidan con los filtros." />
+        ) : (
+          <>
+            <div className="card">
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Tarea</th><th>Proyecto</th><th>Estado</th>
+                      <th>Aprendiz (cc)</th><th>Instructor (cc)</th><th>Fecha</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {entregas.map(e => (
+                      <tr key={e.id_entrega}>
+                        <td><strong>{e.titulo_tarea}</strong></td>
+                        <td><span className="badge badge-slate">{e.nombre_proyecto}</span></td>
+                        <td>{estadoBadge(e.estado)}</td>
+                        <td style={{ fontSize:12 }}>{e.aprendiz_nombre}<br/><span style={{ color:'var(--slate-500)' }}>{e.cc_aprendiz || '—'}</span></td>
+                        <td style={{ fontSize:12 }}>{e.instructor_nombre}<br/><span style={{ color:'var(--slate-500)' }}>{e.cc_instructor || '—'}</span></td>
+                        <td style={{ fontSize:12 }}>{formatFecha(e.fecha_entrega)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <Pagination total={meta.total} limit={meta.limit} offset={meta.offset} onChange={setOffset} />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Aprendiz / Instructor: flujo operativo existente (sin cambios) ──
+function EntregasOperativas() {
+  const { usuario, esInstructor, esAprendiz } = useAuth();
   const [tareas, setTareas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
@@ -13,7 +129,7 @@ export default function EntregasPage() {
   const [revision, setRevision] = useState({ estado: 'Aprobada', observacion_instructor: '' });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-  const [subiendoArchivo, setSubiendoArchivo] = useState(false); // NUEVO
+  const [subiendoArchivo, setSubiendoArchivo] = useState(false);
 
   async function cargar() {
     setLoading(true);
@@ -83,10 +199,6 @@ export default function EntregasPage() {
     }
   }
 
-  // NUEVO: sube un archivo real (antes "Referencia de archivo" era un
-  // campo de texto donde había que escribir la ruta a mano). El endpoint
-  // /entregas/tarea/:id/upload guarda el binario y registra la entrega
-  // en un solo paso, reutilizando la misma lógica de estados que enviar().
   const TIPOS_PERMITIDOS = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
   const TAMANO_MAXIMO_MB = 10;
 
@@ -127,7 +239,7 @@ export default function EntregasPage() {
       <div className="page-header">
         <div className="page-header-left">
           <h1 className="page-title">Entregas</h1>
-          <p className="page-subtitle">{esAprendiz ? 'Entrega y corrección de tus tareas' : 'Revisión de entregas de los proyectos'}</p>
+          <p className="page-subtitle">{esAprendiz ? 'Entrega y corrección de tus tareas' : 'Revisión de entregas de tus proyectos'}</p>
         </div>
       </div>
       <div className="page-body">
@@ -151,7 +263,7 @@ export default function EntregasPage() {
                         {esAprendiz && Number(t.id_asignado) === Number(usuario?.id_usuario) && (
                           <button className="btn btn-primary btn-sm" onClick={() => abrir(t, 'entrega')}>📤 Entregar / corregir</button>
                         )}
-                        {(esInstructor || esAdmin) && (
+                        {esInstructor && (
                           <button className="btn btn-secondary btn-sm" onClick={() => abrir(t, 'revision')}>🔎 Revisar</button>
                         )}
                       </td>
@@ -190,7 +302,6 @@ export default function EntregasPage() {
                         onChange={e => setForm({ ...form, url_entrega: e.target.value })} placeholder="https://…" />
                     </div>
 
-                    {/* NUEVO: subida real de archivo, reemplaza el campo de texto manual */}
                     <div className="form-group">
                       <label className="form-label">Archivo</label>
                       {form.ruta_archivo && (

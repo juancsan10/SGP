@@ -1,6 +1,9 @@
 // =====================================================
 // pages/NotificacionesPage.jsx
-// Gestión de notificaciones del usuario en sesión
+// Gestión de notificaciones del usuario en sesión.
+// Administrador: además puede crear notificaciones para
+// un usuario puntual o un rol completo, con tipo y
+// prioridad (NUEVO).
 // =====================================================
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -8,9 +11,16 @@ import { notificacionesService } from '../services/api.js';
 import { LoadingCenter, EmptyState } from '../components/helpers.jsx';
 
 export default function NotificacionesPage() {
-  const { usuario } = useAuth();
+  const { usuario, esAdmin } = useAuth();
   const [notifs,  setNotifs]  = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // NUEVO — solo Administrador: crear notificación
+  const [modalCrear, setModalCrear] = useState(false);
+  const [form, setForm] = useState({ titulo: '', mensaje: '', tipo: 'informativo', prioridad: 'Media', rol_destino: 'Aprendiz' });
+  const [enviando, setEnviando] = useState(false);
+  const [errorCrear, setErrorCrear] = useState('');
+  const [okCrear, setOkCrear] = useState('');
 
   async function cargar() {
     try {
@@ -39,13 +49,34 @@ export default function NotificacionesPage() {
     } catch (err) { console.error(err); }
   }
 
+  async function enviarBroadcast(e) {
+    e.preventDefault(); setEnviando(true); setErrorCrear(''); setOkCrear('');
+    try {
+      const r = await notificacionesService.broadcast(form);
+      setOkCrear(r.data.message || 'Notificación enviada');
+      setForm({ titulo: '', mensaje: '', tipo: 'informativo', prioridad: 'Media', rol_destino: 'Aprendiz' });
+      setTimeout(() => { setModalCrear(false); setOkCrear(''); }, 1200);
+      await cargar();
+    } catch (err) {
+      setErrorCrear(err.response?.data?.message || 'No se pudo enviar la notificación');
+    } finally {
+      setEnviando(false);
+    }
+  }
+
   const noLeidas = notifs.filter(n => !n.leida).length;
 
   const tipoIcon = {
     mensaje: '💬',
     tarea:   '✅',
     sistema: '⚙️',
+    mantenimiento: '🛠️',
+    advertencia: '⚠️',
+    informativo: 'ℹ️',
   };
+
+  // NUEVO: semáforo de prioridad
+  const prioridadColor = { Alta: 'var(--red-600)', Media: 'var(--amber-500)', Baja: 'var(--slate-400)' };
 
   if (loading) return (
     <div>
@@ -63,11 +94,18 @@ export default function NotificacionesPage() {
             {noLeidas > 0 ? `${noLeidas} sin leer` : 'Todo leído'}
           </p>
         </div>
-        {noLeidas > 0 && (
-          <button className="btn btn-secondary" onClick={marcarTodasLeidas}>
-            ✓ Marcar todas como leídas
-          </button>
-        )}
+        <div className="page-header-right" style={{ display:'flex', gap:10 }}>
+          {esAdmin && (
+            <button className="btn btn-primary" onClick={() => { setErrorCrear(''); setOkCrear(''); setModalCrear(true); }}>
+              + Nueva notificación
+            </button>
+          )}
+          {noLeidas > 0 && (
+            <button className="btn btn-secondary" onClick={marcarTodasLeidas}>
+              ✓ Marcar todas como leídas
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="page-body">
@@ -84,15 +122,20 @@ export default function NotificacionesPage() {
                 key={n.id_notificacion}
                 className="card"
                 style={{
-                  borderLeft: n.leida ? undefined : '3px solid var(--green-500)',
+                  borderLeft: `3px solid ${n.leida ? 'transparent' : (prioridadColor[n.prioridad] || 'var(--green-500)')}`,
                   background: n.leida ? 'var(--white)' : 'var(--green-50)',
                 }}
               >
                 <div style={{ padding:'14px 18px', display:'flex', alignItems:'center', gap:14 }}>
                   <div style={{ fontSize:24 }}>{tipoIcon[n.tipo] || '🔔'}</div>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontWeight: n.leida ? 500 : 700, fontSize:14, color:'var(--slate-900)', marginBottom:2 }}>
-                      {n.titulo}
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:2 }}>
+                      <span style={{ fontWeight: n.leida ? 500 : 700, fontSize:14, color:'var(--slate-900)' }}>
+                        {n.titulo}
+                      </span>
+                      {n.prioridad && n.prioridad !== 'Media' && (
+                        <span className={`badge ${n.prioridad === 'Alta' ? 'badge-red' : 'badge-slate'}`}>{n.prioridad}</span>
+                      )}
                     </div>
                     {n.mensaje && (
                       <div style={{ fontSize:13, color:'var(--slate-600)' }}>{n.mensaje}</div>
@@ -116,6 +159,73 @@ export default function NotificacionesPage() {
           </div>
         )}
       </div>
+
+      {/* NUEVO — solo Administrador: crear notificación para un rol o usuario */}
+      {modalCrear && (
+        <div className="modal-overlay" onClick={() => setModalCrear(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-title">Nueva notificación</span>
+              <button className="modal-close" onClick={() => setModalCrear(false)}>×</button>
+            </div>
+            <form onSubmit={enviarBroadcast}>
+              <div className="modal-body">
+                {errorCrear && <div className="alert alert-error">{errorCrear}</div>}
+                {okCrear && <div className="alert alert-success">{okCrear}</div>}
+
+                <div className="form-group">
+                  <label className="form-label">Destinatarios *</label>
+                  <select className="form-select" value={form.rol_destino}
+                    onChange={e => setForm({ ...form, rol_destino: e.target.value })}>
+                    <option value="Aprendiz">Todos los aprendices</option>
+                    <option value="Instructor">Todos los instructores</option>
+                    <option value="Todos">Aprendices e instructores</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Título *</label>
+                  <input className="form-input" value={form.titulo}
+                    onChange={e => setForm({ ...form, titulo: e.target.value })} required maxLength={150} />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Mensaje *</label>
+                  <textarea className="form-textarea" value={form.mensaje}
+                    onChange={e => setForm({ ...form, mensaje: e.target.value })} required />
+                </div>
+
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  <div className="form-group">
+                    <label className="form-label">Tipo</label>
+                    <select className="form-select" value={form.tipo}
+                      onChange={e => setForm({ ...form, tipo: e.target.value })}>
+                      <option value="informativo">ℹ️ Informativo</option>
+                      <option value="mantenimiento">🛠️ Mantenimiento</option>
+                      <option value="advertencia">⚠️ Advertencia (incumplimiento)</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Prioridad</label>
+                    <select className="form-select" value={form.prioridad}
+                      onChange={e => setForm({ ...form, prioridad: e.target.value })}>
+                      <option value="Baja">🟢 Baja</option>
+                      <option value="Media">🟡 Media</option>
+                      <option value="Alta">🔴 Alta</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setModalCrear(false)}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" disabled={enviando}>
+                  {enviando ? 'Enviando…' : 'Enviar notificación'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
