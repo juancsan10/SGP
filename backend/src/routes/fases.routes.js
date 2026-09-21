@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const ctrl = require('../controllers/fases.controller');
-const { verifyToken, requireProjectMember, requireProjectManager } = require('../middlewares/auth.middleware');
+const { verifyToken, requireProjectMember, requireProjectManager, requireInstructorOwner } = require('../middlewares/auth.middleware');
 const { validate } = require('../middlewares/validation.middleware');
 const { idParam, idBody, requiredText, optionalText, requiredDate, optionalDate, progress } = require('../validators/common.validators');
 
-router.post('/', verifyToken, requireProjectManager('project-direct'), [
+router.post('/', verifyToken, requireInstructorOwner('project-direct'), [
   requiredText('nombre_fase', 100),
   optionalText('descripcion', 5000),
   optionalDate('fecha_inicio'),

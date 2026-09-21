@@ -72,4 +72,50 @@ const review = async (req,res) => {
     return res.json({success:true,message:'Revisión de entrega actualizada'});
   } catch(err){ return res.status(500).json({success:false,message:'Error interno del servidor'}); }
 };
-module.exports = { getByTarea, submit, review };
+// GET /api/v1/entregas  (NUEVO — listado global de supervisión)
+// Administrador ve todas las entregas; Instructor solo las de sus
+// proyectos. Solo lectura — ni Admin ni este endpoint editan nada.
+const getAllAdmin = async (req,res) => {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
+    const { cc, estado, proyecto } = req.query;
+
+    const condiciones = [];
+    const params = [];
+    if (req.user.rol === 'Instructor') {
+      condiciones.push('p.id_instructor = ?');
+      params.push(req.user.id);
+    }
+    if (cc) {
+      condiciones.push('(ua.identificacion LIKE ? OR ui.identificacion LIKE ?)');
+      params.push(`%${cc}%`, `%${cc}%`);
+    }
+    if (estado) { condiciones.push('e.estado = ?'); params.push(estado); }
+    if (proyecto) { condiciones.push('p.nombre LIKE ?'); params.push(`%${proyecto}%`); }
+    const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
+
+    const [rows] = await db.query(
+      `SELECT e.*, t.titulo AS titulo_tarea, p.nombre AS nombre_proyecto,
+              CONCAT(ua.nombres,' ',ua.apellidos) AS aprendiz_nombre, ua.identificacion AS cc_aprendiz,
+              CONCAT(ui.nombres,' ',ui.apellidos) AS instructor_nombre, ui.identificacion AS cc_instructor
+       FROM entregas_tareas e
+       JOIN tareas t ON t.id_tarea = e.id_tarea
+       JOIN proyectos p ON p.id_proyecto = t.id_proyecto
+       JOIN usuarios ua ON ua.id_usuario = e.id_aprendiz
+       JOIN usuarios ui ON ui.id_usuario = p.id_instructor
+       ${where}
+       ORDER BY e.fecha_entrega DESC LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) AS total FROM entregas_tareas e JOIN tareas t ON t.id_tarea=e.id_tarea
+       JOIN proyectos p ON p.id_proyecto=t.id_proyecto JOIN usuarios ua ON ua.id_usuario=e.id_aprendiz
+       JOIN usuarios ui ON ui.id_usuario=p.id_instructor ${where}`,
+      params
+    );
+    return res.json({success:true,data:rows,meta:{total,limit,offset}});
+  } catch(err){ return res.status(500).json({success:false,message:err.message}); }
+};
+
+module.exports = { getByTarea, getAllAdmin, submit, review };

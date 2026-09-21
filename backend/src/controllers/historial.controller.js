@@ -17,18 +17,99 @@ const getByTabla = async (req, res) => {
 };
 
 // GET /api/v1/historial
+// NUEVO: filtros completos (tabla, acción, usuario, rango de fechas,
+// búsqueda de texto) + paginación real — antes solo traía los últimos 200
+// registros sin forma de acotar la búsqueda.
 const getAll = async (req, res) => {
-  try { const limit=Math.min(Math.max(Number(req.query.limit)||50,1),100); const offset=Math.max(Number(req.query.offset)||0,0);
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
+    const { tabla, accion, id_usuario, fecha_desde, fecha_hasta, q } = req.query;
+
+    const condiciones = [];
+    const params = [];
+    if (tabla) { condiciones.push('h.tabla_afectada = ?'); params.push(tabla); }
+    if (accion) { condiciones.push('h.accion LIKE ?'); params.push(`%${accion}%`); }
+    if (id_usuario) { condiciones.push('h.id_usuario = ?'); params.push(id_usuario); }
+    if (fecha_desde) { condiciones.push('h.fecha_cambio >= ?'); params.push(fecha_desde); }
+    if (fecha_hasta) { condiciones.push('h.fecha_cambio <= ?'); params.push(fecha_hasta); }
+    if (q) {
+      condiciones.push('(h.tabla_afectada LIKE ? OR h.accion LIKE ? OR CONCAT(u.nombres," ",u.apellidos) LIKE ?)');
+      const like = `%${q}%`;
+      params.push(like, like, like);
+    }
+    const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
+
     const [rows] = await db.query(
       `SELECT h.*, CONCAT(u.nombres, ' ', u.apellidos) AS usuario_nombre
        FROM historial_cambios h
        LEFT JOIN usuarios u ON h.id_usuario = u.id_usuario
-       ORDER BY h.fecha_cambio DESC LIMIT 200`
+       ${where}
+       ORDER BY h.fecha_cambio DESC LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
     );
-    return res.json({ success: true, data: rows });
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) AS total FROM historial_cambios h LEFT JOIN usuarios u ON h.id_usuario = u.id_usuario ${where}`,
+      params
+    );
+    return res.json({ success: true, data: rows, meta: { total, limit, offset } });
   } catch (err) {
     console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
-module.exports = { getByTabla, getAll };
+// GET /api/v1/historial/estadisticas/dashboard  (NUEVO — solo Administrador)
+// Panel consolidado: totales del sistema + desglose de actividad reciente.
+const estadisticas = async (req, res) => {
+  try {
+    const [[totales]] = await db.query(`
+      SELECT
+        (SELECT COUNT(*) FROM usuarios) AS total_usuarios,
+        (SELECT COUNT(*) FROM usuarios WHERE estado = 1) AS usuarios_activos,
+        (SELECT COUNT(*) FROM usuarios WHERE estado = 0) AS usuarios_inactivos,
+        (SELECT COUNT(*) FROM usuarios u JOIN roles r ON r.id_rol=u.id_rol WHERE r.nombre_rol='Aprendiz') AS total_aprendices,
+        (SELECT COUNT(*) FROM usuarios u JOIN roles r ON r.id_rol=u.id_rol WHERE r.nombre_rol='Instructor') AS total_instructores,
+        (SELECT COUNT(*) FROM proyectos) AS total_proyectos,
+        (SELECT COUNT(*) FROM proyectos WHERE estado='Activo') AS proyectos_activos,
+        (SELECT COUNT(*) FROM proyectos WHERE estado='Finalizado') AS proyectos_finalizados,
+        (SELECT COUNT(*) FROM tareas) AS total_tareas,
+        (SELECT COUNT(*) FROM tareas WHERE estado='Completada') AS tareas_completadas,
+        (SELECT COUNT(*) FROM entregas_tareas WHERE estado='Aprobada') AS entregas_aprobadas,
+        (SELECT COUNT(*) FROM entregas_tareas WHERE estado='Requiere corrección') AS entregas_con_correccion,
+        (SELECT COUNT(*) FROM solicitudes_equipo WHERE estado='Pendiente') AS solicitudes_pendientes,
+        (SELECT COUNT(*) FROM repositorios WHERE estado_semaforo != 'verde') AS repositorios_con_alerta,
+        (SELECT COUNT(*) FROM historial_cambios) AS total_cambios_registrados
+    `);
+
+    const [porTabla] = await db.query(`
+      SELECT tabla_afectada, COUNT(*) AS total FROM historial_cambios
+      GROUP BY tabla_afectada ORDER BY total DESC LIMIT 10
+    `);
+
+    const [porAccion] = await db.query(`
+      SELECT accion, COUNT(*) AS total FROM historial_cambios
+      GROUP BY accion ORDER BY total DESC LIMIT 10
+    `);
+
+    const [actividadReciente] = await db.query(`
+      SELECT DATE(fecha_cambio) AS fecha, COUNT(*) AS total FROM historial_cambios
+      WHERE fecha_cambio >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+      GROUP BY DATE(fecha_cambio) ORDER BY fecha ASC
+    `);
+
+    const [usuariosMasActivos] = await db.query(`
+      SELECT CONCAT(u.nombres,' ',u.apellidos) AS usuario, r.nombre_rol AS rol, COUNT(*) AS total_acciones
+      FROM historial_cambios h JOIN usuarios u ON u.id_usuario = h.id_usuario JOIN roles r ON r.id_rol = u.id_rol
+      GROUP BY h.id_usuario ORDER BY total_acciones DESC LIMIT 10
+    `);
+
+    return res.json({
+      success: true,
+      data: { totales, porTabla, porAccion, actividadReciente, usuariosMasActivos },
+    });
+  } catch (err) {
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+};
+
+module.exports = { getByTabla, getAll, estadisticas };

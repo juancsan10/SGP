@@ -57,6 +57,54 @@ const create = async (req, res) => {
   }
 };
 
+// GET /api/v1/tareas  (NUEVO — listado global para Administrador/Instructor)
+// Muestra la identificación (cc) tanto del aprendiz asignado como del
+// instructor responsable del proyecto, con filtros de búsqueda.
+const getAllAdmin = async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
+    const { cc, proyecto, estado, prioridad } = req.query;
+
+    const condiciones = [];
+    const params = [];
+    // Si es Instructor, solo ve las tareas de SUS proyectos (Admin ve todo).
+    if (req.user.rol === 'Instructor') {
+      condiciones.push('p.id_instructor = ?');
+      params.push(req.user.id);
+    }
+    if (cc) {
+      condiciones.push('(ua.identificacion LIKE ? OR ui.identificacion LIKE ?)');
+      params.push(`%${cc}%`, `%${cc}%`);
+    }
+    if (proyecto) { condiciones.push('p.nombre LIKE ?'); params.push(`%${proyecto}%`); }
+    if (estado) { condiciones.push('t.estado = ?'); params.push(estado); }
+    if (prioridad) { condiciones.push('t.prioridad = ?'); params.push(prioridad); }
+    const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
+
+    const [rows] = await db.query(
+      `SELECT t.*, p.nombre AS nombre_proyecto,
+              CONCAT(ua.nombres,' ',ua.apellidos) AS asignado_nombre, ua.identificacion AS cc_aprendiz,
+              CONCAT(ui.nombres,' ',ui.apellidos) AS instructor_nombre, ui.identificacion AS cc_instructor
+       FROM tareas t
+       JOIN proyectos p ON p.id_proyecto = t.id_proyecto
+       JOIN usuarios ua ON ua.id_usuario = t.id_asignado
+       JOIN usuarios ui ON ui.id_usuario = p.id_instructor
+       ${where}
+       ORDER BY t.fecha_vencimiento ASC LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) AS total FROM tareas t JOIN proyectos p ON p.id_proyecto=t.id_proyecto
+       JOIN usuarios ua ON ua.id_usuario=t.id_asignado JOIN usuarios ui ON ui.id_usuario=p.id_instructor ${where}`,
+      params
+    );
+    return res.json({ success: true, data: rows, meta: { total, limit, offset } });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // GET /api/v1/tareas/:id_proyecto
 const getByProyecto = async (req, res) => {
   try {
@@ -134,4 +182,4 @@ const remove = async (req, res) => {
   }
 };
 
-module.exports = { create, getByProyecto, update, remove };
+module.exports = { create, getByProyecto, getAllAdmin, update, remove };

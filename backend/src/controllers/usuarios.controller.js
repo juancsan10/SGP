@@ -3,15 +3,36 @@ const bcrypt = require('bcryptjs');
 const { registrarCambio } = require('../services/historial.service');
 
 // GET /api/v1/usuarios
+// NUEVO: filtros por rol, estado y búsqueda de texto (nombre, apellido,
+// identificación o correo) — antes solo soportaba paginación simple.
 const getAll = async (req, res) => {
   try {
     const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
+    const { rol, estado, q } = req.query;
+
+    const condiciones = [];
+    const params = [];
+    if (rol) { condiciones.push('r.nombre_rol = ?'); params.push(rol); }
+    if (estado !== undefined && estado !== '') { condiciones.push('u.estado = ?'); params.push(estado === 'true' || estado === '1' ? 1 : 0); }
+    if (q) {
+      condiciones.push('(u.nombres LIKE ? OR u.apellidos LIKE ? OR u.identificacion LIKE ? OR u.correo LIKE ?)');
+      const like = `%${q}%`;
+      params.push(like, like, like, like);
+    }
+    const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
+
     const [rows] = await db.query(
       `SELECT u.id_usuario, u.nombres, u.apellidos, u.identificacion, u.correo, u.ficha, u.programa_formacion, u.estado, u.fecha_registro, r.nombre_rol AS rol
-       FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol ORDER BY u.fecha_registro DESC LIMIT ? OFFSET ?`, [limit, offset]
+       FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol ${where}
+       ORDER BY u.fecha_registro DESC LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
     );
-    return res.json({ success: true, data: rows });
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) AS total FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol ${where}`,
+      params
+    );
+    return res.json({ success: true, data: rows, meta: { total, limit, offset } });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
@@ -32,15 +53,31 @@ const getById = async (req, res) => {
   }
 };
 
-// PUT /api/v1/usuarios/:id
-const searchAprendizByIdentificacion = async (req,res) => {
+// GET /api/v1/usuarios/buscar?identificacion=...&rol=...
+// CORREGIDO: antes solo buscaba Aprendices (searchAprendizByIdentificacion).
+// Ahora busca en cualquier rol — Aprendiz, Instructor o Administrador —
+// opcionalmente filtrado por rol si se indica.
+const buscarPorIdentificacion = async (req, res) => {
   try {
     const identificacion = String(req.query.identificacion || '').trim();
-    if (!identificacion || !/^[A-Za-z0-9.-]{4,30}$/.test(identificacion)) return res.status(400).json({success:false,message:'Identificación inválida'});
-    const [rows] = await db.query(`SELECT u.id_usuario,u.nombres,u.apellidos,u.identificacion,u.correo,u.ficha,u.programa_formacion,u.estado,r.nombre_rol AS rol FROM usuarios u JOIN roles r ON u.id_rol=r.id_rol WHERE u.id_rol=3 AND u.estado=1 AND u.identificacion=?`,[identificacion]);
-    if (!rows.length) return res.status(404).json({success:false,message:'No se encontró un aprendiz activo con esa identificación'});
-    return res.json({success:true,data:rows[0]});
-  } catch(err) { return res.status(500).json({success:false,message:'Error interno del servidor'}); }
+    const rol = req.query.rol;
+    if (!identificacion || !/^[A-Za-z0-9.-]{4,30}$/.test(identificacion)) {
+      return res.status(400).json({ success: false, message: 'Identificación inválida' });
+    }
+    const condiciones = ['u.identificacion = ?'];
+    const params = [identificacion];
+    if (rol) { condiciones.push('r.nombre_rol = ?'); params.push(rol); }
+
+    const [rows] = await db.query(
+      `SELECT u.id_usuario, u.nombres, u.apellidos, u.identificacion, u.correo, u.ficha, u.programa_formacion, u.estado, r.nombre_rol AS rol
+       FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol WHERE ${condiciones.join(' AND ')}`,
+      params
+    );
+    if (!rows.length) return res.status(404).json({ success: false, message: 'No se encontró un usuario con esa identificación' });
+    return res.json({ success: true, data: rows[0] });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
 };
 
 const update = async (req, res) => {
@@ -61,7 +98,7 @@ const update = async (req, res) => {
   }
 };
 
-// DELETE /api/v1/usuarios/:id  — desactivación lógica (RN-007)
+// DELETE /api/v1/usuarios/:id — desactivación lógica (RN-007)
 const remove = async (req, res) => {
   try {
     const [result] = await db.query(
@@ -76,6 +113,48 @@ const remove = async (req, res) => {
   }
 };
 
+// PUT /api/v1/usuarios/:id/activar  (NUEVO)
+// Reactiva a un usuario previamente desactivado.
+const activar = async (req, res) => {
+  try {
+    const [result] = await db.query(`UPDATE usuarios SET estado = 1 WHERE id_usuario = ?`, [req.params.id]);
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    await registrarCambio('usuarios', req.params.id, 'ACTIVAR', req.user?.id);
+    return res.json({ success: true, message: 'Usuario activado' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+};
+
+// DELETE /api/v1/usuarios/:id/permanente  (NUEVO)
+// Eliminación física. Se bloquea si el usuario tiene registros
+// dependientes (proyectos como instructor, tareas asignadas, membresías
+// de equipo) para no romper la integridad referencial ni el historial —
+// en ese caso, la vía correcta sigue siendo desactivar.
+const eliminarPermanente = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const [[usuario]] = await db.query('SELECT id_usuario, estado FROM usuarios WHERE id_usuario = ?', [id]);
+    if (!usuario) return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+
+    const [[{ total: proyectos }]] = await db.query('SELECT COUNT(*) AS total FROM proyectos WHERE id_instructor = ?', [id]);
+    const [[{ total: tareas }]] = await db.query('SELECT COUNT(*) AS total FROM tareas WHERE id_asignado = ?', [id]);
+    const [[{ total: equipos }]] = await db.query('SELECT COUNT(*) AS total FROM equipos_proyecto WHERE id_usuario = ?', [id]);
+
+    if (proyectos > 0 || tareas > 0 || equipos > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `No se puede eliminar de forma permanente: tiene ${proyectos} proyecto(s), ${tareas} tarea(s) y ${equipos} membresía(s) de equipo asociadas. Desactívalo en su lugar.`,
+      });
+    }
+
+    await db.query('DELETE FROM usuarios WHERE id_usuario = ?', [id]);
+    await registrarCambio('usuarios', id, 'DELETE_PERMANENTE', req.user?.id);
+    return res.json({ success: true, message: 'Usuario eliminado permanentemente' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+};
 
 const changePassword = async (req,res) => {
   try {
@@ -88,4 +167,5 @@ const changePassword = async (req,res) => {
     res.json({success:true,message:'Contraseña actualizada'});
   } catch(err){console.error(err);res.status(500).json({success:false,message:'Error interno del servidor'});}
 };
-module.exports = { getAll, getById, searchAprendizByIdentificacion, update, remove, changePassword };
+
+module.exports = { getAll, getById, buscarPorIdentificacion, update, remove, activar, eliminarPermanente, changePassword };

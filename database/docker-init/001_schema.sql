@@ -147,6 +147,7 @@ CREATE TABLE notificaciones (
     titulo VARCHAR(150),
     mensaje TEXT,
     tipo VARCHAR(50),
+    prioridad VARCHAR(20) DEFAULT 'Media',
     leida BOOLEAN DEFAULT FALSE,
     fecha_envio DATETIME DEFAULT CURRENT_TIMESTAMP,
     id_usuario INT NOT NULL,
@@ -160,9 +161,35 @@ CREATE TABLE repositorios (
     id_repositorio INT AUTO_INCREMENT PRIMARY KEY,
     url_github VARCHAR(255) NOT NULL,
     rama_principal VARCHAR(100),
+    activo BOOLEAN DEFAULT TRUE,
+    estado_semaforo VARCHAR(20) DEFAULT 'verde',
     ultima_actualizacion DATETIME,
     id_proyecto INT NOT NULL,
     FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto)
+);
+
+-- ============================================
+-- TABLA SOLICITUDES_EQUIPO
+-- Un instructor no elimina directamente a un aprendiz del equipo;
+-- crea una solicitud que un Administrador debe aprobar o rechazar.
+-- ============================================
+CREATE TABLE solicitudes_equipo (
+    id_solicitud INT AUTO_INCREMENT PRIMARY KEY,
+    id_equipo INT NULL,
+    id_proyecto INT NOT NULL,
+    id_usuario_afectado INT NOT NULL,
+    motivo TEXT,
+    estado VARCHAR(20) NOT NULL DEFAULT 'Pendiente',
+    id_instructor_solicita INT NOT NULL,
+    id_admin_resuelve INT NULL,
+    observacion_admin TEXT,
+    fecha_solicitud DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fecha_resolucion DATETIME NULL,
+    FOREIGN KEY (id_equipo) REFERENCES equipos_proyecto(id_equipo) ON DELETE SET NULL,
+    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto),
+    FOREIGN KEY (id_usuario_afectado) REFERENCES usuarios(id_usuario),
+    FOREIGN KEY (id_instructor_solicita) REFERENCES usuarios(id_usuario),
+    FOREIGN KEY (id_admin_resuelve) REFERENCES usuarios(id_usuario)
 );
 
 -- ============================================

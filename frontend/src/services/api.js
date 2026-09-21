@@ -43,15 +43,23 @@ export default api;
 export const authService = {
   login:    (data) => api.post('/auth/login', data),
   register: (data) => api.post('/auth/register', data),
+  // NUEVO: Administrador crea cuentas de Instructor o Administrador.
+  createUser: (data) => api.post('/auth/users', data),
 };
 
 // ── Usuarios ──────────────────────────────────────────
 export const usuariosService = {
-  getAll:   ()         => api.get('/usuarios'),
+  // NUEVO: soporta filtros de servidor (rol, estado, q) y paginación.
+  getAll:   (params={}) => api.get('/usuarios', { params }),
   getById:  (id)       => api.get(`/usuarios/${id}`),
-  searchAprendiz: (identificacion) => api.get('/usuarios/aprendices/buscar', { params: { identificacion } }),
+  // CORREGIDO: antes solo buscaba Aprendices ("/usuarios/aprendices/buscar").
+  // Ahora busca en cualquier rol, opcionalmente filtrado con { rol }.
+  buscarPorIdentificacion: (identificacion, rol) => api.get('/usuarios/buscar', { params: { identificacion, rol } }),
   update:   (id, data) => api.put(`/usuarios/${id}`, data),
-  remove:   (id)       => api.delete(`/usuarios/${id}`),
+  remove:   (id)       => api.delete(`/usuarios/${id}`), // desactivar (soft)
+  // NUEVO
+  activar:  (id)       => api.put(`/usuarios/${id}/activar`),
+  eliminarPermanente: (id) => api.delete(`/usuarios/${id}/permanente`),
 };
 
 // ── Proyectos ─────────────────────────────────────────

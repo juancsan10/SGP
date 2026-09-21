@@ -56,11 +56,15 @@ const resetPassword=async(req,res)=>{
 
 const createUserByAdmin=async(req,res)=>{
  try{
-  const {nombres,apellidos,correo,contrasena,ficha,programa_formacion,id_rol}=req.body;
+  const {nombres,apellidos,correo,contrasena,ficha,programa_formacion,id_rol,identificacion}=req.body;
   if(!nombres||!apellidos||!correo||!contrasena||![1,2].includes(Number(id_rol))) return res.status(400).json({success:false,message:'Datos inválidos. El rol debe ser Administrador (1) o Instructor (2)'});
   const [exists]=await db.query('SELECT id_usuario FROM usuarios WHERE correo=?',[correo]); if(exists.length) return res.status(400).json({success:false,message:'El correo ya está registrado'});
+  if(identificacion){
+    const [existeCc]=await db.query('SELECT id_usuario FROM usuarios WHERE identificacion=?',[identificacion]);
+    if(existeCc.length) return res.status(400).json({success:false,message:'Ya existe un usuario con esa identificación'});
+  }
   const hash=await bcrypt.hash(contrasena,10);
-  const [r]=await db.query('INSERT INTO usuarios (nombres,apellidos,correo,contrasena,ficha,programa_formacion,id_rol) VALUES (?,?,?,?,?,?,?)',[nombres,apellidos,correo,hash,ficha||null,programa_formacion||null,id_rol]);
+  const [r]=await db.query('INSERT INTO usuarios (nombres,apellidos,correo,contrasena,ficha,programa_formacion,id_rol,identificacion) VALUES (?,?,?,?,?,?,?,?)',[nombres,apellidos,correo,hash,ficha||null,programa_formacion||null,id_rol,identificacion||null]);
   res.status(201).json({success:true,message:'Usuario creado',data:{id_usuario:r.insertId}});
  }catch(err){console.error(err);res.status(500).json({success:false,message:'Error interno del servidor'});}
 };

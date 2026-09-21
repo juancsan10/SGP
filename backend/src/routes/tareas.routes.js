@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const ctrl = require('../controllers/tareas.controller');
-const { verifyToken, requireProjectMember, requireProjectManager, requireTaskEditor, requireRole } = require('../middlewares/auth.middleware');
+const { verifyToken, requireProjectMember, requireProjectManager, requireInstructorOwner, requireTaskEditor, requireRole } = require('../middlewares/auth.middleware');
 const { validate } = require('../middlewares/validation.middleware');
 const { idParam, idBody, requiredText, optionalText, requiredDate, optionalDate, progress } = require('../validators/common.validators');
 
-router.post('/', verifyToken, requireProjectManager('project-direct'), [
+router.post('/', verifyToken, requireInstructorOwner('project-direct'), [
   requiredText('titulo', 150),
   optionalText('descripcion', 5000),
   optionalDate('fecha_inicio'),
@@ -14,6 +14,11 @@ router.post('/', verifyToken, requireProjectManager('project-direct'), [
   idBody('id_proyecto'),
   idBody('id_asignado')
 ], validate, ctrl.create);
+
+// NUEVO — listado global (Administrador ve todo, Instructor ve solo sus
+// proyectos) con filtros por cc, proyecto, estado y prioridad.
+router.get('/', verifyToken, requireRole('Administrador','Instructor'), ctrl.getAllAdmin);
+
 router.get('/:id_proyecto', verifyToken, requireProjectMember('project-direct'), [idParam('id_proyecto')], validate, ctrl.getByProyecto);
 router.put('/:id', verifyToken, requireTaskEditor, [
   idParam('id'),

@@ -1,4 +1,6 @@
 const db = require('../config/db');
+const { registrarCambio } = require('../services/historial.service');
+const { contienePalabraProhibida } = require('../utils/glosario-prohibido');
 
 // POST /api/v1/mensajes
 const create = async (req, res) => {
@@ -8,6 +10,23 @@ const create = async (req, res) => {
 
     if (!contenido || !id_proyecto) {
       return res.status(400).json({ success: false, message: 'contenido e id_proyecto son requeridos' });
+    }
+
+    // NUEVO: filtro de lenguaje inapropiado (Sección Mensajes, punto 6).
+    // El administrador solo observa los mensajes; este filtro es lo que
+    // efectivamente hace cumplir la regla — si el remitente usa una
+    // palabra del glosario, el mensaje se rechaza y se le genera una
+    // alerta (notificación) a quien cometió la infracción.
+    const palabraDetectada = contienePalabraProhibida(contenido);
+    if (palabraDetectada) {
+      await db.query(
+        `INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario) VALUES (?, ?, 'advertencia', 'Alta', ?)`,
+        ['Mensaje bloqueado por lenguaje inapropiado',
+         'Tu mensaje no se envió porque contenía lenguaje no permitido en la plataforma. Recuerda mantener un trato respetuoso con tu equipo.',
+         id_remitente]
+      );
+      await registrarCambio('mensajes', null, 'BLOQUEADO_LENGUAJE_INAPROPIADO', id_remitente);
+      return res.status(400).json({ success: false, message: 'Tu mensaje contiene lenguaje no permitido y no fue enviado. Se generó una alerta en tu cuenta.' });
     }
 
     const [result] = await db.query(

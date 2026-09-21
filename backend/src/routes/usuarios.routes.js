@@ -18,9 +18,15 @@ const passwordValidators = [
 ];
 
 router.get('/',verifyToken,requireRole('Administrador','Instructor'),pagination,validate,ctrl.getAll);
-router.get('/aprendices/buscar',verifyToken,requireRole('Administrador','Instructor'),ctrl.searchAprendizByIdentificacion);
-router.get('/:id',verifyToken,requireSelfOrAdmin,[idParam('id')],validate,ctrl.getById);
-router.put('/:id',verifyToken,requireSelfOrAdmin,[idParam('id'),...profileValidators],validate,ctrl.update);
-router.put('/:id/password',verifyToken,requireSelfOrAdmin,[idParam('id'),...passwordValidators],validate,ctrl.changePassword);
+// CORREGIDO: la ruta ya no es "/aprendices/buscar" — ahora busca en
+// cualquier rol (Aprendiz, Instructor, Administrador), opcionalmente
+// filtrado con ?rol=.
+router.get('/buscar',verifyToken,requireRole('Administrador','Instructor'),ctrl.buscarPorIdentificacion);
+router.get('/:id',verifyToken,requireSelfOrAdmin(),[idParam('id')],validate,ctrl.getById);
+router.put('/:id',verifyToken,requireSelfOrAdmin(),[idParam('id'),...profileValidators],validate,ctrl.update);
+router.put('/:id/password',verifyToken,requireSelfOrAdmin(),[idParam('id'),...passwordValidators],validate,ctrl.changePassword);
+// NUEVO — solo Administrador: reactivar y eliminar permanentemente.
+router.put('/:id/activar',verifyToken,requireRole('Administrador'),[idParam('id')],validate,ctrl.activar);
+router.delete('/:id/permanente',verifyToken,requireRole('Administrador'),[idParam('id')],validate,ctrl.eliminarPermanente);
 router.delete('/:id',verifyToken,requireRole('Administrador'),[idParam('id')],validate,ctrl.remove);
 module.exports=router;

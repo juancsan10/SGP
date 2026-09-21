@@ -50,4 +50,60 @@ const update = async (req, res) => {
   }
 };
 
-module.exports = { create, getByProyecto, update };
+// PUT /api/v1/repositorios/:id/estado  (NUEVO — solo Administrador)
+// Habilita o deshabilita un repositorio sin borrarlo.
+const toggleEstado = async (req, res) => {
+  try {
+    const { activo } = req.body;
+    if (typeof activo !== 'boolean') {
+      return res.status(400).json({ success: false, message: 'activo debe ser true o false' });
+    }
+    const [result] = await db.query(`UPDATE repositorios SET activo = ? WHERE id_repositorio = ?`, [activo, req.params.id]);
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Repositorio no encontrado' });
+    await registrarCambio('repositorios', req.params.id, activo ? 'ACTIVAR' : 'DESACTIVAR', req.user?.id);
+    return res.json({ success: true, message: activo ? 'Repositorio habilitado' : 'Repositorio deshabilitado' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// PUT /api/v1/repositorios/:id/semaforo  (NUEVO — solo Administrador)
+// Marca el cumplimiento de reglas de negocio del repositorio con un
+// semáforo visual: verde (cumple), amarillo (observación), rojo (incumple).
+const ESTADOS_SEMAFORO = ['verde', 'amarillo', 'rojo'];
+const setSemaforo = async (req, res) => {
+  try {
+    const { estado_semaforo, observacion } = req.body;
+    if (!ESTADOS_SEMAFORO.includes(estado_semaforo)) {
+      return res.status(400).json({ success: false, message: `estado_semaforo debe ser uno de: ${ESTADOS_SEMAFORO.join(', ')}` });
+    }
+    const [result] = await db.query(`UPDATE repositorios SET estado_semaforo = ? WHERE id_repositorio = ?`, [estado_semaforo, req.params.id]);
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Repositorio no encontrado' });
+
+    // Si el semáforo pasa a amarillo o rojo, se notifica al instructor
+    // responsable del proyecto (incumplimiento de regla de negocio).
+    if (estado_semaforo !== 'verde') {
+      const [proy] = await db.query(
+        `SELECT p.id_instructor, p.nombre FROM repositorios r JOIN proyectos p ON p.id_proyecto = r.id_proyecto WHERE r.id_repositorio = ?`,
+        [req.params.id]
+      );
+      if (proy.length) {
+        const nivel = estado_semaforo === 'rojo' ? 'incumplimiento grave' : 'observación';
+        await db.query(
+          `INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario) VALUES (?, ?, 'advertencia', ?, ?)`,
+          [`Repositorio marcado en ${estado_semaforo}`,
+           `El repositorio del proyecto "${proy[0].nombre}" fue marcado como ${nivel} por el administrador.${observacion ? ' Observación: ' + observacion : ''}`,
+           estado_semaforo === 'rojo' ? 'Alta' : 'Media',
+           proy[0].id_instructor]
+        );
+      }
+    }
+
+    await registrarCambio('repositorios', req.params.id, 'SEMAFORO_' + estado_semaforo.toUpperCase(), req.user?.id);
+    return res.json({ success: true, message: 'Estado de semáforo actualizado' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { create, getByProyecto, update, toggleEstado, setSemaforo };

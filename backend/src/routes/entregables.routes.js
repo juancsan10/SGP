@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const ctrl = require('../controllers/entregables.controller');
-const { verifyToken, requireProjectMember, requireProjectManager } = require('../middlewares/auth.middleware');
+const { verifyToken, requireProjectMember, requireProjectManager, requireInstructorOwner } = require('../middlewares/auth.middleware');
 const { validate } = require('../middlewares/validation.middleware');
 const { idParam, idBody, requiredText, optionalText, requiredDate, optionalDate } = require('../validators/common.validators');
 
-router.post('/', verifyToken, requireProjectManager('phase'), [
+router.post('/', verifyToken, requireInstructorOwner('phase'), [
   requiredText('nombre', 150),
   optionalText('descripcion', 5000),
   requiredDate('fecha_entrega'),

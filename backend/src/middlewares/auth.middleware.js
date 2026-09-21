@@ -78,6 +78,31 @@ const requireProjectManager = (resource='project') => async (req,res,next) => {
   }
 };
 
+// NUEVO: a diferencia de requireProjectManager, este middleware NO tiene
+// bypass de Administrador — el Admin puede supervisar (GET) pero nunca
+// crear/editar la estructura operativa de un proyecto (fases, entregables,
+// tareas, repositorios, reuniones). Solo el instructor responsable puede.
+const requireInstructorOwner = (resource='project') => async (req,res,next) => {
+  try {
+    if (req.user?.rol !== 'Instructor') {
+      return res.status(403).json({success:false,message:'Solo el instructor responsable puede crear o modificar este recurso. El administrador únicamente supervisa.'});
+    }
+
+    const projectId = await resolveProjectId(req, resource);
+    if (!projectId) return res.status(404).json({success:false,message:'Proyecto o recurso no encontrado'});
+
+    const [rows] = await db.query(
+      'SELECT id_proyecto FROM proyectos WHERE id_proyecto=? AND id_instructor=?',
+      [projectId, req.user.id]
+    );
+
+    if (!rows.length) return res.status(403).json({success:false,message:'Solo el instructor responsable puede administrar este proyecto'});
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
 // Administrador/instructor responsable: cualquier tarea del proyecto.
 // Aprendiz: únicamente su propia tarea asignada.
 const requireTaskEditor = async (req,res,next) => {
@@ -148,8 +173,13 @@ const requireNotificationOwner = async (req,res,next) => {
   }
 };
 
-const requireSelfOrAdmin = (req,res,next) => {
-  if (req.user?.rol === 'Administrador' || req.user?.id === Number(req.params.id)) return next();
+// CORREGIDO: antes comparaba siempre contra req.params.id, así que
+// cualquier ruta que usara un nombre de parámetro distinto (ej.
+// ":id_usuario" en notificaciones.routes.js) quedaba rota — un usuario
+// nunca podía pasar la comparación contra su propio id porque
+// req.params.id era undefined. Ahora acepta el nombre del parámetro.
+const requireSelfOrAdmin = (paramName = 'id') => (req,res,next) => {
+  if (req.user?.rol === 'Administrador' || req.user?.id === Number(req.params[paramName])) return next();
   return res.status(403).json({success:false,message:'Solo puedes modificar tu propia cuenta'});
 };
 
@@ -158,6 +188,7 @@ module.exports = {
   requireRole,
   requireProjectMember,
   requireProjectManager,
+  requireInstructorOwner,
   requireTaskEditor,
   requireTaskOwnerOrAdmin,
   requireTaskDeliveryReview,
