@@ -40,11 +40,13 @@ export default function HistorialPage() {
   // ── Dashboard (NUEVO) ────────────────────────────
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [errorStats, setErrorStats] = useState(''); // NUEVO: aviso visible si falla el dashboard
 
   // ── Listado detallado con filtros de servidor (NUEVO) ─
   const [historial, setHistorial] = useState([]);
   const [meta, setMeta] = useState({ total: 0, limit: LIMITE, offset: 0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(''); // NUEVO: aviso visible si falla la búsqueda
   const [q, setQ] = useState('');
   const [accion, setAccion] = useState('');
   const [tabla, setTabla] = useState('');
@@ -53,12 +55,12 @@ export default function HistorialPage() {
   useEffect(() => {
     historialService.getEstadisticas()
       .then(r => setStats(r.data.data))
-      .catch(console.error)
+      .catch(err => setErrorStats(err.response?.data?.message || 'No se pudieron cargar las estadísticas'))
       .finally(() => setLoadingStats(false));
   }, []);
 
   async function cargar() {
-    setLoading(true);
+    setLoading(true); setError('');
     try {
       const params = { limit: LIMITE, offset };
       if (q) params.q = q;
@@ -67,7 +69,9 @@ export default function HistorialPage() {
       const r = await historialService.getAll(params);
       setHistorial(r.data.data || []);
       setMeta(r.data.meta || { total: 0, limit: LIMITE, offset: 0 });
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      setError(err.response?.data?.message || 'No se pudo cargar el historial');
+    }
     finally { setLoading(false); }
   }
 
@@ -91,7 +95,9 @@ export default function HistorialPage() {
 
       <div className="page-body">
         {/* ── Dashboard consolidado (NUEVO) ──────────── */}
-        {loadingStats ? <LoadingCenter texto="Cargando estadísticas…" /> : stats && (
+        {loadingStats ? <LoadingCenter texto="Cargando estadísticas…" /> : errorStats ? (
+          <div className="alert alert-error" style={{ marginBottom: 20 }}>{errorStats}</div>
+        ) : stats && (
           <>
             <div className="stats-grid">
               <div className="stat-card">
@@ -185,6 +191,9 @@ export default function HistorialPage() {
             </button>
           )}
         </div>
+
+        {/* NUEVO: aviso visible si falla la búsqueda */}
+        {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
         {loading && historial.length === 0 ? <LoadingCenter /> : historial.length === 0 ? (
           <EmptyState icon="📋" titulo="Sin registros" desc="No hay cambios que coincidan." />

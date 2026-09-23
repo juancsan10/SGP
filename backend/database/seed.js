@@ -19,14 +19,7 @@ const DB_CONFIG = {
   password: process.env.DB_PASSWORD || '',
 };
 
-// ── Fechas relativas a "hoy" (NUEVO) ─────────────────
-// ANTES: las fechas de proyectos/fases/entregables/tareas estaban escritas
-// como texto fijo (ej. '2025-01-20'), así que en cuanto pasaba esa fecha,
-// TODO el seed quedaba "vencido" desde el día 1 de cualquier demo nueva.
-// AHORA: se calculan en el momento de correr el seed, relativas a la
-// fecha real del sistema, para que los elementos pendientes/en curso
-// siempre queden coherentes (y el buscador de alertas/calendario tenga
-// algo real que mostrar) sin importar cuándo se ejecute esto.
+// ── Fechas relativas a "hoy" ──────────────────────────
 function fechaRelativa(diasDesdeHoy) {
   const d = new Date();
   d.setDate(d.getDate() + diasDesdeHoy);
@@ -60,7 +53,7 @@ async function seed() {
     // Limpiar tablas en orden inverso de dependencias
     const tablas = [
       'password_reset_tokens', 'entregas_tareas', 'historial_cambios', 'notificaciones', 'mensajes', 'repositorios',
-      'comentarios', 'archivos', 'evaluaciones', 'reuniones', 'github_integration',
+      'comentarios', 'archivos', 'evaluaciones', 'reuniones', 'github_integration', 'solicitudes_equipo',
       'entregables', 'tareas', 'fases_proyecto', 'equipos_proyecto',
       'proyectos', 'usuarios', 'roles',
     ];
@@ -80,10 +73,8 @@ async function seed() {
     console.log('✅  Roles insertados');
 
     // ── USUARIOS ──────────────────────────────────────
-    // NUEVO: nombres, correos e "identificacion" (cédula) realistas en
-    // vez de datos genéricos de prueba (juan@mail.com, "001".."010") —
-    // así el buscador de aprendices por identificación (sección 12-13 del
-    // README) tiene datos reales que encontrar, no una tabla vacía.
+    // AMPLIADO: 3 aprendices más (11-13) para dar más variedad de datos
+    // y demostrar la paginación con volumen real, no apenas 1-2 páginas.
     console.log('🔐  Generando hashes de contraseñas...');
     const hash = await bcrypt.hash('Sena2026*', 10);
     console.log('    Hash generado:', hash);
@@ -101,11 +92,17 @@ async function seed() {
         (7,  'Andrés Felipe',   'Suárez Peña',          'andres.suarez@sgpsena.local',   '1098765004', ?, '2825789', 'Análisis y Desarrollo de Software', 3, 1),
         (8,  'Camila',          'Zapata Bedoya',        'camila.zapata@sgpsena.local',   '1098765005', ?, '2825789', 'Análisis y Desarrollo de Software', 3, 1),
         (9,  'Sebastián',       'Ortiz Muñoz',          'sebastian.ortiz@sgpsena.local', '1098765006', ?, '2825789', 'Análisis y Desarrollo de Software', 3, 1),
-        (10, 'Mariana',         'Restrepo Vélez',       'mariana.restrepo@sgpsena.local','1098765007', ?, '2826150', 'Inteligencia Artificial',  3, 1)
-    `, Array(10).fill(hash));
+        (10, 'Mariana',         'Restrepo Vélez',       'mariana.restrepo@sgpsena.local','1098765007', ?, '2826150', 'Inteligencia Artificial',  3, 1),
+        (11, 'Diego',           'Ramírez Ortiz',        'diego.ramirez@sgpsena.local',   '1098765008', ?, '2826150', 'Inteligencia Artificial',  3, 1),
+        (12, 'Natalia',         'Cárdenas Ruiz',        'natalia.cardenas@sgpsena.local','1098765009', ?, '2827200', 'Análisis y Desarrollo de Software', 3, 1),
+        (13, 'Santiago',        'Molina Vega',          'santiago.molina@sgpsena.local', '1098765010', ?, '2827200', 'Análisis y Desarrollo de Software', 3, 1)
+    `, Array(13).fill(hash));
     console.log('✅  Usuarios insertados (contraseña: Sena2026*)');
 
     // ── PROYECTOS ───────────────────────────────────────
+    // AMPLIADO: 3 proyectos más (5-7), para tener 7 en total — suficiente
+    // para que la paginación de la sección Proyectos (6 por página) se
+    // vea funcionando con datos reales desde el primer arranque.
     await conn.execute(`
       INSERT INTO proyectos
         (id_proyecto, nombre, descripcion, fecha_inicio, fecha_fin, porcentaje_avance, estado, id_instructor)
@@ -121,11 +118,23 @@ async function seed() {
             '${fechaRelativa(-30)}', '${fechaRelativa(120)}', 10.00, 'En Planificación', 3),
         (4, 'E-Learning Platform',
             'Plataforma de aprendizaje en línea para cursos virtuales',
-            '${fechaRelativa(-10)}', '${fechaRelativa(150)}', 0.00, 'En Planificación', 2)
+            '${fechaRelativa(-10)}', '${fechaRelativa(150)}', 0.00, 'En Planificación', 2),
+        (5, 'Sistema de Biblioteca Digital',
+            'Plataforma para gestión de préstamos y catálogo de la biblioteca SENA',
+            '${fechaRelativa(-45)}', '${fechaRelativa(90)}', 45.00, 'Activo', 2),
+        (6, 'Portal de Egresados',
+            'Red de seguimiento y contacto con egresados del SENA',
+            '${fechaRelativa(-20)}', '${fechaRelativa(100)}', 15.00, 'Activo', 3),
+        (7, 'Sistema de Inventario de Laboratorios',
+            'Control de equipos y reservas de los laboratorios de cómputo',
+            '${fechaRelativa(-5)}', '${fechaRelativa(120)}', 5.00, 'En Planificación', 2)
     `);
     console.log('✅  Proyectos insertados');
 
     // ── EQUIPOS ─────────────────────────────────────────
+    // AMPLIADO: equipos para los 3 proyectos nuevos, más 2 aprendices
+    // existentes agregados a un segundo proyecto (dentro del límite de
+    // RN-001: máximo 2 proyectos activos por aprendiz).
     await conn.execute(`
       INSERT INTO equipos_proyecto (id_proyecto, id_usuario, rol_en_equipo) VALUES
       (1, 4,  'Desarrollador Frontend'),
@@ -134,11 +143,17 @@ async function seed() {
       (2, 7,  'Desarrollador Móvil'),
       (2, 8,  'Diseñadora UI/UX'),
       (3, 10, 'Investigadora IA'),
-      (3, 9,  'Desarrollador Python')
+      (3, 9,  'Desarrollador Python'),
+      (5, 11, 'Desarrollador Backend'),
+      (5, 12, 'Desarrolladora Frontend'),
+      (6, 13, 'Desarrollador Full Stack'),
+      (6, 9,  'Analista de Datos'),
+      (7, 6,  'Analista QA')
     `);
     console.log('✅  Equipos insertados');
 
     // ── FASES ────────────────────────────────────────────
+    // AMPLIADO: fases para los proyectos 5, 6 y 7.
     await conn.execute(`
       INSERT INTO fases_proyecto
         (id_fase, nombre_fase, descripcion, fecha_inicio, fecha_fin, porcentaje_avance, id_proyecto)
@@ -160,13 +175,24 @@ async function seed() {
             '${fechaRelativa(-90)}', '${fechaRelativa(-45)}', 80.00, 2),
         (6, 'Desarrollo MVP',
             'Desarrollo del producto mínimo viable',
-            '${fechaRelativa(-44)}', '${fechaRelativa(45)}', 20.00, 2)
+            '${fechaRelativa(-44)}', '${fechaRelativa(45)}', 20.00, 2),
+        (7, 'Análisis y Diseño',
+            'Levantamiento de requerimientos y diseño de base de datos de la biblioteca',
+            '${fechaRelativa(-45)}', '${fechaRelativa(-15)}', 100.00, 5),
+        (8, 'Desarrollo',
+            'Implementación del catálogo y módulo de préstamos',
+            '${fechaRelativa(-14)}', '${fechaRelativa(60)}', 40.00, 5),
+        (9, 'Investigación',
+            'Encuestas y análisis de necesidades de los egresados',
+            '${fechaRelativa(-20)}', '${fechaRelativa(10)}', 60.00, 6),
+        (10, 'Levantamiento de Requerimientos',
+            'Inventario inicial de equipos y necesidades de reserva',
+            '${fechaRelativa(-5)}', '${fechaRelativa(25)}', 10.00, 7)
     `);
     console.log('✅  Fases insertadas');
 
     // ── ENTREGABLES ──────────────────────────────────────
-    // Los ya "Entregado" quedan con fecha pasada; los pendientes/en
-    // revisión quedan en el futuro (y siempre dentro del rango de su fase).
+    // AMPLIADO: entregables de los proyectos nuevos.
     await conn.execute(`
       INSERT INTO entregables
         (nombre, descripcion, fecha_entrega, estado, id_fase)
@@ -179,11 +205,17 @@ async function seed() {
         ('Módulo de Proyectos',          'CRUD de proyectos',          '${fechaRelativa(-30)}',  'Entregado',  3),
         ('Módulo de Tareas',             'Gestión de tareas',          '${fechaRelativa(2)}',    'En Revisión',3),
         ('Plan de Pruebas',              'Casos de prueba unitarias y de integración', '${fechaRelativa(17)}', 'Pendiente', 4),
-        ('Reporte Final de Pruebas',     'Resultados de QA y cobertura de código',     '${fechaRelativa(28)}', 'Pendiente', 4)
+        ('Reporte Final de Pruebas',     'Resultados de QA y cobertura de código',     '${fechaRelativa(28)}', 'Pendiente', 4),
+        ('Documento de requerimientos biblioteca', 'Alcance y funcionalidades del catálogo', '${fechaRelativa(-40)}', 'Entregado', 7),
+        ('Prototipo de catálogo',        'Mockups de búsqueda y préstamo de libros',   '${fechaRelativa(20)}', 'Pendiente', 8),
+        ('Informe de investigación egresados', 'Resultados de la encuesta de seguimiento', '${fechaRelativa(5)}', 'Pendiente', 9)
     `);
     console.log('✅  Entregables insertados');
 
     // ── TAREAS ───────────────────────────────────────────
+    // AMPLIADO: 5 tareas más (11-15) en los proyectos nuevos, para pasar
+    // de 10 a 15 tareas totales — suficiente para que la paginación del
+    // listado global de Tareas (10 por página) muestre 2 páginas reales.
     await conn.execute(`
       INSERT INTO tareas
         (titulo, descripcion, fecha_inicio, fecha_vencimiento, estado, prioridad, porcentaje_avance, id_proyecto, id_asignado)
@@ -197,26 +229,31 @@ async function seed() {
         ('Configurar React Native',          'Setup del proyecto móvil',           '${fechaRelativa(-61)}', '${fechaRelativa(-46)}', 'Completada','Alta',  100.00,2,7),
         ('Módulo de autenticación app',      'Login biométrico y JWT',             '${fechaRelativa(-45)}', '${fechaRelativa(15)}',  'En curso',  'Alta',   50.00,2,7),
         ('Integrar API backend',             'Conectar app con API REST',          '${fechaRelativa(16)}',  '${fechaRelativa(40)}',  'Pendiente', 'Media',   0.00,2,8),
-        ('Investigar modelos de ML',         'Revisar algoritmos recomendación',   '${fechaRelativa(-30)}', '${fechaRelativa(30)}',  'En curso',  'Alta',   40.00,3,10)
+        ('Investigar modelos de ML',         'Revisar algoritmos recomendación',   '${fechaRelativa(-30)}', '${fechaRelativa(30)}',  'En curso',  'Alta',   40.00,3,10),
+        ('Diseñar esquema de base de datos biblioteca', 'Tablas de libros, préstamos y usuarios', '${fechaRelativa(-40)}', '${fechaRelativa(-20)}', 'Completada', 'Alta', 100.00,5,11),
+        ('Implementar catálogo de libros',   'Búsqueda y filtros del catálogo',    '${fechaRelativa(-14)}', '${fechaRelativa(20)}',  'En curso',  'Alta',   55.00,5,12),
+        ('Recopilar datos de egresados',     'Base de datos inicial de contacto',  '${fechaRelativa(-15)}', '${fechaRelativa(10)}',  'Pendiente', 'Media',   0.00,6,13),
+        ('Diseñar encuesta de seguimiento',  'Encuesta de satisfacción laboral',   '${fechaRelativa(-18)}', '${fechaRelativa(5)}',   'En curso',  'Media',  30.00,6,9),
+        ('Inventariar equipos de laboratorio','Levantamiento físico de equipos',   '${fechaRelativa(-5)}',  '${fechaRelativa(25)}',  'Pendiente', 'Baja',    0.00,7,6)
     `);
     console.log('✅  Tareas insertadas');
 
-    // ── ENTREGAS DE TAREAS (NUEVO) ──────────────────────
-    // Ejemplos con los 4 estados del flujo de revisión (sección 11 del
-    // README): Entregada, Requiere corrección, Corregida, Aprobada. Así
-    // el módulo de Entregas se puede probar en vivo sin tener que crear
-    // datos manualmente primero.
+    // ── ENTREGAS DE TAREAS ──────────────────────────────
+    // AMPLIADO: un ejemplo más (tarea 11, biblioteca) para variar los
+    // proyectos representados, no solo Sistema Web SENA.
     await conn.execute(`
       INSERT INTO entregas_tareas
         (id_tarea, id_aprendiz, comentario_aprendiz, url_entrega, estado, observacion_instructor, fecha_revision)
       VALUES
         (1, 4, 'Repositorio creado con la estructura base del proyecto.', 'https://github.com/sena-adso/sistema-web', 'Aprobada', 'Buen trabajo, estructura clara y bien organizada.', NOW()),
         (4, 5, 'Avance del frontend, faltan los últimos 2 componentes.',  NULL, 'Requiere corrección', 'Falta el componente de notificaciones y el responsive en móvil.', NOW()),
-        (8, 7, 'Login con JWT implementado, pendiente biometría.',        NULL, 'Corregida', NULL, NULL)
+        (8, 7, 'Login con JWT implementado, pendiente biometría.',        NULL, 'Corregida', NULL, NULL),
+        (11, 11, 'Esquema de base de datos normalizado a 3FN, incluye índices.', 'https://github.com/sena-adso/biblioteca-digital', 'Aprobada', 'Excelente normalización.', NOW())
     `);
     console.log('✅  Entregas de tareas insertadas');
 
     // ── MENSAJES ─────────────────────────────────────────
+    // AMPLIADO: mensajes en los proyectos nuevos también.
     await conn.execute(`
       INSERT INTO mensajes (contenido, id_remitente, id_proyecto) VALUES
       ('Buenos días equipo, ¿cómo va el avance del módulo de autenticación?', 2, 1),
@@ -226,11 +263,23 @@ async function seed() {
       ('Recuerden la reunión de seguimiento el viernes a las 2pm.',           2, 1),
       ('Confirmado, ahí estaremos.',                                          4, 1),
       ('Equipo app: el prototipo de Figma está aprobado, iniciamos dev.',     3, 2),
-      ('Genial! Ya configuré el proyecto en React Native.',                   7, 2)
+      ('Genial! Ya configuré el proyecto en React Native.',                   7, 2),
+      ('¿Cómo va el esquema de la base de datos de la biblioteca?',           2, 5),
+      ('Ya está listo y aprobado, empiezo con el catálogo esta semana.',      11, 5),
+      ('¿Tenemos ya los primeros resultados de la encuesta de egresados?',    3, 6),
+      ('Vamos en un 30%, la mayoría responde por correo institucional.',      9, 6)
     `);
     console.log('✅  Mensajes insertados');
 
     // ── NOTIFICACIONES ───────────────────────────────────
+    // AMPLIADO — dos partes nuevas:
+    // 1) más notificaciones "de sistema" para los usuarios nuevos.
+    // 2) NOTIFICACIONES CREADAS POR EL ADMINISTRADOR (id_creador=1), para
+    //    que la pestaña "Enviadas por mí" de Notificaciones no aparezca
+    //    vacía la primera vez que un Admin la abre — esto es justo lo que
+    //    el equipo reportó no poder ver. Cada broadcast usa NOW() (o
+    //    DATE_SUB) UNA sola vez por sentencia INSERT, así todas sus filas
+    //    comparten el mismo fecha_envio y se agrupan correctamente.
     await conn.execute(`
       INSERT INTO notificaciones (titulo, mensaje, tipo, leida, id_usuario) VALUES
       ('Nueva tarea asignada',     'Se te asignó: Desarrollar interfaz de usuario', 'tarea',   0, 5),
@@ -239,21 +288,46 @@ async function seed() {
       ('Nueva tarea asignada',     'Se te asignó: Módulo de autenticación app',     'tarea',   0, 7),
       ('Bienvenido al SGP',        'Tu cuenta ha sido activada exitosamente',       'sistema', 1, 4),
       ('Bienvenido al SGP',        'Tu cuenta ha sido activada exitosamente',       'sistema', 1, 5),
-      ('Proyecto actualizado',     'El proyecto App Móvil tiene nuevas tareas',     'sistema', 0, 8)
+      ('Proyecto actualizado',     'El proyecto App Móvil tiene nuevas tareas',     'sistema', 0, 8),
+      ('Nueva tarea asignada',     'Se te asignó: Implementar catálogo de libros',  'tarea',   0, 12),
+      ('Nueva tarea asignada',     'Se te asignó: Recopilar datos de egresados',    'tarea',   0, 13),
+      ('Bienvenido al SGP',        'Tu cuenta ha sido activada exitosamente',       'sistema', 1, 11)
     `);
-    console.log('✅  Notificaciones insertadas');
+
+    // NUEVO: broadcast de ejemplo #1 — a los 2 instructores, con 1 ya leída.
+    await conn.execute(`
+      INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario, id_creador, leida, fecha_envio) VALUES
+      ('Mantenimiento programado del sistema', 'El sistema estará en mantenimiento el sábado de 2am a 4am por actualización de infraestructura.', 'mantenimiento', 'Alta', 2, 1, 1, NOW()),
+      ('Mantenimiento programado del sistema', 'El sistema estará en mantenimiento el sábado de 2am a 4am por actualización de infraestructura.', 'mantenimiento', 'Alta', 3, 1, 0, NOW())
+    `);
+
+    // NUEVO: broadcast de ejemplo #2 — a 5 aprendices, enviado hace 2 días.
+    await conn.execute(`
+      INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario, id_creador, leida, fecha_envio) VALUES
+      ('Recordatorio: actualiza tu información de perfil', 'Verifica que tu ficha y programa de formación estén correctos en tu perfil.', 'informativo', 'Baja', 4, 1, 1, DATE_SUB(NOW(), INTERVAL 2 DAY)),
+      ('Recordatorio: actualiza tu información de perfil', 'Verifica que tu ficha y programa de formación estén correctos en tu perfil.', 'informativo', 'Baja', 5, 1, 1, DATE_SUB(NOW(), INTERVAL 2 DAY)),
+      ('Recordatorio: actualiza tu información de perfil', 'Verifica que tu ficha y programa de formación estén correctos en tu perfil.', 'informativo', 'Baja', 6, 1, 0, DATE_SUB(NOW(), INTERVAL 2 DAY)),
+      ('Recordatorio: actualiza tu información de perfil', 'Verifica que tu ficha y programa de formación estén correctos en tu perfil.', 'informativo', 'Baja', 7, 1, 0, DATE_SUB(NOW(), INTERVAL 2 DAY)),
+      ('Recordatorio: actualiza tu información de perfil', 'Verifica que tu ficha y programa de formación estén correctos en tu perfil.', 'informativo', 'Baja', 8, 1, 0, DATE_SUB(NOW(), INTERVAL 2 DAY))
+    `);
+    console.log('✅  Notificaciones insertadas (incluye 2 envíos de ejemplo del Administrador)');
 
     // ── REPOSITORIOS ─────────────────────────────────────
+    // AMPLIADO: repos para los proyectos nuevos, con semáforo variado
+    // (verde/amarillo/rojo) para que la funcionalidad se vea en acción
+    // desde el primer arranque, sin tener que configurarla a mano.
     await conn.execute(`
-      INSERT INTO repositorios (url_github, rama_principal, ultima_actualizacion, id_proyecto) VALUES
-      ('https://github.com/sena-adso/sistema-web',    'main',    NOW(), 1),
-      ('https://github.com/sena-adso/app-movil',      'develop', NOW(), 2),
-      ('https://github.com/sena-adso/ia-vocacional',  'main',    NOW(), 3)
+      INSERT INTO repositorios (url_github, rama_principal, activo, estado_semaforo, ultima_actualizacion, id_proyecto) VALUES
+      ('https://github.com/sena-adso/sistema-web',    'main',    TRUE, 'verde',    NOW(), 1),
+      ('https://github.com/sena-adso/app-movil',      'develop', TRUE, 'verde',    NOW(), 2),
+      ('https://github.com/sena-adso/ia-vocacional',  'main',    TRUE, 'verde',    NOW(), 3),
+      ('https://github.com/sena-adso/biblioteca-digital', 'main',    TRUE, 'verde',    NOW(), 5),
+      ('https://github.com/sena-adso/portal-egresados',   'develop', TRUE, 'amarillo', NOW(), 6),
+      ('https://github.com/sena-adso/inventario-labs',    'main',    TRUE, 'rojo',     NOW(), 7)
     `);
     console.log('✅  Repositorios insertados');
 
     // ── COMENTARIOS (RN-015) ──────────────────────────────
-    // Nota: id_entregable 1-9 corresponden a los entregables sembrados arriba.
     await conn.execute(`
       INSERT INTO comentarios (contenido, id_usuario, id_entregable) VALUES
       ('Buen trabajo con el documento, solo falta detallar el alcance en la sección 3.', 2, 1),
@@ -265,27 +339,35 @@ async function seed() {
     // ── EVALUACIONES (RN-016) ─────────────────────────────
     // Solo se evalúan entregables de proyectos en estado "En Revisión".
     // Ninguno de los proyectos sembrados está en ese estado todavía, así
-    // que esta tabla queda vacía intencionalmente. Cambia el estado de un
-    // proyecto a "En Revisión" vía PUT /proyectos/:id para probar
-    // POST /evaluaciones.
+    // que esta tabla queda vacía intencionalmente.
 
     // ── REUNIONES ──────────────────────────────────────────
-    // Una histórica (ya ocurrió) y una próxima, para que el Calendario y
-    // la Línea de Tiempo tengan algo pendiente que mostrar.
+    // AMPLIADO: reuniones también para los proyectos nuevos.
     await conn.execute(`
       INSERT INTO reuniones (titulo, descripcion, fecha_reunion, lugar, id_proyecto) VALUES
       ('Seguimiento semanal Sistema Web', 'Revisión de avance del sprint actual', '${fechaHoraRelativa(3, '14:00:00')}', 'Sala virtual - Meet', 1),
-      ('Kickoff App Móvil', 'Reunión inicial de planificación', '${fechaHoraRelativa(-85, '09:00:00')}', 'Bloque 5 - Sala 302', 2)
+      ('Kickoff App Móvil', 'Reunión inicial de planificación', '${fechaHoraRelativa(-85, '09:00:00')}', 'Bloque 5 - Sala 302', 2),
+      ('Kickoff Biblioteca Digital', 'Reunión inicial de planificación del proyecto', '${fechaHoraRelativa(-40, '10:00:00')}', 'Sala virtual - Meet', 5),
+      ('Seguimiento Portal de Egresados', 'Revisión de avance de la encuesta de seguimiento', '${fechaHoraRelativa(5, '15:00:00')}', 'Bloque 3 - Sala 201', 6)
     `);
     console.log('✅  Reuniones insertadas');
 
+    // ── SOLICITUDES DE EQUIPO (NUEVO) ─────────────────────
+    // Una solicitud pendiente de ejemplo, para que el panel de
+    // aprobación del Administrador (en la pestaña Equipo del proyecto 1)
+    // tenga algo real que mostrar desde el primer arranque.
+    await conn.execute(`
+      INSERT INTO solicitudes_equipo (id_equipo, id_proyecto, id_usuario_afectado, motivo, estado, id_instructor_solicita) VALUES
+      (3, 1, 6, 'Bajo desempeño y ausencias reiteradas en las últimas 3 semanas.', 'Pendiente', 2)
+    `);
+    console.log('✅  Solicitud de equipo de ejemplo insertada');
+
     // ── GITHUB_INTEGRATION ─────────────────────────────────
-    // El "token" de ejemplo es un valor ficticio; en un caso real cada
-    // usuario lo genera desde GitHub (Settings > Developer settings > PAT).
     await conn.execute(`
       INSERT INTO github_integration (github_username, github_token, id_usuario) VALUES
       ('carlos-herrera-dev', 'ghp_ejemploFicticioNoUsarEnProduccion01', 4),
-      ('juan-martinez-dev',  'ghp_ejemploFicticioNoUsarEnProduccion02', 5)
+      ('juan-martinez-dev',  'ghp_ejemploFicticioNoUsarEnProduccion02', 5),
+      ('diego-ramirez-dev',  'ghp_ejemploFicticioNoUsarEnProduccion03', 11)
     `);
     console.log('✅  Integraciones de GitHub insertadas');
 
@@ -298,6 +380,12 @@ async function seed() {
     console.log('  👤 miguel.torres@sgpsena.local   → Instructor');
     console.log('  👤 carlos.herrera@sgpsena.local  → Aprendiz (identificación: 1098765001)');
     console.log('  👤 juan.martinez@sgpsena.local   → Aprendiz (identificación: 1098765002)');
+    console.log('  👤 diego.ramirez@sgpsena.local   → Aprendiz (identificación: 1098765008)');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('  📊 13 usuarios · 7 proyectos · 10 fases · 12 entregables');
+    console.log('  📊 15 tareas · 4 entregas · 12 mensajes · 6 repositorios');
+    console.log('  📊 2 envíos de notificaciones del Administrador (pestaña "Enviadas")');
+    console.log('  📊 1 solicitud de equipo pendiente de aprobar (proyecto 1, pestaña Equipo)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   } catch (err) {

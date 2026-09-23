@@ -104,6 +104,8 @@ export const tareasService = {
   getByProyecto: (idProy)  => api.get(`/tareas/${idProy}`),
   // NUEVO — Administrador/Instructor: listado global con filtros.
   getAllAdmin: (params = {}) => api.get('/tareas', { params }),
+  // NUEVO: tareas recientes para el Dashboard (cualquier rol).
+  getRecientes: (limit = 8) => api.get('/tareas/recientes/dashboard', { params: { limit } }),
   create:        (data)    => api.post('/tareas', data),
   update:        (id, data)=> api.put(`/tareas/${id}`, data),
   remove:        (id)      => api.delete(`/tareas/${id}`),
@@ -113,6 +115,11 @@ export const tareasService = {
 export const mensajesService = {
   getByProyecto: (idProy)  => api.get(`/mensajes/${idProy}`),
   create:        (data)    => api.post('/mensajes', data),
+  // NUEVO: editar un mensaje propio.
+  update:        (id, contenido) => api.put(`/mensajes/${id}`, { contenido }),
+  // NUEVO: mensajes recientes para el Dashboard, resueltos por el backend
+  // (no depende de qué proyectos trajo primero /proyectos).
+  getRecientes:  (limit = 8) => api.get('/mensajes/recientes/dashboard', { params: { limit } }),
 };
 
 // ── Notificaciones ────────────────────────────────────
@@ -122,6 +129,8 @@ export const notificacionesService = {
   marcarTodasLeidas:(idUsr)  => api.put(`/notificaciones/leer-todas/${idUsr}`),
   // NUEVO — solo Administrador: notificar a un usuario puntual o a un rol completo.
   broadcast: (data) => api.post('/notificaciones/broadcast', data),
+  // NUEVO — solo Administrador: ver las notificaciones que él mismo creó.
+  getEnviadas: (params = {}) => api.get('/notificaciones/enviadas', { params }),
 };
 
 // ── Repositorios ──────────────────────────────────────

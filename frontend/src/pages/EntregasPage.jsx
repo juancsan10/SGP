@@ -22,13 +22,14 @@ function EntregasSupervisionAdmin() {
   const [entregas, setEntregas] = useState([]);
   const [meta, setMeta] = useState({ total: 0, limit: LIMITE, offset: 0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(''); // NUEVO: aviso visible si falla la carga
   const [cc, setCc] = useState('');
   const [proyecto, setProyecto] = useState('');
   const [estado, setEstado] = useState('');
   const [offset, setOffset] = useState(0);
 
   async function cargar() {
-    setLoading(true);
+    setLoading(true); setError('');
     try {
       const params = { limit: LIMITE, offset };
       if (cc) params.cc = cc;
@@ -37,7 +38,9 @@ function EntregasSupervisionAdmin() {
       const r = await entregasService.getAllAdmin(params);
       setEntregas(r.data.data || []);
       setMeta(r.data.meta || { total: 0, limit: LIMITE, offset: 0 });
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      setError(err.response?.data?.message || 'No se pudieron cargar las entregas');
+    }
     finally { setLoading(false); }
   }
 
@@ -81,6 +84,9 @@ function EntregasSupervisionAdmin() {
             </button>
           )}
         </div>
+
+        {/* NUEVO: aviso visible si falla la carga */}
+        {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
         {entregas.length === 0 ? (
           <EmptyState icon="📤" titulo="Sin entregas" desc="No hay entregas que coincidan con los filtros." />
@@ -314,7 +320,7 @@ function EntregasOperativas() {
                         <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" style={{ display: 'none' }}
                           disabled={subiendoArchivo} onChange={subirArchivo} />
                       </label>
-                      <span style={{ fontSize: 11, color: 'var(--slate-500)', marginLeft: 8 }}>
+                      <span className="form-hint" style={{ display: 'inline-flex', marginLeft: 8 }}>
                         PDF, JPG, PNG o WEBP · máx. 10 MB
                       </span>
                     </div>

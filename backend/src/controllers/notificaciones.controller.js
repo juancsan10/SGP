@@ -59,6 +59,9 @@ const broadcast = async (req, res) => {
     }
     const tipoFinal = TIPOS_VALIDOS.includes(tipo) ? tipo : 'informativo';
     const prioridadFinal = PRIORIDADES_VALIDAS.includes(prioridad) ? prioridad : 'Media';
+    // NUEVO: una sola fecha calculada una vez, compartida por todas las
+    // filas de este envío (ver comentario en el INSERT más abajo).
+    const fechaEnvio = new Date();
 
     let destinatarios = [];
     if (id_usuario) {
@@ -81,8 +84,16 @@ const broadcast = async (req, res) => {
 
     await Promise.all(destinatarios.map(id =>
       db.query(
-        `INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario) VALUES (?, ?, ?, ?, ?)`,
-        [titulo, mensaje, tipoFinal, prioridadFinal, id]
+        // NUEVO: id_creador guarda quién envió el broadcast (antes no se
+        // registraba, así que un Administrador no tenía forma de ver las
+        // notificaciones que él mismo había creado). fecha_envio se pasa
+        // explícita (en vez de dejarla en DEFAULT CURRENT_TIMESTAMP) para
+        // que TODAS las filas de este mismo envío compartan exactamente
+        // el mismo valor — así se pueden agrupar de forma confiable en
+        // getEnviadas() sin depender de que las inserciones caigan en el
+        // mismo segundo por casualidad.
+        `INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario, id_creador, fecha_envio) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [titulo, mensaje, tipoFinal, prioridadFinal, id, req.user.id, fechaEnvio]
       )
     ));
 
@@ -93,4 +104,42 @@ const broadcast = async (req, res) => {
   }
 };
 
-module.exports = { getByUsuario, marcarLeida, marcarTodasLeidas, broadcast };
+// GET /api/v1/notificaciones/enviadas  (NUEVO — solo Administrador)
+// Muestra las notificaciones que el propio Administrador ha creado por
+// broadcast, agrupadas por envío (un broadcast a 10 aprendices genera 10
+// filas en la tabla, pero aquí se ve como UN solo envío con el conteo de
+// destinatarios y cuántos ya la leyeron).
+const getEnviadas = async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
+
+    const [rows] = await db.query(
+      `SELECT MIN(n.id_notificacion) AS id_notificacion, n.titulo, n.mensaje, n.tipo, n.prioridad, n.fecha_envio,
+              COUNT(*) AS total_destinatarios,
+              SUM(n.leida) AS total_leidas,
+              GROUP_CONCAT(DISTINCT CONCAT(u.nombres,' ',u.apellidos) ORDER BY u.nombres SEPARATOR ', ') AS destinatarios
+       FROM notificaciones n
+       JOIN usuarios u ON u.id_usuario = n.id_usuario
+       WHERE n.id_creador = ?
+       GROUP BY n.titulo, n.mensaje, n.tipo, n.prioridad, n.fecha_envio
+       ORDER BY n.fecha_envio DESC
+       LIMIT ? OFFSET ?`,
+      [req.user.id, limit, offset]
+    );
+
+    const [[{ total }]] = await db.query(
+      `SELECT COUNT(*) AS total FROM (
+         SELECT 1 FROM notificaciones WHERE id_creador = ?
+         GROUP BY titulo, mensaje, tipo, prioridad, fecha_envio
+       ) agrupado`,
+      [req.user.id]
+    );
+
+    return res.json({ success: true, data: rows, meta: { total, limit, offset } });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { getByUsuario, marcarLeida, marcarTodasLeidas, broadcast, getEnviadas };

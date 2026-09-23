@@ -12,7 +12,7 @@ import {
   entregablesService, usuariosService,
   comentariosService, archivosService, evaluacionesService, reunionesService, // NUEVOS
 } from '../services/api.js';
-import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha, Pagination } from '../components/helpers.jsx';
+import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha, Pagination, ConfirmModal } from '../components/helpers.jsx';
 
 const LIMITE_ENTREGABLES = 8; // NUEVO: tamaño de página para la pestaña Entregables
 
@@ -49,6 +49,10 @@ export default function ProyectoDetallePage() {
   // ── Mensajes ──────────────────────────────────────
   const [msgTexto,  setMsgTexto]  = useState('');
   const [msgError,  setMsgError]  = useState(''); // NUEVO: muestra el rechazo del glosario de palabras prohibidas
+  const [mensajeEditando, setMensajeEditando] = useState(null); // NUEVO: id del mensaje en edición
+  const [textoEditando,   setTextoEditando]   = useState('');
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [errorEdicion, setErrorEdicion] = useState('');
   const mensajesEndRef = useRef(null);
 
   // ── Modales rápidos ───────────────────────────────
@@ -61,6 +65,9 @@ export default function ProyectoDetallePage() {
   const [modalDetalle,    setModalDetalle]    = useState(false); // NUEVO: comentarios+archivos+evaluación
   const [offsetEntregables, setOffsetEntregables] = useState(0); // NUEVO: paginación de la pestaña Entregables
   const [offsetTareasTab, setOffsetTareasTab] = useState(0); // NUEVO: paginación de la pestaña Tareas
+  const [offsetEquipo, setOffsetEquipo] = useState(0); // NUEVO: paginación de la pestaña Equipo
+  const [offsetRepos, setOffsetRepos] = useState(0); // NUEVO: paginación de la pestaña Repositorios
+  const [offsetReuniones, setOffsetReuniones] = useState(0); // NUEVO: paginación de la pestaña Reuniones
 
   // NUEVO: solicitud de eliminación de equipo (Instructor pide, Admin resuelve)
   const [modalSolicitarBaja, setModalSolicitarBaja] = useState(null); // miembro seleccionado o null
@@ -68,6 +75,13 @@ export default function ProyectoDetallePage() {
   const [enviandoBaja, setEnviandoBaja] = useState(false);
   const [solicitudesEquipo, setSolicitudesEquipo] = useState([]);
   const [resolviendoSolicitud, setResolviendoSolicitud] = useState(null);
+
+  // NUEVO: confirmación genérica con ícono (reemplaza confirm()/alert()
+  // nativos del navegador) — reutilizable para cualquier acción destructiva
+  // puntual de esta página (cancelar reunión, eliminar archivo, etc.).
+  const [confirmGenerico, setConfirmGenerico] = useState(null); // { titulo, mensaje, tipo, onConfirmar }
+  const [procesandoConfirm, setProcesandoConfirm] = useState(false);
+  const [errorConfirm, setErrorConfirm] = useState('');
 
   const [formFase,  setFormFase]  = useState({ nombre_fase:'', descripcion:'', fecha_inicio:'', fecha_fin:'' });
   const [formTarea, setFormTarea] = useState({ titulo:'', descripcion:'', prioridad:'Media', fecha_vencimiento:'', id_asignado:'' });
@@ -280,13 +294,46 @@ export default function ProyectoDetallePage() {
     }
   }
 
+  // NUEVO: editar un mensaje propio (el backend valida que sea el autor
+  // real y vuelve a pasar el glosario de palabras prohibidas).
+  function iniciarEdicionMensaje(m) {
+    setMensajeEditando(m.id_mensaje);
+    setTextoEditando(m.contenido);
+    setErrorEdicion('');
+  }
+  function cancelarEdicionMensaje() {
+    setMensajeEditando(null);
+    setTextoEditando('');
+    setErrorEdicion('');
+  }
+  async function guardarEdicionMensaje(idMensaje) {
+    if (!textoEditando.trim()) return;
+    setGuardandoEdicion(true); setErrorEdicion('');
+    try {
+      await mensajesService.update(idMensaje, textoEditando);
+      setMensajeEditando(null);
+      const r = await mensajesService.getByProyecto(id);
+      setMensajes(r.data.data || []);
+    } catch (err) {
+      setErrorEdicion(err.response?.data?.message || 'No se pudo guardar la edición');
+    } finally {
+      setGuardandoEdicion(false);
+    }
+  }
+
   // ── Actualizar estado de tarea ────────────────────
+  const [errorTareaEstado, setErrorTareaEstado] = useState(''); // NUEVO: aviso visible en la pestaña Tareas
   async function actualizarEstadoTarea(idTarea, estado) {
+    setErrorTareaEstado('');
     try {
       await tareasService.update(idTarea, { estado });
       const r = await tareasService.getByProyecto(id);
       setTareas(r.data.data || []);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      // NUEVO: antes esto fallaba en silencio — el desplegable de estado
+      // simplemente no cambiaba y el usuario no sabía por qué.
+      setErrorTareaEstado(err.response?.data?.message || 'No se pudo actualizar el estado de la tarea');
+    }
   }
 
   // ── NUEVO: Crear Entregable ───────────────────────
@@ -313,13 +360,26 @@ export default function ProyectoDetallePage() {
   }
 
   // ── NUEVO: Cancelar reunión ────────────────────────
-  async function cancelarReunion(idReunion) {
-    if (!confirm('¿Cancelar esta reunión?')) return;
-    try {
-      await reunionesService.remove(idReunion);
-      const r = await reunionesService.getByProyecto(id);
-      setReuniones(r.data.data || []);
-    } catch (err) { alert(err.response?.data?.message || 'Error'); }
+  function cancelarReunion(idReunion) {
+    setErrorConfirm('');
+    setConfirmGenerico({
+      titulo: '¿Cancelar esta reunión?',
+      mensaje: 'Se eliminará del calendario del proyecto. Esta acción no se puede deshacer.',
+      tipo: 'peligro',
+      onConfirmar: async () => {
+        setProcesandoConfirm(true);
+        try {
+          await reunionesService.remove(idReunion);
+          const r = await reunionesService.getByProyecto(id);
+          setReuniones(r.data.data || []);
+          setConfirmGenerico(null);
+        } catch (err) {
+          setErrorConfirm(err.response?.data?.message || 'No se pudo cancelar la reunión');
+        } finally {
+          setProcesandoConfirm(false);
+        }
+      },
+    });
   }
 
   // ── NUEVO: Abrir el detalle de un entregable (comentarios/archivos/evaluación) ──
@@ -387,13 +447,26 @@ export default function ProyectoDetallePage() {
   }
 
   // ── NUEVO: Borrar un archivo (también borra el binario en el servidor) ──
-  async function borrarArchivo(idArchivo) {
-    if (!confirm('¿Eliminar este archivo?')) return;
-    try {
-      await archivosService.remove(idArchivo);
-      const r = await archivosService.getByEntregable(entregableSel.id_entregable);
-      setArchivosEnt(r.data.data || []);
-    } catch (err) { setDetalleError(err.response?.data?.message || 'Error al eliminar el archivo'); }
+  function borrarArchivo(idArchivo) {
+    setErrorConfirm('');
+    setConfirmGenerico({
+      titulo: '¿Eliminar este archivo?',
+      mensaje: 'El archivo se borrará también del servidor. Esta acción no se puede deshacer.',
+      tipo: 'peligro',
+      onConfirmar: async () => {
+        setProcesandoConfirm(true);
+        try {
+          await archivosService.remove(idArchivo);
+          const r = await archivosService.getByEntregable(entregableSel.id_entregable);
+          setArchivosEnt(r.data.data || []);
+          setConfirmGenerico(null);
+        } catch (err) {
+          setErrorConfirm(err.response?.data?.message || 'No se pudo eliminar el archivo');
+        } finally {
+          setProcesandoConfirm(false);
+        }
+      },
+    });
   }
 
   // ── NUEVO: Calificar entregable (RN-016: solo si el proyecto está "En Revisión") ──
@@ -580,6 +653,8 @@ export default function ProyectoDetallePage() {
                 </button>
               </div>
             )}
+            {/* NUEVO: aviso visible si falla el cambio de estado de una tarea */}
+            {errorTareaEstado && <div className="alert alert-error" style={{ marginBottom:16 }}>{errorTareaEstado}</div>}
             {tareas.length === 0 ? (
               <div className="card"><div className="empty-state"><div className="empty-state-icon">✅</div><h3>Sin tareas</h3></div></div>
             ) : (
@@ -674,7 +749,7 @@ export default function ProyectoDetallePage() {
                   <table>
                     <thead><tr><th>Nombre</th><th>Correo</th><th>Rol sistema</th><th>Rol en proyecto</th>{esInstructor && <th></th>}</tr></thead>
                     <tbody>
-                      {equipo.map(m => (
+                      {equipo.slice(offsetEquipo, offsetEquipo + LIMITE_ENTREGABLES).map(m => (
                         <tr key={m.id_equipo}>
                           <td><strong>{m.nombre_usuario}</strong></td>
                           <td>{m.correo}</td>
@@ -694,6 +769,10 @@ export default function ProyectoDetallePage() {
                     </tbody>
                   </table>
                 </div>
+                {/* NUEVO: paginación numerada */}
+                <div style={{ padding:'12px 16px 0' }}>
+                  <Pagination total={equipo.length} limit={LIMITE_ENTREGABLES} offset={offsetEquipo} onChange={setOffsetEquipo} />
+                </div>
               </div>
             )}
           </div>
@@ -709,6 +788,7 @@ export default function ProyectoDetallePage() {
                 )}
                 {mensajes.map(m => {
                   const esPropio = m.id_remitente === usuario.id;
+                  const editando = mensajeEditando === m.id_mensaje;
                   return (
                     <div key={m.id_mensaje} style={{ display:'flex', gap:10, flexDirection: esPropio ? 'row-reverse' : 'row' }}>
                       <div style={{ width:32, height:32, borderRadius:'50%', background: esPropio ? 'var(--green-600)' : 'var(--slate-300)', color: esPropio ? 'white' : 'var(--slate-700)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:12, flexShrink:0 }}>
@@ -717,10 +797,41 @@ export default function ProyectoDetallePage() {
                       <div style={{ maxWidth:'70%' }}>
                         <div style={{ fontSize:10, color:'var(--slate-500)', marginBottom:3, textAlign: esPropio ? 'right' : 'left' }}>
                           {m.remitente_nombre} · {new Date(m.fecha_envio).toLocaleString('es-CO')}
+                          {m.fecha_edicion && <span title={`Editado: ${new Date(m.fecha_edicion).toLocaleString('es-CO')}`}> · (editado)</span>}
                         </div>
-                        <div style={{ background: esPropio ? 'var(--green-50)' : 'var(--slate-100)', borderRadius: esPropio ? '12px 12px 2px 12px' : '12px 12px 12px 2px', padding:'8px 12px', fontSize:13, color:'var(--slate-800)', border:'1px solid', borderColor: esPropio ? 'var(--green-100)' : 'var(--slate-200)' }}>
-                          {m.contenido}
-                        </div>
+                        {editando ? (
+                          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                            {errorEdicion && <div className="alert alert-error" style={{ fontSize:11, padding:'6px 10px' }}>{errorEdicion}</div>}
+                            <textarea
+                              className="form-textarea"
+                              style={{ minHeight:50, fontSize:13 }}
+                              value={textoEditando}
+                              onChange={e => setTextoEditando(e.target.value)}
+                              autoFocus
+                            />
+                            <div style={{ display:'flex', gap:6, justifyContent: esPropio ? 'flex-end' : 'flex-start' }}>
+                              <button className="btn btn-secondary btn-sm" onClick={cancelarEdicionMensaje} disabled={guardandoEdicion}>Cancelar</button>
+                              <button className="btn btn-primary btn-sm" onClick={() => guardarEdicionMensaje(m.id_mensaje)} disabled={guardandoEdicion || !textoEditando.trim()}>
+                                {guardandoEdicion ? 'Guardando…' : 'Guardar'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display:'flex', flexDirection:'column', gap:3, alignItems: esPropio ? 'flex-end' : 'flex-start' }}>
+                            <div style={{ background: esPropio ? 'var(--green-50)' : 'var(--slate-100)', borderRadius: esPropio ? '12px 12px 2px 12px' : '12px 12px 12px 2px', padding:'8px 12px', fontSize:13, color:'var(--slate-800)', border:'1px solid', borderColor: esPropio ? 'var(--green-100)' : 'var(--slate-200)' }}>
+                              {m.contenido}
+                            </div>
+                            {/* NUEVO: solo el autor puede editar su propio mensaje */}
+                            {esPropio && (
+                              <button
+                                onClick={() => iniciarEdicionMensaje(m)}
+                                style={{ background:'none', border:'none', color:'var(--slate-400)', fontSize:11, cursor:'pointer', padding:0 }}
+                              >
+                                ✏️ Editar
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -758,7 +869,7 @@ export default function ProyectoDetallePage() {
             )}
             {repos.length === 0 ? (
               <div className="card"><div className="empty-state"><div className="empty-state-icon">📁</div><h3>Sin repositorios vinculados</h3></div></div>
-            ) : repos.map(r => {
+            ) : repos.slice(offsetRepos, offsetRepos + LIMITE_ENTREGABLES).map(r => {
               const semaforoInfo = {
                 verde:   { color: 'var(--green-600)', label: 'Cumple' },
                 amarillo:{ color: 'var(--amber-500)',  label: 'Observación' },
@@ -803,6 +914,8 @@ export default function ProyectoDetallePage() {
               </div>
               );
             })}
+            {/* NUEVO: paginación numerada */}
+            <Pagination total={repos.length} limit={LIMITE_ENTREGABLES} offset={offsetRepos} onChange={setOffsetRepos} />
           </div>
         )}
 
@@ -818,7 +931,7 @@ export default function ProyectoDetallePage() {
             )}
             {reuniones.length === 0 ? (
               <div className="card"><div className="empty-state"><div className="empty-state-icon">📅</div><h3>Sin reuniones programadas</h3></div></div>
-            ) : reuniones.map(r => (
+            ) : reuniones.slice(offsetReuniones, offsetReuniones + LIMITE_ENTREGABLES).map(r => (
               <div key={r.id_reunion} className="card" style={{ marginBottom:12 }}>
                 <div className="card-body" style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                   <div>
@@ -836,6 +949,8 @@ export default function ProyectoDetallePage() {
                 </div>
               </div>
             ))}
+            {/* NUEVO: paginación numerada */}
+            <Pagination total={reuniones.length} limit={LIMITE_ENTREGABLES} offset={offsetReuniones} onChange={setOffsetReuniones} />
           </div>
         )}
       </div>
@@ -1147,6 +1262,20 @@ export default function ProyectoDetallePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* NUEVO: confirmación genérica (reemplaza confirm()/alert() nativos) */}
+      {confirmGenerico && (
+        <ConfirmModal
+          abierto
+          tipo={confirmGenerico.tipo}
+          titulo={confirmGenerico.titulo}
+          mensaje={errorConfirm || confirmGenerico.mensaje}
+          textoConfirmar="Sí, continuar"
+          cargando={procesandoConfirm}
+          onConfirmar={confirmGenerico.onConfirmar}
+          onCancelar={() => { setConfirmGenerico(null); setErrorConfirm(''); }}
+        />
       )}
     </div>
   );

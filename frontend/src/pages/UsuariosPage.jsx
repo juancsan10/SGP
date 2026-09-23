@@ -16,6 +16,7 @@ export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([]);
   const [meta, setMeta] = useState({ total: 0, limit: LIMITE, offset: 0 });
   const [loading, setLoading] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(''); // NUEVO: aviso visible si falla la carga
 
   // ── Filtros (NUEVO: por sección, servidor) ──────────
   const [q, setQ] = useState('');
@@ -54,7 +55,7 @@ export default function UsuariosPage() {
   const [accionMsg, setAccionMsg] = useState('');
 
   async function cargar() {
-    setLoading(true);
+    setLoading(true); setErrorCarga('');
     try {
       const params = { limit: LIMITE, offset };
       if (q) params.q = q;
@@ -63,7 +64,9 @@ export default function UsuariosPage() {
       const r = await usuariosService.getAll(params);
       setUsuarios(r.data.data || []);
       setMeta(r.data.meta || { total: 0, limit: LIMITE, offset: 0 });
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      setErrorCarga(err.response?.data?.message || 'No se pudieron cargar los usuarios');
+    }
     finally { setLoading(false); }
   }
 
@@ -274,6 +277,9 @@ export default function UsuariosPage() {
           </select>
         </div>
 
+        {/* NUEVO: aviso visible si falla la carga */}
+        {errorCarga && <div className="alert alert-error" style={{ marginBottom: 16 }}>{errorCarga}</div>}
+
         {usuarios.length === 0 ? (
           <EmptyState icon="👥" titulo="Sin usuarios" desc="No hay usuarios que coincidan con los filtros." />
         ) : (
@@ -445,7 +451,7 @@ export default function UsuariosPage() {
                       onChange={e => setFormCrear({ ...formCrear, contrasena: e.target.value })} required />
                     {erroresCrear.contrasena
                       ? <span className="field-error">{erroresCrear.contrasena}</span>
-                      : <span style={{ fontSize: 11, color: 'var(--slate-500)' }}>Mínimo 8 caracteres, con letra y número</span>}
+                      : <span className="form-hint">Mínimo 8 caracteres, con letra y número</span>}
                   </div>
                   <div className="form-group">
                     <label className="form-label">Rol *</label>

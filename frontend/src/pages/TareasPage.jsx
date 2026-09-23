@@ -163,6 +163,7 @@ function TareasSupervision() {
   const [tareas, setTareas] = useState([]);
   const [meta, setMeta] = useState({ total: 0, limit: LIMITE, offset: 0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(''); // NUEVO: aviso visible si falla la carga
 
   const [cc, setCc] = useState('');
   const [proyecto, setProyecto] = useState('');
@@ -171,7 +172,7 @@ function TareasSupervision() {
   const [offset, setOffset] = useState(0);
 
   async function cargar() {
-    setLoading(true);
+    setLoading(true); setError('');
     try {
       const params = { limit: LIMITE, offset };
       if (cc) params.cc = cc;
@@ -181,7 +182,11 @@ function TareasSupervision() {
       const r = await tareasService.getAllAdmin(params);
       setTareas(r.data.data || []);
       setMeta(r.data.meta || { total: 0, limit: LIMITE, offset: 0 });
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      // NUEVO: antes un fallo aquí se tragaba en silencio y la tabla
+      // quedaba pegada sin ninguna explicación.
+      setError(err.response?.data?.message || 'No se pudieron cargar las tareas');
+    }
     finally { setLoading(false); }
   }
 
@@ -241,6 +246,9 @@ function TareasSupervision() {
             </button>
           )}
         </div>
+
+        {/* NUEVO: aviso visible si falla la carga (antes se tragaba en silencio) */}
+        {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
         {tareas.length === 0 ? (
           <EmptyState icon="✅" titulo="Sin tareas" desc="No hay tareas que coincidan con los filtros." />

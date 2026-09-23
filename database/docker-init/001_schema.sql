@@ -133,6 +133,7 @@ CREATE TABLE mensajes (
     id_mensaje INT AUTO_INCREMENT PRIMARY KEY,
     contenido TEXT NOT NULL,
     fecha_envio DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fecha_edicion DATETIME NULL,
     id_remitente INT NOT NULL,
     id_proyecto INT NOT NULL,
     FOREIGN KEY (id_remitente) REFERENCES usuarios(id_usuario),
@@ -151,7 +152,9 @@ CREATE TABLE notificaciones (
     leida BOOLEAN DEFAULT FALSE,
     fecha_envio DATETIME DEFAULT CURRENT_TIMESTAMP,
     id_usuario INT NOT NULL,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+    id_creador INT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario),
+    FOREIGN KEY (id_creador) REFERENCES usuarios(id_usuario)
 );
 
 -- ============================================

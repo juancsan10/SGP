@@ -18,6 +18,9 @@ router.post('/', verifyToken, requireInstructorOwner('project-direct'), [
 // NUEVO — listado global (Administrador ve todo, Instructor ve solo sus
 // proyectos) con filtros por cc, proyecto, estado y prioridad.
 router.get('/', verifyToken, requireRole('Administrador','Instructor'), ctrl.getAllAdmin);
+// NUEVO: disponible para cualquier rol (incluido Aprendiz), a diferencia
+// del listado global de arriba que es solo Admin/Instructor.
+router.get('/recientes/dashboard', verifyToken, ctrl.getRecientes);
 
 router.get('/:id_proyecto', verifyToken, requireProjectMember('project-direct'), [idParam('id_proyecto')], validate, ctrl.getByProyecto);
 router.put('/:id', verifyToken, requireTaskEditor, [
