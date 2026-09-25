@@ -3,19 +3,23 @@
 // Gestión de usuarios (Admin/Instructor)
 // =====================================================
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { usuariosService, authService, passwordService } from '../services/api.js';
 import { LoadingCenter, EmptyState, formatFecha, Pagination, ConfirmModal } from '../components/helpers.jsx';
+import EliminarUsuarioModal from '../components/EliminarUsuarioModal.jsx'; // NUEVO: cuestionario de eliminación
 
 const LIMITE = 10;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const validarNombre = (v) => v.trim().length >= 2 && v.trim().length <= 100;
 const validarCorreo = (v) => EMAIL_REGEX.test(v.trim());
+const validarCc = (v) => /^[0-9]{5,15}$/.test(v.trim()); // NUEVO
 const validarPassword = (v) => v.length >= 8 && /[A-Za-z]/.test(v) && /[0-9]/.test(v);
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([]);
   const [meta, setMeta] = useState({ total: 0, limit: LIMITE, offset: 0 });
   const [loading, setLoading] = useState(true);
+  const [errorCarga, setErrorCarga] = useState(''); // NUEVO: aviso visible si falla la carga
 
   // ── Filtros (NUEVO: por sección, servidor) ──────────
   const [q, setQ] = useState('');
@@ -40,7 +44,7 @@ export default function UsuariosPage() {
   const [enviandoReset, setEnviandoReset] = useState(false);
   const [resetMsg, setResetMsg] = useState('');
 
-  // ── Modal crear (Instructor/Administrador) ──────────
+  // ── Modal crear (solo Instructor: el Administrador es único) ──
   const [modalCrear, setModalCrear] = useState(false);
   const [formCrear, setFormCrear] = useState({ nombres: '', apellidos: '', correo: '', identificacion: '', contrasena: '', id_rol: '2', ficha: '', programa_formacion: '' });
   const [erroresCrear, setErroresCrear] = useState({});
@@ -52,9 +56,11 @@ export default function UsuariosPage() {
   const [confirmAccion, setConfirmAccion] = useState(null); // { tipo, usuario }
   const [procesando, setProcesando] = useState(false);
   const [accionMsg, setAccionMsg] = useState('');
+  const [usuarioEliminar, setUsuarioEliminar] = useState(null); // NUEVO: cuestionario
+  const [avisoOk, setAvisoOk] = useState('');                   // NUEVO
 
   async function cargar() {
-    setLoading(true);
+    setLoading(true); setErrorCarga('');
     try {
       const params = { limit: LIMITE, offset };
       if (q) params.q = q;
@@ -63,7 +69,9 @@ export default function UsuariosPage() {
       const r = await usuariosService.getAll(params);
       setUsuarios(r.data.data || []);
       setMeta(r.data.meta || { total: 0, limit: LIMITE, offset: 0 });
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      setErrorCarga(err.response?.data?.message || 'No se pudieron cargar los usuarios');
+    }
     finally { setLoading(false); }
   }
 
@@ -87,7 +95,8 @@ export default function UsuariosPage() {
 
   function abrirEditar(u) {
     setUsuSel(u);
-    setForm({ nombres: u.nombres, apellidos: u.apellidos, ficha: u.ficha || '', programa_formacion: u.programa_formacion || '' });
+    setForm({ nombres: u.nombres, apellidos: u.apellidos, ficha: u.ficha || '', programa_formacion: u.programa_formacion || '',
+              correo: u.correo || '', identificacion: u.identificacion || '' }); // NUEVO: cc y correo editables
     setError(''); setOk(''); setResetMsg('');
     setModal(true);
   }
@@ -96,6 +105,16 @@ export default function UsuariosPage() {
     e.preventDefault(); setSaving(true); setError(''); setOk('');
     if (!validarNombre(form.nombres) || !validarNombre(form.apellidos)) {
       setError('Nombres y apellidos deben tener entre 2 y 100 caracteres');
+      setSaving(false);
+      return;
+    }
+    if (!validarCorreo(form.correo)) {
+      setError('Ingresa un correo electrónico válido');
+      setSaving(false);
+      return;
+    }
+    if (form.identificacion && !validarCc(form.identificacion)) {
+      setError('La identificación (cc) debe tener entre 5 y 15 dígitos, sin puntos ni espacios');
       setSaving(false);
       return;
     }
@@ -135,7 +154,6 @@ export default function UsuariosPage() {
     try {
       if (tipo === 'desactivar') await usuariosService.remove(usuario.id_usuario);
       if (tipo === 'activar') await usuariosService.activar(usuario.id_usuario);
-      if (tipo === 'eliminar') await usuariosService.eliminarPermanente(usuario.id_usuario);
       setConfirmAccion(null);
       await cargar();
     } catch (err) {
@@ -145,7 +163,7 @@ export default function UsuariosPage() {
     }
   }
 
-  // ── Crear usuario (Instructor/Administrador) ────────
+  // ── Crear usuario (solo Instructor) ─────────────────
   function validarFormCrear() {
     const errs = {};
     if (!validarNombre(formCrear.nombres)) errs.nombres = 'Debe tener entre 2 y 100 caracteres';
@@ -191,12 +209,7 @@ export default function UsuariosPage() {
       mensaje: (u) => `${u.nombres} ${u.apellidos} podrá volver a iniciar sesión de inmediato.`,
       texto: 'Sí, activar',
     },
-    eliminar: {
-      tipo: 'peligro',
-      titulo: '¿Eliminar este usuario permanentemente?',
-      mensaje: (u) => `Esta acción NO se puede deshacer. Si ${u.nombres} tiene proyectos, tareas o equipos asociados, el sistema rechazará la eliminación y deberás desactivarlo en su lugar.`,
-      texto: 'Sí, eliminar',
-    },
+    // (Eliminar ya no usa esta confirmación: abre EliminarUsuarioModal con el cuestionario.)
   };
 
   if (loading && usuarios.length === 0) return (
@@ -215,7 +228,7 @@ export default function UsuariosPage() {
         </div>
         <div className="page-header-right">
           <button className="btn btn-primary" onClick={() => { setErrorCrear(''); setErroresCrear({}); setModalCrear(true); }}>
-            + Nuevo usuario
+            + Nuevo instructor
           </button>
         </div>
       </div>
@@ -274,6 +287,10 @@ export default function UsuariosPage() {
           </select>
         </div>
 
+        {/* NUEVO: aviso visible si falla la carga */}
+        {errorCarga && <div className="alert alert-error" style={{ marginBottom: 16 }}>{errorCarga}</div>}
+        {avisoOk && <div className="alert alert-success" style={{ marginBottom: 16 }}><span>{avisoOk} <Link to="/historial">Ver en el historial →</Link></span></div>}
+
         {usuarios.length === 0 ? (
           <EmptyState icon="👥" titulo="Sin usuarios" desc="No hay usuarios que coincidan con los filtros." />
         ) : (
@@ -313,12 +330,19 @@ export default function UsuariosPage() {
                         <td>
                           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                             <button className="btn btn-secondary btn-sm" onClick={() => abrirEditar(u)}>✏️ Editar</button>
-                            {u.estado === 1 ? (
-                              <button className="btn btn-secondary btn-sm" onClick={() => pedirConfirmacion('desactivar', u)}>⏸️ Desactivar</button>
+                            {u.rol === 'Administrador' ? (
+                              // Administrador único: no se desactiva ni se elimina.
+                              <span className="badge badge-slate" title="El Administrador único no se puede desactivar ni eliminar">🔒 Cuenta principal</span>
                             ) : (
-                              <button className="btn btn-secondary btn-sm" onClick={() => pedirConfirmacion('activar', u)}>▶️ Activar</button>
+                              <>
+                                {u.estado === 1 ? (
+                                  <button className="btn btn-secondary btn-sm" onClick={() => pedirConfirmacion('desactivar', u)}>⏸️ Desactivar</button>
+                                ) : (
+                                  <button className="btn btn-secondary btn-sm" onClick={() => pedirConfirmacion('activar', u)}>▶️ Activar</button>
+                                )}
+                                <button className="btn btn-danger btn-sm" onClick={() => { setAvisoOk(''); setUsuarioEliminar(u); }}>🗑️ Eliminar</button>
+                              </>
                             )}
-                            <button className="btn btn-danger btn-sm" onClick={() => pedirConfirmacion('eliminar', u)}>🗑️ Eliminar</button>
                           </div>
                         </td>
                       </tr>
@@ -356,6 +380,19 @@ export default function UsuariosPage() {
                     <label className="form-label">Apellidos</label>
                     <input className="form-input" value={form.apellidos}
                       onChange={e => setForm({ ...form, apellidos: e.target.value })} required minLength={2} maxLength={100} />
+                  </div>
+                </div>
+                {/* NUEVO: el Administrador puede corregir correo e identificación */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="form-group">
+                    <label className="form-label">Correo electrónico</label>
+                    <input className="form-input" type="email" value={form.correo} maxLength={150}
+                      onChange={e => setForm({ ...form, correo: e.target.value })} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Identificación (cc)</label>
+                    <input className="form-input" inputMode="numeric" value={form.identificacion} maxLength={15}
+                      onChange={e => setForm({ ...form, identificacion: e.target.value.replace(/[^0-9]/g, '') })} />
                   </div>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -398,7 +435,7 @@ export default function UsuariosPage() {
         <div className="modal-overlay" onClick={() => setModalCrear(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <span className="modal-title">Nuevo usuario (Instructor o Administrador)</span>
+              <span className="modal-title">Nuevo instructor</span>
               <button className="modal-close" onClick={() => setModalCrear(false)}>×</button>
             </div>
             <form onSubmit={crearUsuario}>
@@ -445,15 +482,13 @@ export default function UsuariosPage() {
                       onChange={e => setFormCrear({ ...formCrear, contrasena: e.target.value })} required />
                     {erroresCrear.contrasena
                       ? <span className="field-error">{erroresCrear.contrasena}</span>
-                      : <span style={{ fontSize: 11, color: 'var(--slate-500)' }}>Mínimo 8 caracteres, con letra y número</span>}
+                      : <span className="form-hint">Mínimo 8 caracteres, con letra y número</span>}
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Rol *</label>
-                    <select className="form-select" value={formCrear.id_rol}
-                      onChange={e => setFormCrear({ ...formCrear, id_rol: e.target.value })}>
-                      <option value="2">Instructor</option>
-                      <option value="1">Administrador</option>
-                    </select>
+                    <label className="form-label">Rol</label>
+                    {/* El sistema tiene un único Administrador: aquí solo se crean Instructores. */}
+                    <input className="form-input" value="Instructor" disabled />
+                    <span className="form-hint">El Administrador es único</span>
                   </div>
                 </div>
 
@@ -473,7 +508,7 @@ export default function UsuariosPage() {
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setModalCrear(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary" disabled={creando}>
-                  {creando ? 'Creando…' : 'Crear usuario'}
+                  {creando ? 'Creando…' : 'Crear instructor'}
                 </button>
               </div>
             </form>
@@ -482,6 +517,15 @@ export default function UsuariosPage() {
       )}
 
       {/* Aviso de activar/desactivar/eliminar (NUEVO, con ícono y botones diferenciados) */}
+      {/* NUEVO: eliminar exige el cuestionario con motivo y soportes */}
+      {usuarioEliminar && (
+        <EliminarUsuarioModal
+          usuario={usuarioEliminar}
+          onClose={() => setUsuarioEliminar(null)}
+          onEliminado={async (mensaje) => { setUsuarioEliminar(null); setAvisoOk(mensaje); await cargar(); }}
+        />
+      )}
+
       {confirmAccion && (
         <ConfirmModal
           abierto

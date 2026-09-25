@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { proyectosService, tareasService } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, EmptyState, formatFecha, Pagination } from '../components/helpers.jsx';
+import { CalificacionChip, DetalleEntregaModal } from '../components/CalificacionEntrega.jsx';
 
 const LIMITE = 10;
 
@@ -163,15 +164,17 @@ function TareasSupervision() {
   const [tareas, setTareas] = useState([]);
   const [meta, setMeta] = useState({ total: 0, limit: LIMITE, offset: 0 });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(''); // NUEVO: aviso visible si falla la carga
 
   const [cc, setCc] = useState('');
   const [proyecto, setProyecto] = useState('');
   const [estado, setEstado] = useState('');
   const [prioridad, setPrioridad] = useState('');
   const [offset, setOffset] = useState(0);
+  const [entregaVer, setEntregaVer] = useState(null); // NUEVO: detalle de la calificación
 
   async function cargar() {
-    setLoading(true);
+    setLoading(true); setError('');
     try {
       const params = { limit: LIMITE, offset };
       if (cc) params.cc = cc;
@@ -181,7 +184,11 @@ function TareasSupervision() {
       const r = await tareasService.getAllAdmin(params);
       setTareas(r.data.data || []);
       setMeta(r.data.meta || { total: 0, limit: LIMITE, offset: 0 });
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      // NUEVO: antes un fallo aquí se tragaba en silencio y la tabla
+      // quedaba pegada sin ninguna explicación.
+      setError(err.response?.data?.message || 'No se pudieron cargar las tareas');
+    }
     finally { setLoading(false); }
   }
 
@@ -242,6 +249,9 @@ function TareasSupervision() {
           )}
         </div>
 
+        {/* NUEVO: aviso visible si falla la carga (antes se tragaba en silencio) */}
+        {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
+
         {tareas.length === 0 ? (
           <EmptyState icon="✅" titulo="Sin tareas" desc="No hay tareas que coincidan con los filtros." />
         ) : (
@@ -259,6 +269,7 @@ function TareasSupervision() {
                       <th>Instructor (cc)</th>
                       <th>Vencimiento</th>
                       <th>Avance</th>
+                      <th>Calificación</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -280,6 +291,20 @@ function TareasSupervision() {
                         <td style={{ minWidth:120 }}>
                           <ProgressBar value={parseFloat(t.porcentaje_avance)||0} />
                         </td>
+                        {/* NUEVO: calificación que el instructor dio a la entrega del aprendiz */}
+                        <td style={{ minWidth:130 }}>
+                          {t.id_entrega ? (
+                            <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-start', gap:4 }}>
+                              <CalificacionChip valor={t.calificacion} />
+                              <button className="btn btn-ghost btn-sm" style={{ padding:'2px 6px', fontSize:11 }}
+                                onClick={() => setEntregaVer(t.id_entrega)}>
+                                Ver revisión →
+                              </button>
+                            </div>
+                          ) : (
+                            <span style={{ fontSize:12, color:'var(--slate-400)' }}>Sin entrega</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -290,6 +315,8 @@ function TareasSupervision() {
           </>
         )}
       </div>
+
+      {entregaVer && <DetalleEntregaModal idEntrega={entregaVer} onClose={() => setEntregaVer(null)} />}
     </div>
   );
 }

@@ -38,7 +38,7 @@ El servidor queda disponible en `http://localhost:3000`, con la API base en `htt
 
 | Correo | Rol | Contraseña |
 |---|---|---|
-| diana.rios@sgpsena.local | Administrador | Sena2026* |
+| rubiel.tads@gmail.com | Administrador (único) | Definida en `ADMIN_CONTRASENA` de `backend/database/seed.js` |
 | laura.gomez@sgpsena.local | Instructor | Sena2026* |
 | miguel.torres@sgpsena.local | Instructor | Sena2026* |
 | carlos.herrera@sgpsena.local | Aprendiz | Sena2026* |

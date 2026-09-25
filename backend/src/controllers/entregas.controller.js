@@ -48,7 +48,7 @@ const submit = async (req,res) => {
     if (existing.length) {
       if (req.user.rol !== 'Administrador' && existing[0].id_aprendiz !== Number(req.user.id)) { borrarArchivoSiExiste(req); return res.status(403).json({success:false,message:'La entrega pertenece a otro aprendiz'}); }
       if (req.user.rol !== 'Administrador' && existing[0].estado !== 'Requiere corrección') { borrarArchivoSiExiste(req); return res.status(400).json({success:false,message:'La entrega no está habilitada para corrección'}); }
-      await db.query(`UPDATE entregas_tareas SET comentario_aprendiz=?,url_entrega=?,ruta_archivo=?,estado='Corregida',fecha_entrega=NOW(),fecha_revision=NULL,observacion_instructor=NULL WHERE id_tarea=?`,[comentario_aprendiz||null,url_entrega||null,ruta_archivo||null,req.params.id]);
+      await db.query(`UPDATE entregas_tareas SET comentario_aprendiz=?,url_entrega=?,ruta_archivo=?,estado='Corregida',fecha_entrega=NOW(),fecha_revision=NULL,observacion_instructor=NULL,calificacion=NULL WHERE id_tarea=?`,[comentario_aprendiz||null,url_entrega||null,ruta_archivo||null,req.params.id]);
       await registrarCambio('entregas_tareas',existing[0].id_entrega,'UPDATE',req.user.id);
       return res.json({success:true,message:'Corrección enviada correctamente'});
     }
@@ -65,9 +65,19 @@ const review = async (req,res) => {
     const { estado, observacion_instructor } = req.body;
     const permitidos = ['En revisión','Requiere corrección','Aprobada'];
     if (!permitidos.includes(estado)) return res.status(400).json({success:false,message:'Estado de revisión inválido'});
+    // NUEVO: calificación de 0 a 100 (misma escala que las evaluaciones de
+    // entregables). Obligatoria al aprobar; opcional en los demás casos.
+    const calRaw = req.body.calificacion;
+    const calificacion = (calRaw === undefined || calRaw === null || calRaw === '') ? null : Number(calRaw);
+    if (calificacion !== null && (!Number.isFinite(calificacion) || calificacion < 0 || calificacion > 100)) {
+      return res.status(400).json({success:false,message:'La calificación debe estar entre 0 y 100'});
+    }
+    if (estado === 'Aprobada' && calificacion === null) {
+      return res.status(400).json({success:false,message:'Para aprobar la entrega debes asignar una calificación (0 a 100)'});
+    }
     const [rows] = await db.query('SELECT id_entrega FROM entregas_tareas WHERE id_tarea=?',[req.params.id]);
     if (!rows.length) return res.status(404).json({success:false,message:'No existe una entrega para esta tarea'});
-    await db.query(`UPDATE entregas_tareas SET estado=?,observacion_instructor=?,fecha_revision=NOW() WHERE id_tarea=?`,[estado,observacion_instructor||null,req.params.id]);
+    await db.query(`UPDATE entregas_tareas SET estado=?,observacion_instructor=?,calificacion=?,fecha_revision=NOW() WHERE id_tarea=?`,[estado,observacion_instructor||null,calificacion,req.params.id]);
     await registrarCambio('entregas_tareas',rows[0].id_entrega,'REVIEW',req.user.id);
     return res.json({success:true,message:'Revisión de entrega actualizada'});
   } catch(err){ return res.status(500).json({success:false,message:'Error interno del servidor'}); }
@@ -118,4 +128,29 @@ const getAllAdmin = async (req,res) => {
   } catch(err){ return res.status(500).json({success:false,message:err.message}); }
 };
 
-module.exports = { getByTarea, getAllAdmin, submit, review };
+// GET /api/v1/entregas/:id/detalle  (NUEVO — solo lectura)
+// Todo lo que el Administrador necesita para revisar una entrega:
+// comentario y archivo del aprendiz, estado, calificación y la
+// retroalimentación del instructor. El Instructor solo ve las suyas.
+const getDetalle = async (req,res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT e.*, t.titulo AS titulo_tarea, t.descripcion AS descripcion_tarea, t.fecha_vencimiento,
+              t.estado AS estado_tarea, t.prioridad, p.id_proyecto, p.nombre AS nombre_proyecto, p.id_instructor,
+              CONCAT(ua.nombres,' ',ua.apellidos) AS aprendiz_nombre, ua.identificacion AS cc_aprendiz, ua.correo AS correo_aprendiz,
+              CONCAT(ui.nombres,' ',ui.apellidos) AS instructor_nombre, ui.identificacion AS cc_instructor
+       FROM entregas_tareas e
+       JOIN tareas t ON t.id_tarea = e.id_tarea
+       JOIN proyectos p ON p.id_proyecto = t.id_proyecto
+       JOIN usuarios ua ON ua.id_usuario = e.id_aprendiz
+       JOIN usuarios ui ON ui.id_usuario = p.id_instructor
+       WHERE e.id_entrega = ?`, [req.params.id]);
+    if (!rows.length) return res.status(404).json({success:false,message:'Entrega no encontrada'});
+    if (req.user.rol === 'Instructor' && Number(rows[0].id_instructor) !== Number(req.user.id)) {
+      return res.status(403).json({success:false,message:'Solo puedes ver las entregas de tus proyectos'});
+    }
+    return res.json({success:true,data:rows[0]});
+  } catch(err){ return res.status(500).json({success:false,message:'Error interno del servidor'}); }
+};
+
+module.exports = { getByTarea, getAllAdmin, getDetalle, submit, review };

@@ -161,4 +161,62 @@ const remove = async (req, res) => {
   }
 };
 
-module.exports = { create, getAll, getById, update, remove };
+// GET /api/v1/proyectos/:id/revision  (NUEVO — Administrador, solo lectura)
+// Reúne en una sola respuesta lo que el Administrador revisa de un
+// proyecto: por cada entregable, sus documentos adjuntos, los comentarios
+// del instructor y de los aprendices, y sus evaluaciones; además, las
+// entregas de tareas con su calificación y retroalimentación.
+const getRevision = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const [[proyecto]] = await db.query('SELECT id_proyecto FROM proyectos WHERE id_proyecto = ?', [id]);
+    if (!proyecto) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
+
+    const [entregables] = await db.query(
+      `SELECT e.id_entregable, e.nombre, e.descripcion, e.fecha_entrega, e.estado, f.nombre_fase
+       FROM entregables e JOIN fases_proyecto f ON f.id_fase = e.id_fase
+       WHERE f.id_proyecto = ? ORDER BY f.fecha_inicio, e.fecha_entrega`, [id]);
+    const ids = entregables.map(e => e.id_entregable);
+
+    let archivos = [], comentarios = [], evaluaciones = [];
+    if (ids.length) {
+      [archivos] = await db.query(
+        `SELECT id_archivo, nombre_archivo, ruta_archivo, fecha_subida, id_entregable
+         FROM archivos WHERE id_entregable IN (?) ORDER BY fecha_subida DESC`, [ids]);
+      [comentarios] = await db.query(
+        `SELECT c.id_comentario, c.contenido, c.fecha_comentario, c.id_entregable,
+                COALESCE(CONCAT(u.nombres,' ',u.apellidos), 'Usuario eliminado') AS autor_nombre,
+                COALESCE(r.nombre_rol, '—') AS autor_rol
+         FROM comentarios c
+         LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario
+         LEFT JOIN roles r ON r.id_rol = u.id_rol
+         WHERE c.id_entregable IN (?) ORDER BY c.fecha_comentario ASC`, [ids]);
+      [evaluaciones] = await db.query(
+        `SELECT ev.id_evaluacion, ev.calificacion, ev.comentarios, ev.fecha_evaluacion, ev.id_entregable,
+                COALESCE(CONCAT(u.nombres,' ',u.apellidos), 'Usuario eliminado') AS evaluador_nombre
+         FROM evaluaciones ev LEFT JOIN usuarios u ON u.id_usuario = ev.id_usuario
+         WHERE ev.id_entregable IN (?) ORDER BY ev.fecha_evaluacion DESC`, [ids]);
+    }
+
+    const [entregas] = await db.query(
+      `SELECT et.id_entrega, et.id_tarea, et.comentario_aprendiz, et.url_entrega, et.ruta_archivo, et.estado,
+              et.fecha_entrega, et.observacion_instructor, et.calificacion, et.fecha_revision,
+              t.titulo AS titulo_tarea, CONCAT(u.nombres,' ',u.apellidos) AS aprendiz_nombre, u.identificacion AS cc_aprendiz
+       FROM entregas_tareas et
+       JOIN tareas t ON t.id_tarea = et.id_tarea
+       JOIN usuarios u ON u.id_usuario = et.id_aprendiz
+       WHERE t.id_proyecto = ? ORDER BY et.fecha_entrega DESC`, [id]);
+
+    const data = entregables.map(e => ({
+      ...e,
+      archivos: archivos.filter(a => a.id_entregable === e.id_entregable),
+      comentarios: comentarios.filter(c => c.id_entregable === e.id_entregable),
+      evaluaciones: evaluaciones.filter(v => v.id_entregable === e.id_entregable),
+    }));
+    return res.json({ success: true, data: { entregables: data, entregas } });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+};
+
+module.exports = { create, getAll, getById, update, remove, getRevision };

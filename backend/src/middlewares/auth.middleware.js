@@ -167,6 +167,16 @@ const requireTaskDeliveryReview = async (req,res,next) => {
   } catch (err) { next(err); }
 };
 
+// NUEVO: en el detalle de un proyecto el Administrador SOLO REVISA:
+// consulta comentarios, archivos adjuntos y evaluaciones, pero no comenta,
+// no adjunta, no borra y no califica (eso es del instructor y el aprendiz).
+const denyAdmin = (accion = 'realizar esta acción') => (req, res, next) => {
+  if (req.user?.rol === 'Administrador') {
+    return res.status(403).json({ success: false, message: `El administrador solo revisa; no puede ${accion}.` });
+  }
+  next();
+};
+
 const requireNotificationOwner = async (req,res,next) => {
   try {
     if (req.user?.rol === 'Administrador') return next();
@@ -204,5 +214,6 @@ module.exports = {
   requireTaskOwnerOrAdmin,
   requireTaskDeliveryReview,
   requireNotificationOwner,
-  requireSelfOrAdmin
+  requireSelfOrAdmin,
+  denyAdmin
 };

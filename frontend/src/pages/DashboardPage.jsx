@@ -5,15 +5,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { proyectosService, tareasService } from '../services/api.js';
+import { proyectosService, tareasService, mensajesService } from '../services/api.js';
 import { estadoBadge, prioridadBadge, formatFecha } from '../components/helpers.jsx';
+import SolicitudesPanel from '../components/SolicitudesPanel.jsx'; // NUEVO
 
 export default function DashboardPage() {
-  const { usuario } = useAuth();
+  const { usuario, esAdmin } = useAuth();
   const navigate    = useNavigate();
 
   const [proyectos, setProyectos] = useState([]);
   const [tareas,    setTareas]    = useState([]);
+  const [mensajes,  setMensajes]  = useState([]); // NUEVO: mensajes recientes
   const [loading,   setLoading]   = useState(true);
 
   useEffect(() => {
@@ -22,14 +24,21 @@ export default function DashboardPage() {
         const [pRes] = await Promise.all([proyectosService.getAll()]);
         setProyectos(pRes.data.data || []);
 
-        // Cargar tareas de los primeros proyectos disponibles
-        const primeros = pRes.data.data?.slice(0, 5) || [];
-        const tareasPromises = primeros.map(p => tareasService.getByProyecto(p.id_proyecto));
-        const resultados = await Promise.allSettled(tareasPromises);
-        const todasTareas = resultados
-          .filter(r => r.status === 'fulfilled')
-          .flatMap(r => r.value.data.data || []);
-        setTareas(todasTareas);
+        // CORREGIDO (mismo bug que se encontró en mensajes): antes esto
+        // pedía tareas solo de "los primeros 5 proyectos" — una tarea de
+        // cualquier otro proyecto quedaba guardada pero invisible aquí.
+        // Ahora se pide directo al endpoint dedicado, con el alcance
+        // correcto por rol resuelto en el backend.
+        const rTareas = await tareasService.getRecientes(8);
+        setTareas(rTareas.data.data || []);
+
+        // CORREGIDO: antes esto pedía mensajes solo de "los primeros 5
+        // proyectos" — un mensaje creado en cualquier otro proyecto nunca se llegaba a pedir, aunque
+        // estuviera perfectamente guardado en la base de datos. Ahora se
+        // pide directo al endpoint dedicado, que ya trae los más recientes
+        // del alcance correcto según el rol (resuelto en el backend).
+        const rMsg = await mensajesService.getRecientes(8);
+        setMensajes(rMsg.data.data || []);
       } catch (err) {
         console.error('Error cargando dashboard:', err);
       } finally {
@@ -110,6 +119,9 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* NUEVO: bandeja de solicitudes de Instructores y Aprendices */}
+        {esAdmin && <SolicitudesPanel esAdmin />}
 
         {/* Proyectos recientes */}
         <div className="card" style={{ marginBottom: 20 }}>
@@ -209,6 +221,51 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* NUEVO: Mensajes recientes — así la creación de un mensaje
+            (o su edición) se ve reflejada aquí, no solo en la pestaña
+            de Mensajes de cada proyecto. */}
+        <div className="card" style={{ marginTop: 20 }}>
+          <div className="card-header">
+            <span>💬</span>
+            <strong>Mensajes recientes</strong>
+          </div>
+          {mensajes.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">📭</div>
+              <h3>Sin mensajes recientes</h3>
+            </div>
+          ) : (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mensaje</th>
+                    <th>Proyecto</th>
+                    <th>De</th>
+                    <th>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mensajes.slice(0, 8).map(m => (
+                    <tr key={m.id_mensaje}>
+                      <td>
+                        {m.contenido.length > 60 ? m.contenido.substring(0, 60) + '…' : m.contenido}
+                        {m.fecha_edicion && <span style={{ fontSize:10, color:'var(--slate-400)' }}> (editado)</span>}
+                      </td>
+                      <td><span className="badge badge-slate">{m.proyecto_nombre}</span></td>
+                      <td>{m.remitente_nombre}</td>
+                      <td style={{ fontSize:11, color:'var(--slate-500)' }}>{new Date(m.fecha_envio).toLocaleString('es-CO')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* NUEVO: Instructor / Aprendiz — enviar y seguir solicitudes */}
+        {!esAdmin && <SolicitudesPanel esAdmin={false} />}
       </div>
     </div>
   );

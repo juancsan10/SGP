@@ -22,6 +22,7 @@ const reunionesRoutes         = require('./reuniones.routes');
 const githubIntegrationRoutes = require('./githubIntegration.routes');
 const agendaRoutes = require('./agenda.routes');
 const entregasRoutes = require('./entregas.routes');
+const solicitudesRoutes = require('./solicitudes.routes'); // NUEVO
 
 router.use('/auth',           authRoutes);
 router.use('/usuarios',       usuariosRoutes);
@@ -43,5 +44,6 @@ router.use('/reuniones',          reunionesRoutes);
 router.use('/github-integration', githubIntegrationRoutes);
 router.use('/agenda', agendaRoutes);
 router.use('/entregas', entregasRoutes);
+router.use('/solicitudes', solicitudesRoutes); // NUEVO
 
 module.exports = router;

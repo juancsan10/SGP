@@ -8,11 +8,12 @@ const { body } = require('express-validator');
 
 const score = body('calificacion').isFloat({ min: 0, max: 100 }).withMessage('calificacion debe estar entre 0 y 100').toFloat();
 
-router.post('/', verifyToken, requireRole('Instructor','Administrador'), requireProjectMember('deliverable'), [
+// El Administrador no califica: solo el instructor responsable del proyecto.
+router.post('/', verifyToken, requireRole('Instructor'), requireProjectMember('deliverable'), [
   idBody('id_entregable'), score
 ], validate, ctrl.create);
 router.get('/:id_entregable', verifyToken, requireProjectMember('deliverable'), [idParam('id_entregable')], validate, ctrl.getByEntregable);
-router.put('/:id', verifyToken, requireRole('Instructor','Administrador'), requireProjectMember('evaluation'), [
+router.put('/:id', verifyToken, requireRole('Instructor'), requireProjectMember('evaluation'), [
   idParam('id'), score
 ], validate, ctrl.update);
 

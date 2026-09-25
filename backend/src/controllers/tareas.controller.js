@@ -85,9 +85,12 @@ const getAllAdmin = async (req, res) => {
     const [rows] = await db.query(
       `SELECT t.*, p.nombre AS nombre_proyecto,
               CONCAT(ua.nombres,' ',ua.apellidos) AS asignado_nombre, ua.identificacion AS cc_aprendiz,
-              CONCAT(ui.nombres,' ',ui.apellidos) AS instructor_nombre, ui.identificacion AS cc_instructor
+              CONCAT(ui.nombres,' ',ui.apellidos) AS instructor_nombre, ui.identificacion AS cc_instructor,
+              et.id_entrega, et.estado AS estado_entrega, et.calificacion,
+              et.observacion_instructor, et.fecha_revision
        FROM tareas t
        JOIN proyectos p ON p.id_proyecto = t.id_proyecto
+       LEFT JOIN entregas_tareas et ON et.id_tarea = t.id_tarea
        JOIN usuarios ua ON ua.id_usuario = t.id_asignado
        JOIN usuarios ui ON ui.id_usuario = p.id_instructor
        ${where}
@@ -182,4 +185,42 @@ const remove = async (req, res) => {
   }
 };
 
-module.exports = { create, getByProyecto, getAllAdmin, update, remove };
+// GET /api/v1/tareas/recientes/dashboard  (NUEVO)
+// CORREGIDO: mismo problema que se encontró en mensajes — el Dashboard
+// armaba "Tareas recientes" pidiendo tareas de "los primeros 5 proyectos"
+// (por fecha_creacion DESC), así que una tarea de cualquier proyecto fuera
+// de ese top 5 quedaba guardada pero invisible en el panel. Disponible
+// para cualquier rol, con el alcance resuelto en el propio backend.
+const getRecientes = async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 8, 1), 50);
+    const condiciones = [];
+    const params = [];
+
+    if (req.user.rol === 'Instructor') {
+      condiciones.push('p.id_instructor = ?');
+      params.push(req.user.id);
+    } else if (req.user.rol === 'Aprendiz') {
+      condiciones.push('t.id_asignado = ?');
+      params.push(req.user.id);
+    }
+    // Administrador: sin condición — ve tareas de todos los proyectos.
+    const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
+
+    const [rows] = await db.query(
+      `SELECT t.*, p.nombre AS proyecto_nombre, CONCAT(u.nombres,' ',u.apellidos) AS asignado_nombre
+       FROM tareas t
+       JOIN proyectos p ON p.id_proyecto = t.id_proyecto
+       JOIN usuarios u ON u.id_usuario = t.id_asignado
+       ${where}
+       ORDER BY t.id_tarea DESC
+       LIMIT ?`,
+      [...params, limit]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { create, getByProyecto, getAllAdmin, getRecientes, update, remove };

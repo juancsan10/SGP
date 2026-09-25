@@ -57,7 +57,9 @@ const resetPassword=async(req,res)=>{
 const createUserByAdmin=async(req,res)=>{
  try{
   const {nombres,apellidos,correo,contrasena,ficha,programa_formacion,id_rol,identificacion}=req.body;
-  if(!nombres||!apellidos||!correo||!contrasena||![1,2].includes(Number(id_rol))) return res.status(400).json({success:false,message:'Datos inválidos. El rol debe ser Administrador (1) o Instructor (2)'});
+  // Administrador único: por esta vía solo se crean Instructores (id_rol = 2).
+  if(Number(id_rol)===1) return res.status(403).json({success:false,message:'El sistema tiene un único Administrador; no se pueden crear más'});
+  if(!nombres||!apellidos||!correo||!contrasena||Number(id_rol)!==2) return res.status(400).json({success:false,message:'Datos inválidos. Solo se pueden crear Instructores (2)'});
   const [exists]=await db.query('SELECT id_usuario FROM usuarios WHERE correo=?',[correo]); if(exists.length) return res.status(400).json({success:false,message:'El correo ya está registrado'});
   if(identificacion){
     const [existeCc]=await db.query('SELECT id_usuario FROM usuarios WHERE identificacion=?',[identificacion]);

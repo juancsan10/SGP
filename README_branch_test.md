@@ -67,13 +67,13 @@ Después de ejecutar el seed (paso 4 del arranque) se dispone de:
 
 | Cuenta | Rol | Contraseña |
 |---|---|---|
-| diana.rios@sgpsena.local | Administrador | Sena2026* |
+| rubiel.tads@gmail.com | Administrador (único) | Definida en `ADMIN_CONTRASENA` de `backend/database/seed.js` |
 | laura.gomez@sgpsena.local | Instructor | Sena2026* |
 | miguel.torres@sgpsena.local | Instructor | Sena2026* |
 | carlos.herrera@sgpsena.local | Aprendiz | Sena2026* |
 | juan.martinez@sgpsena.local | Aprendiz | Sena2026* |
 
-El seed crea 10 usuarios en total (1 administrador, 2 instructores y 7 aprendices); la lista completa está en `backend/database/seed.js`.
+El seed crea 13 usuarios en total (1 administrador único, 2 instructores y 10 aprendices); la lista completa está en `backend/database/seed.js`.
 
 > Para producción, las contraseñas de demostración deben sustituirse.
 

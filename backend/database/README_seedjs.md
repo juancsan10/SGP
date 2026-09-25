@@ -45,7 +45,8 @@ node database/seed.js
    - `repositorios` (links de GitHub por proyecto)
 
 4. **Seguridad en contraseñas**
-   No se guardan en texto plano: se usa `bcrypt.hash('Sena2026*', 10)` para simular
+   No se guardan en texto plano: se usa `bcrypt.hash(..., 10)` (las cuentas de demo con
+   `Sena2026*` y el Administrador con su contraseña propia) para simular
    el comportamiento real de autenticación del sistema.
 
 5. **Resumen final en consola**
@@ -56,15 +57,25 @@ node database/seed.js
 
 | Correo                        | Rol            | Contraseña |
 |-------------------------------|----------------|------------|
-| diana.rios@sgpsena.local      | Administrador  | Sena2026*  |
+| rubiel.tads@gmail.com | Administrador (único) | Definida en `ADMIN_CONTRASENA` de `backend/database/seed.js` |
 | laura.gomez@sgpsena.local     | Instructor     | Sena2026*  |
 | miguel.torres@sgpsena.local   | Instructor     | Sena2026*  |
 | carlos.herrera@sgpsena.local  | Aprendiz       | Sena2026*  |
 | juan.martinez@sgpsena.local   | Aprendiz       | Sena2026*  |
 
-(El seed crea 10 usuarios en total; ver `seed.js`.)
+(El seed crea 13 usuarios en total: 1 administrador único, 2 instructores y 10 aprendices; ver `seed.js`.)
 
 **Con Docker:** `docker compose exec backend node database/seed.js`
+
+### Administrador único en una base de datos que ya tiene datos
+
+`seed.js` vacía las tablas. Si solo necesitas aplicar las credenciales del
+Administrador único sin perder información, usa:
+
+`docker compose exec backend node database/admin-unico.js`
+
+Actualiza al Administrador existente y, si hubiera otros, los pasa a Instructor
+desactivados.
 
 ## Por qué existe este script
 

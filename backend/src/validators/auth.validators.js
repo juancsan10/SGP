@@ -1,5 +1,18 @@
 const { body } = require('express-validator');
 
+// normalizeEmail() por defecto QUITA los puntos de las cuentas de Gmail
+// ("rubiel.tads@gmail.com" → "rubieltads@gmail.com"), así que el
+// correo que llegaba al login ya no coincidía con el guardado en la BD.
+// Solo se normaliza a minúsculas; el resto del correo se respeta tal cual.
+const NORMALIZE_EMAIL_OPTS = {
+  gmail_remove_dots: false,
+  gmail_remove_subaddress: false,
+  gmail_convert_googlemaildotcom: false,
+  outlookdotcom_remove_subaddress: false,
+  yahoo_remove_subaddress: false,
+  icloud_remove_subaddress: false
+};
+
 /**
  * Validaciones para inicio de sesión
  */
@@ -10,7 +23,7 @@ const loginValidators = [
     .withMessage('El correo es requerido')
     .isEmail()
     .withMessage('El correo no tiene un formato válido')
-    .normalizeEmail(),
+    .normalizeEmail(NORMALIZE_EMAIL_OPTS),
 
   body('contrasena')
     .notEmpty()
@@ -41,7 +54,7 @@ const registerValidators = [
     .withMessage('El correo es requerido')
     .isEmail()
     .withMessage('El correo no tiene un formato válido')
-    .normalizeEmail(),
+    .normalizeEmail(NORMALIZE_EMAIL_OPTS),
 
   body('contrasena')
     .notEmpty()
@@ -72,7 +85,7 @@ const resetRequestValidators = [
     .withMessage('El correo es requerido')
     .isEmail()
     .withMessage('El correo no tiene un formato válido')
-    .normalizeEmail()
+    .normalizeEmail(NORMALIZE_EMAIL_OPTS)
 ];
 
 /**
@@ -115,7 +128,7 @@ const adminUserValidators = [
     .withMessage('El correo es requerido')
     .isEmail()
     .withMessage('El correo no tiene un formato válido')
-    .normalizeEmail(),
+    .normalizeEmail(NORMALIZE_EMAIL_OPTS),
 
   body('contrasena')
     .notEmpty()
@@ -123,11 +136,13 @@ const adminUserValidators = [
     .isLength({ min: 8 })
     .withMessage('La contraseña debe tener al menos 8 caracteres'),
 
+  // El sistema tiene un único Administrador: desde aquí solo se crean
+  // Instructores (id_rol = 2).
   body('id_rol')
     .notEmpty()
     .withMessage('El rol es requerido')
-    .isInt({ min: 1, max: 2 })
-    .withMessage('El rol debe ser Administrador (1) o Instructor (2)'),
+    .isInt({ min: 2, max: 2 })
+    .withMessage('Solo se pueden crear Instructores: el sistema tiene un único Administrador'),
 
   body('ficha')
     .optional({ nullable: true })

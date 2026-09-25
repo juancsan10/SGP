@@ -4,7 +4,7 @@ const db = require('../config/db');
 const getByTabla = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT h.*, CONCAT(u.nombres, ' ', u.apellidos) AS usuario_nombre
+      `SELECT h.*, COALESCE(CONCAT(u.nombres, ' ', u.apellidos), h.usuario_eliminado) AS usuario_nombre
        FROM historial_cambios h
        LEFT JOIN usuarios u ON h.id_usuario = u.id_usuario
        WHERE h.tabla_afectada = ? ORDER BY h.fecha_cambio DESC LIMIT 100`,
@@ -41,7 +41,7 @@ const getAll = async (req, res) => {
     const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
 
     const [rows] = await db.query(
-      `SELECT h.*, CONCAT(u.nombres, ' ', u.apellidos) AS usuario_nombre
+      `SELECT h.*, COALESCE(CONCAT(u.nombres, ' ', u.apellidos), h.usuario_eliminado) AS usuario_nombre
        FROM historial_cambios h
        LEFT JOIN usuarios u ON h.id_usuario = u.id_usuario
        ${where}
@@ -112,4 +112,43 @@ const estadisticas = async (req, res) => {
   }
 };
 
-module.exports = { getByTabla, getAll, estadisticas };
+// GET /api/v1/historial/eliminaciones  (NUEVO — Administrador)
+// Registro de usuarios eliminados con el cuestionario que se diligenció.
+const getEliminaciones = async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
+    const offset = Math.max(Number(req.query.offset) || 0, 0);
+    const q = (req.query.q || '').trim();
+    const where = q ? 'WHERE (e.nombre_completo LIKE ? OR e.correo LIKE ? OR e.identificacion LIKE ? OR e.motivo LIKE ?)' : '';
+    const params = q ? Array(4).fill(`%${q}%`) : [];
+    const [rows] = await db.query(
+      `SELECT e.*, COALESCE(CONCAT(a.nombres,' ',a.apellidos), 'Administrador') AS admin_nombre,
+              (SELECT COUNT(*) FROM eliminaciones_archivos x WHERE x.id_eliminacion = e.id_eliminacion) AS total_archivos
+       FROM eliminaciones_usuario e LEFT JOIN usuarios a ON a.id_usuario = e.id_admin
+       ${where} ORDER BY e.fecha_eliminacion DESC LIMIT ? OFFSET ?`, [...params, limit, offset]);
+    const [[{ total }]] = await db.query(`SELECT COUNT(*) AS total FROM eliminaciones_usuario e ${where}`, params);
+    return res.json({ success: true, data: rows, meta: { total, limit, offset } });
+  } catch (err) {
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+};
+
+// GET /api/v1/historial/eliminaciones/:id  (NUEVO — Administrador)
+const getEliminacion = async (req, res) => {
+  try {
+    const [[e]] = await db.query(
+      `SELECT e.*, COALESCE(CONCAT(a.nombres,' ',a.apellidos), 'Administrador') AS admin_nombre
+       FROM eliminaciones_usuario e LEFT JOIN usuarios a ON a.id_usuario = e.id_admin
+       WHERE e.id_eliminacion = ?`, [req.params.id]);
+    if (!e) return res.status(404).json({ success: false, message: 'Registro de eliminación no encontrado' });
+    const [archivos] = await db.query(
+      'SELECT * FROM eliminaciones_archivos WHERE id_eliminacion = ? ORDER BY id_archivo', [req.params.id]);
+    let resumen = null;
+    try { resumen = e.resumen ? JSON.parse(e.resumen) : null; } catch { resumen = null; }
+    return res.json({ success: true, data: { ...e, resumen, archivos } });
+  } catch (err) {
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+};
+
+module.exports = { getByTabla, getAll, estadisticas, getEliminaciones, getEliminacion };

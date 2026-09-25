@@ -26,4 +26,8 @@ router.post('/tarea/:id/upload', verifyToken, requireTaskOwnerOrAdmin, upload.si
   },
   [idParam('id'), ...entregaBody], validate, ctrl.submit);
 router.put('/tarea/:id/revision',verifyToken,requireTaskDeliveryReview,[idParam('id'),optionalText('estado',50),optionalText('observacion_instructor',5000)],validate,ctrl.review);
+
+// NUEVO — detalle de solo lectura para el Administrador (y el instructor
+// responsable): entrega + tarea + proyecto + calificación + retroalimentación.
+router.get('/:id/detalle', verifyToken, requireRole('Administrador','Instructor'), [idParam('id')], validate, ctrl.getDetalle);
 module.exports=router;

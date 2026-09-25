@@ -31,6 +31,8 @@ export function estadoBadge(estado) {
     'Cancelado':        'badge-red',
     'Vencido':          'badge-red',
     'Rechazado':        'badge-red',
+    'Rechazada':        'badge-red',   // NUEVO: solicitudes
+    'Atendida':         'badge-green', // NUEVO: solicitudes
   };
   const cls = mapa[estado] || 'badge-slate';
   return <span className={`badge ${cls}`}>{estado || '—'}</span>;
@@ -162,4 +164,13 @@ export function ConfirmModal({ abierto, tipo = 'advertencia', titulo, mensaje, t
       </div>
     </div>
   );
+}
+
+// ── Destino de los portales de modales (NUEVO) ─────────
+// Los modales que se abren desde dentro de una tarjeta se montan con
+// createPortal para quedar por encima del encabezado fijo. Se montan en
+// el contenedor del rol (.role-admin/.role-instructor/.role-aprendiz) y no
+// en <body>, para conservar el color de acento de cada rol.
+export function portalDestino() {
+  return document.querySelector('.role-admin, .role-instructor, .role-aprendiz') || document.body;
 }
