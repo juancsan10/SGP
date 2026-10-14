@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { historialService } from '../services/api.js';
-import { LoadingCenter, EmptyState, Pagination, portalDestino } from '../components/helpers.jsx';
+import { LoadingCenter, EmptyState, Pagination, portalDestino, NumeroAnimado } from '../components/helpers.jsx';
 
 const ACCIONES = {
   INSERT: { label: 'Creación',  cls: 'badge-green' },
@@ -243,27 +243,27 @@ export default function HistorialPage() {
             <div className="stats-grid">
               <div className="stat-card">
                 <div className="stat-icon green">👥</div>
-                <div><div className="stat-value">{stats.totales.usuarios_activos}</div><div className="stat-label">Usuarios activos ({stats.totales.total_usuarios} total)</div></div>
+                <div><div className="stat-value"><NumeroAnimado valor={stats.totales.usuarios_activos} /></div><div className="stat-label">Usuarios activos ({stats.totales.total_usuarios} total)</div></div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon blue">📁</div>
-                <div><div className="stat-value">{stats.totales.proyectos_activos}</div><div className="stat-label">Proyectos activos ({stats.totales.total_proyectos} total)</div></div>
+                <div><div className="stat-value"><NumeroAnimado valor={stats.totales.proyectos_activos} /></div><div className="stat-label">Proyectos activos ({stats.totales.total_proyectos} total)</div></div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon green">✅</div>
-                <div><div className="stat-value">{stats.totales.tareas_completadas}</div><div className="stat-label">Tareas completadas ({stats.totales.total_tareas} total)</div></div>
+                <div><div className="stat-value"><NumeroAnimado valor={stats.totales.tareas_completadas} /></div><div className="stat-label">Tareas completadas ({stats.totales.total_tareas} total)</div></div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon amber">📤</div>
-                <div><div className="stat-value">{stats.totales.entregas_con_correccion}</div><div className="stat-label">Entregas con corrección</div></div>
+                <div><div className="stat-value"><NumeroAnimado valor={stats.totales.entregas_con_correccion} /></div><div className="stat-label">Entregas con corrección</div></div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon amber">👤</div>
-                <div><div className="stat-value">{stats.totales.solicitudes_pendientes}</div><div className="stat-label">Solicitudes de equipo pendientes</div></div>
+                <div><div className="stat-value"><NumeroAnimado valor={stats.totales.solicitudes_pendientes} /></div><div className="stat-label">Solicitudes de equipo pendientes</div></div>
               </div>
               <div className="stat-card">
                 <div className="stat-icon red">🚦</div>
-                <div><div className="stat-value">{stats.totales.repositorios_con_alerta}</div><div className="stat-label">Repositorios con alerta de semáforo</div></div>
+                <div><div className="stat-value"><NumeroAnimado valor={stats.totales.repositorios_con_alerta} /></div><div className="stat-label">Repositorios con alerta de semáforo</div></div>
               </div>
             </div>
 

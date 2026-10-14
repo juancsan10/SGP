@@ -116,7 +116,7 @@ function SolicitudesAdmin() {
     <div className="card" style={{ marginBottom: 20 }}>
       <div className="card-header">
         <span>📨</span><strong>Solicitudes de instructores y aprendices</strong>
-        {pendientesTotales > 0 && <span className="badge badge-red">{pendientesTotales} pendiente(s)</span>}
+        {pendientesTotales > 0 && <span className="badge badge-red badge-pulse">{pendientesTotales} pendiente(s)</span>}
       </div>
       <div className="card-body">
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 14 }}>

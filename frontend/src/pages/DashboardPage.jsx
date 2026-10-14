@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { proyectosService, tareasService, mensajesService } from '../services/api.js';
-import { estadoBadge, prioridadBadge, formatFecha } from '../components/helpers.jsx';
+import { estadoBadge, prioridadBadge, formatFecha, NumeroAnimado } from '../components/helpers.jsx';
 import SolicitudesPanel from '../components/SolicitudesPanel.jsx'; // NUEVO
 
 export default function DashboardPage() {
@@ -86,35 +86,35 @@ export default function DashboardPage() {
           <div className="stat-card">
             <div className="stat-icon green">📁</div>
             <div>
-              <div className="stat-value">{proyectos.length}</div>
+              <div className="stat-value"><NumeroAnimado valor={proyectos.length} /></div>
               <div className="stat-label">Proyectos totales</div>
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-icon blue">🔄</div>
             <div>
-              <div className="stat-value">{activos}</div>
+              <div className="stat-value"><NumeroAnimado valor={activos} /></div>
               <div className="stat-label">En curso</div>
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-icon amber">📝</div>
             <div>
-              <div className="stat-value">{planif}</div>
+              <div className="stat-value"><NumeroAnimado valor={planif} /></div>
               <div className="stat-label">En planificación</div>
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-icon green">🏁</div>
             <div>
-              <div className="stat-value">{finalizados}</div>
+              <div className="stat-value"><NumeroAnimado valor={finalizados} /></div>
               <div className="stat-label">Finalizados</div>
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-icon red">⏳</div>
             <div>
-              <div className="stat-value">{tareasPend}</div>
+              <div className="stat-value"><NumeroAnimado valor={tareasPend} /></div>
               <div className="stat-label">Tareas pendientes</div>
             </div>
           </div>

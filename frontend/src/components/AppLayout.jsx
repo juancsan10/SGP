@@ -1,9 +1,22 @@
 // =====================================================
 // components/AppLayout.jsx
 // Layout principal: sidebar + área de contenido
+// NUEVO: el sidebar se puede contraer (solo íconos) con el botón «/»,
+// y "Cerrar sesión" pide confirmación antes de salir.
 // =====================================================
+import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { ConfirmModal } from './helpers.jsx';
+
+// La preferencia de contraído/expandido se recuerda en este navegador.
+const CLAVE_SIDEBAR = 'sgp_sidebar_contraido';
+function leerContraido() {
+  try { return localStorage.getItem(CLAVE_SIDEBAR) === '1'; } catch { return false; }
+}
+function guardarContraido(valor) {
+  try { localStorage.setItem(CLAVE_SIDEBAR, valor ? '1' : '0'); } catch { /* almacenamiento no disponible */ }
+}
 
 // Definición de ítems del menú
 function getNavItems(esAdmin, esInstructor) {
@@ -32,6 +45,12 @@ export default function AppLayout() {
   const navigate  = useNavigate();
   const location  = useLocation();
   const navItems  = getNavItems(esAdmin, esInstructor);
+  const [contraido, setContraido] = useState(leerContraido);
+  const [confirmarSalida, setConfirmarSalida] = useState(false);
+
+  function alternarSidebar() {
+    setContraido(c => { guardarContraido(!c); return !c; });
+  }
 
   // Iniciales del usuario para el avatar
   const initials = usuario
@@ -39,15 +58,16 @@ export default function AppLayout() {
     : '?';
 
   function handleLogout() {
+    setConfirmarSalida(false);
     logout();
     navigate('/login');
   }
 
   return (
-    <div className={`app-layout ${rolClase}`}>
+    <div className={`app-layout ${rolClase} ${contraido ? 'sidebar-contraido' : ''}`}>
       {/* ── Sidebar ───────────────────────────────── */}
       <aside className="sidebar">
-        {/* Logo */}
+        {/* Logo + botón para contraer/expandir */}
         <div className="sidebar-brand">
           <div className="sidebar-brand-logo">
             <div className="sidebar-brand-icon">S</div>
@@ -56,6 +76,16 @@ export default function AppLayout() {
               <span>Gestión de Proyectos</span>
             </div>
           </div>
+          <button
+            type="button"
+            className="sidebar-toggle"
+            onClick={alternarSidebar}
+            title={contraido ? 'Expandir menú' : 'Contraer menú'}
+            aria-label={contraido ? 'Expandir menú' : 'Contraer menú'}
+            aria-expanded={!contraido}
+          >
+            {contraido ? '»' : '«'}
+          </button>
         </div>
 
         {/* Navegación */}
@@ -68,9 +98,10 @@ export default function AppLayout() {
                 key={item.path}
                 className={`nav-link ${location.pathname.startsWith(item.path) ? 'active' : ''}`}
                 onClick={() => navigate(item.path)}
+                title={contraido ? item.label : undefined}
               >
                 <span className="icon">{item.icon}</span>
-                {item.label}
+                <span className="nav-label">{item.label}</span>
               </button>
             )
           )}
@@ -78,7 +109,7 @@ export default function AppLayout() {
 
         {/* Usuario + logout */}
         <div className="sidebar-footer">
-          <div className="sidebar-user">
+          <div className="sidebar-user" title={contraido ? `${usuario?.nombres ?? ''} ${usuario?.apellidos ?? ''} · ${usuario?.rol ?? ''}` : undefined}>
             <div className="sidebar-avatar">{initials}</div>
             <div className="sidebar-user-info">
               <div className="sidebar-user-name">{usuario?.nombres} {usuario?.apellidos}</div>
@@ -87,19 +118,35 @@ export default function AppLayout() {
           </div>
           <button
             className="nav-link"
-            onClick={handleLogout}
+            onClick={() => setConfirmarSalida(true)}
             style={{ marginTop: 4 }}
+            title={contraido ? 'Cerrar sesión' : undefined}
           >
             <span className="icon">🚪</span>
-            Cerrar sesión
+            <span className="nav-label">Cerrar sesión</span>
           </button>
         </div>
       </aside>
 
       {/* ── Contenido ─────────────────────────────── */}
       <main className="main-content">
-        <Outlet />
+        {/* NUEVO: la "key" reinicia la animación de entrada en cada cambio de ruta */}
+        <div key={location.pathname} className="route-transition">
+          <Outlet />
+        </div>
       </main>
+
+      {/* NUEVO: confirmación antes de cerrar sesión */}
+      <ConfirmModal
+        abierto={confirmarSalida}
+        tipo="advertencia"
+        titulo="¿Cerrar sesión?"
+        mensaje="Tendrás que volver a ingresar tu correo y contraseña para continuar."
+        textoConfirmar="Sí, cerrar sesión"
+        textoCancelar="Cancelar"
+        onConfirmar={handleLogout}
+        onCancelar={() => setConfirmarSalida(false)}
+      />
     </div>
   );
 }
