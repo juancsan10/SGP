@@ -153,7 +153,6 @@ export default function LoginPage() {
         <ul className="sgp-login__roles" aria-label="Perfiles disponibles">
           <li>Aprendiz</li>
           <li>Instructor</li>
-          <li>Administrador</li>
         </ul>
 
         <p className="sgp-login__hero-foot">SENA · Análisis y Desarrollo de Software</p>
