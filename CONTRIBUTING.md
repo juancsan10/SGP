@@ -53,8 +53,38 @@ clonar después del `force-push`.
 
 ## Flujo de ramas
 
-- `main` — únicamente código verificado y funcional. Nunca se hace push directo aquí.
-- `develop` — integración de features antes de pasar a main.
-- `feature/<nombre-descriptivo>` — una rama por tarea/historia de usuario. Ejemplo: `feature/recuperacion-contrasena`.
+- `develop` — rama de trabajo diaria. Aquí se integran todas las features, fixes y tests.
+- `STG` — pre-producción. Recibe `develop` cuando hay una presentación o una entrega para validar.
+- `main` — producción. Recibe `STG` solo cuando lo validado está listo. Nunca se hace push directo aquí.
+- Ramas de trabajo, siempre creadas **desde `develop`**:
+  - `feature/<nombre-descriptivo>` — una historia de usuario. Ejemplo: `feature/HU-16-recuperacion-contrasena`.
+  - `fix/<nombre>` — corrección de un bug.
+  - `test/<nombre>` — pruebas.
+  - `chore/<nombre>` — mantenimiento (dependencias, configuración).
+  - `ci/<nombre>` — cambios en el CI.
 
-Todo cambio a `main` o `develop` debe llegar vía **Pull Request**, no vía push directo.
+Recorrido de un cambio: `rama de trabajo → develop → STG → main`.
+
+Todo cambio a `develop`, `STG` o `main` debe llegar vía **Pull Request**, no vía push directo.
+
+## Pull Requests
+
+- Una PR por propósito, apuntando a `develop` (salvo los pases `develop → STG` y `STG → main`).
+- Debe tener el CI en verde y la aprobación de **al menos un compañero** del equipo antes de hacer merge.
+- Quien abre la PR no la aprueba ni la mergea sin la revisión de otra persona.
+- Al abrir la PR se carga una plantilla (`.github/pull_request_template.md`); complétala.
+
+## Integración continua (CI)
+
+El workflow `.github/workflows/ci.yml` corre en cada PR y push hacia `develop`, `STG` y `main`:
+
+- **backend:** instala dependencias con el lockfile y ejecuta `pnpm audit` (falla con vulnerabilidades altas o críticas).
+- **frontend:** instala dependencias, compila (`pnpm build`) y ejecuta `pnpm audit`.
+
+Si el audit falla, actualiza la librería afectada (`pnpm update <paquete>`) y sube el lockfile. Si no existe versión corregida, no lo ignores en silencio: explica el motivo en la PR.
+
+## Dependencias
+
+- Las versiones están fijadas de forma exacta en `package.json`; no uses `^` ni `~`.
+- Usa siempre **pnpm** (versión 9.15.0), nunca `npm install`.
+- Antes de subir cambios de dependencias, corre `pnpm audit` en `backend/` y `frontend/`.

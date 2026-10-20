@@ -1,12 +1,23 @@
 name: SGP CI
 on:
   pull_request:
-    branches: [develop]
+    branches: [develop, STG, main]
   push:
-    branches: [develop]
+    branches: [develop, STG, main]
+
+# El CI solo lee el repositorio; no necesita permisos de escritura.
+permissions:
+  contents: read
+
+# Si se sube un commit nuevo a la misma rama/PR, cancela la ejecución anterior.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: backend
@@ -21,9 +32,15 @@ jobs:
           cache: pnpm
           cache-dependency-path: backend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile --ignore-scripts
+      # Se ignora solo GHSA-vfj7-8cjw-p6xm (braces), listado en
+      # backend/package.json > pnpm.auditConfig.ignoreGhsas: no existe versión
+      # corregida en npm y solo llega por nodemon (herramienta de desarrollo,
+      # no corre en producción). Cualquier otro aviso sigue haciendo fallar el CI.
+      # Cuando braces publique parche, quitar ese bloque del package.json.
       - run: pnpm audit --audit-level=high
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: frontend
