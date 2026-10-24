@@ -1,6 +1,7 @@
 const db = require('../config/db');
 const { registrarCambio } = require('../services/historial.service');
 const { contienePalabraProhibida } = require('../utils/glosario-prohibido');
+const notificacionesService = require('../services/notificaciones.service');
 
 // POST /api/v1/mensajes
 const create = async (req, res) => {
@@ -19,12 +20,13 @@ const create = async (req, res) => {
     // alerta (notificación) a quien cometió la infracción.
     const palabraDetectada = contienePalabraProhibida(contenido);
     if (palabraDetectada) {
-      await db.query(
-        `INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario) VALUES (?, ?, 'advertencia', 'Alta', ?)`,
-        ['Mensaje bloqueado por lenguaje inapropiado',
-         'Tu mensaje no se envió porque contenía lenguaje no permitido en la plataforma. Recuerda mantener un trato respetuoso con tu equipo.',
-         id_remitente]
-      );
+      await notificacionesService.crearYNotificar({
+        titulo: 'Mensaje bloqueado por lenguaje inapropiado',
+        mensaje: 'Tu mensaje no se envió porque contenía lenguaje no permitido en la plataforma. Recuerda mantener un trato respetuoso con tu equipo.',
+        tipo: 'advertencia',
+        prioridad: 'Alta',
+        id_usuario: id_remitente
+      });
       await registrarCambio('mensajes', null, 'BLOQUEADO_LENGUAJE_INAPROPIADO', id_remitente);
       return res.status(400).json({ success: false, message: 'Tu mensaje contiene lenguaje no permitido y no fue enviado. Se generó una alerta en tu cuenta.' });
     }
@@ -45,13 +47,13 @@ const create = async (req, res) => {
       [id_proyecto, id_remitente]
     );
 
-    const notifPromises = miembros.map(m =>
-      db.query(
-        `INSERT INTO notificaciones (titulo, mensaje, tipo, id_usuario) VALUES ('Nuevo mensaje', ?, 'mensaje', ?)`,
-        [contenido.substring(0, 100), m.id_usuario]
-      )
-    );
-    await Promise.all(notifPromises);
+    await notificacionesService.crearYNotificarMultiples({
+      ids_usuarios: miembros.map(m => m.id_usuario),
+      titulo: 'Nuevo mensaje',
+      mensaje: contenido.substring(0, 100),
+      tipo: 'mensaje',
+      prioridad: 'Media'
+    });
 
     return res.status(201).json({ success: true, message: 'Mensaje enviado', data: { id_mensaje: result.insertId } });
   } catch (err) {
@@ -79,12 +81,13 @@ const update = async (req, res) => {
     // puede burlar el glosario cambiando el contenido después de enviado.
     const palabraDetectada = contienePalabraProhibida(contenido);
     if (palabraDetectada) {
-      await db.query(
-        `INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario) VALUES (?, ?, 'advertencia', 'Alta', ?)`,
-        ['Edición de mensaje bloqueada por lenguaje inapropiado',
-         'La edición de tu mensaje no se guardó porque contenía lenguaje no permitido en la plataforma.',
-         req.user.id]
-      );
+      await notificacionesService.crearYNotificar({
+        titulo: 'Edición de mensaje bloqueada por lenguaje inapropiado',
+        mensaje: 'La edición de tu mensaje no se guardó porque contenía lenguaje no permitido en la plataforma.',
+        tipo: 'advertencia',
+        prioridad: 'Alta',
+        id_usuario: req.user.id
+      });
       await registrarCambio('mensajes', req.params.id, 'BLOQUEADO_LENGUAJE_INAPROPIADO', req.user.id);
       return res.status(400).json({ success: false, message: 'La edición contiene lenguaje no permitido y no fue guardada. Se generó una alerta en tu cuenta.' });
     }

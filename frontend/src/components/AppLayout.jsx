@@ -7,7 +7,9 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useNotificaciones } from '../context/NotificacionesContext.jsx';
 import { ConfirmModal } from './helpers.jsx';
+import ToastNotificaciones from './ToastNotificaciones.jsx';
 
 // La preferencia de contraído/expandido se recuerda en este navegador.
 const CLAVE_SIDEBAR = 'sgp_sidebar_contraido';
@@ -42,6 +44,7 @@ function getNavItems(esAdmin, esInstructor) {
 
 export default function AppLayout() {
   const { usuario, logout, esAdmin, esInstructor, rolClase } = useAuth();
+  const { noLeidas, conectado } = useNotificaciones();
   const navigate  = useNavigate();
   const location  = useLocation();
   const navItems  = getNavItems(esAdmin, esInstructor);
@@ -98,10 +101,22 @@ export default function AppLayout() {
                 key={item.path}
                 className={`nav-link ${location.pathname.startsWith(item.path) ? 'active' : ''}`}
                 onClick={() => navigate(item.path)}
-                title={contraido ? item.label : undefined}
+                title={contraido ? (item.path === '/notificaciones' && noLeidas > 0 ? `${item.label} (${noLeidas} sin leer)` : item.label) : undefined}
               >
-                <span className="icon">{item.icon}</span>
-                <span className="nav-label">{item.label}</span>
+                <span className="icon" style={{ position: 'relative' }}>
+                  {item.icon}
+                  {item.path === '/notificaciones' && noLeidas > 0 && contraido && (
+                    <span className="sidebar-dot-badge" />
+                  )}
+                </span>
+                <span className="nav-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <span>{item.label}</span>
+                  {item.path === '/notificaciones' && noLeidas > 0 && (
+                    <span className="sidebar-notif-pill" id="sidebar-notif-badge">
+                      {noLeidas > 99 ? '99+' : noLeidas}
+                    </span>
+                  )}
+                </span>
               </button>
             )
           )}
@@ -125,6 +140,16 @@ export default function AppLayout() {
             <span className="icon">🚪</span>
             <span className="nav-label">Cerrar sesión</span>
           </button>
+
+          {/* Indicador de estado en tiempo real (RF4.4 / HU-28) */}
+          <div style={{ padding: '6px 12px 2px', display: 'flex', alignItems: 'center', gap: 6, opacity: 0.85 }} title={conectado ? 'Conexión WebSocket activa en tiempo real' : 'Conectando servicio en tiempo real...'}>
+            <span className="live-indicator-dot" style={{ background: conectado ? '#10b981' : '#f59e0b' }} />
+            {!contraido && (
+              <span style={{ fontSize: 10, color: 'var(--text-muted, #94a3b8)', letterSpacing: '0.02em' }}>
+                {conectado ? 'Tiempo real activo' : 'Conectando…'}
+              </span>
+            )}
+          </div>
         </div>
       </aside>
 
@@ -147,6 +172,9 @@ export default function AppLayout() {
         onConfirmar={handleLogout}
         onCancelar={() => setConfirmarSalida(false)}
       />
+
+      {/* Alertas flotantes en tiempo real (RF4.4 / HU-28) */}
+      <ToastNotificaciones />
     </div>
   );
 }
