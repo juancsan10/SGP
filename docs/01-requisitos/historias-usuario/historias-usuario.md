@@ -255,12 +255,12 @@ Este documento complementa [`../rf-rnf/requisitos-funcionales-no-funcionales.md`
 ---
 
 ### HU-35 — Exportar reportes del proyecto
-**Como** instructor
+**Como** instructor o administrador
 **Quiero** exportar un reporte del avance del proyecto en PDF o Excel
 **Para** compartirlo o archivarlo fuera del sistema
 
-**Requisito relacionado:** RF6.3 · **Caso de uso:** CU-010
-**Estado:** ⬜ Pendiente — sin código todavía
+**Requisito relacionado:** RF6.3 · **Caso de uso:** CU-010 · **Endpoints:** `GET /reportes/proyectos/:id/pdf`, `GET /reportes/proyectos/:id/excel`, `GET /reportes/consolidado/pdf`, `GET /reportes/consolidado/excel`, `GET /reportes/resumen`
+**Estado:** ✅ Hecho — Implementación completa y probada tanto en backend como en frontend. Genera archivos reales PDF con diseño institucional SENA y libros Excel (.xlsx) estructurados en hojas (Resumen, Fases, Entregables, Tareas, Equipo), disponible desde la vista dedicada `/reportes` y desde el detalle de cada proyecto.
 
 ---
 
@@ -268,13 +268,12 @@ Este documento complementa [`../rf-rnf/requisitos-funcionales-no-funcionales.md`
 
 | Estado | Cantidad | Historias |
 |---|---|---|
-| ✅ Hecho | 18 | HU-13 a HU-27, HU-29, HU-30, HU-31, HU-32 |
+| ✅ Hecho | 19 | HU-13 a HU-27, HU-29, HU-30, HU-31, HU-32, HU-35 |
 | 🟡 Parcial | 2 | HU-33, HU-34 |
-| ⬜ Pendiente | 2 | HU-28, HU-35 |
+| ⬜ Pendiente | 1 | HU-28 |
 
-**18 de 23 historias completamente implementadas y verificadas (≈78%)**, 2 parciales
-con una limitación puntual documentada, y 2 sin iniciar por decisión del equipo
-(no por olvido) — ver `docs/07-deuda-tecnica.md`.
+**19 de 23 historias completamente implementadas y verificadas (≈83%)**, 2 parciales
+con una limitación puntual documentada, y 1 sin iniciar (HU-28 sincronización bidireccional de tareas con GitHub Issues) — ver `docs/07-deuda-tecnica.md`.
 
 > ✍️ **Autor:** Equipo de Desarrollo — Sistema de Gestión de Proyectos SENA
 > 📅 **Última actualización:** ver historial de commits de este archivo

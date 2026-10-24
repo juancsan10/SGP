@@ -87,7 +87,7 @@ código real en la rama `test` al momento de escribir esto):
 |---|---|---|---|---|---|
 | RF6.1 Integración con GitHub | — | — | HU-33 | `POST/GET/PUT/DELETE /github-integration`, `POST/GET /repositorios` | 🟡 |
 | RF6.2 Almacenamiento en la nube | — | — | HU-34 | `POST /archivos/upload/:id`, `/entregas/tarea/:id/upload` | 🟡 |
-| RF6.3 Exportación de reportes | — | CU-010 | HU-35 | — | ⬜ |
+| RF6.3 Exportación de reportes | — | CU-010 | HU-35 | `GET /reportes/proyectos/:id/pdf`, `GET /reportes/proyectos/:id/excel`, `GET /reportes/consolidado/pdf`, `GET /reportes/consolidado/excel`, `GET /reportes/resumen` | ✅ |
 
 > **RF6.1 en detalle:** se guarda usuario/token de GitHub y la URL del
 > repositorio, pero el sistema no consume la API de GitHub todavía (no
@@ -97,9 +97,9 @@ código real en la rama `test` al momento de escribir esto):
 > volumen persistente), pero es **almacenamiento local**, no una integración
 > con un proveedor cloud (Google Drive/S3) como pedía el RF originalmente.
 >
-> **RF6.3 en detalle:** sin código ni endpoint todavía — es el único
-> requisito funcional completamente sin empezar (HU-35 está documentada
-> pero no construida).
+> **RF6.3 en detalle:** 100% implementado y verificado (HU-35). Genera archivos
+> reales PDF con diseño institucional SENA y libros Excel (.xlsx) estructurados en hojas,
+> disponibles por proyecto individual y consolidado general.
 
 ---
 
@@ -133,15 +133,13 @@ arquitectura o de proceso. Se documenta cómo se verificó cada uno, no solo si 
 
 | Categoría | Hecho ✅ | Parcial 🟡 | Pendiente ⬜ | Total |
 |---|---|---|---|---|
-| Requisitos Funcionales (RF) | 20 | 3 | 1 | 24 |
+| Requisitos Funcionales (RF) | 21 | 3 | 0 | 24 |
 | Requisitos No Funcionales (RNF) | 5 | 4 | 7 | 16 |
 
-**Cobertura funcional real: 83% completo, 12.5% parcial, 4% sin iniciar.**
+**Cobertura funcional real: 87.5% completo, 12.5% parcial, 0% sin iniciar.**
 
-Los 2 pendientes funcionales que quedan por decisión propia del equipo
-(no por olvido): **RF6.3 exportación de reportes** y la porción de
-**tiempo real** de RF4.4 — ambos documentados desde hace varias sesiones
-en `docs/07-deuda-tecnica.md` como trabajo futuro, no como omisiones.
+El único pendiente funcional restante con alcance a futuro es la porción de
+**tiempo real** de RF4.4 (WebSockets) — documentado en `docs/07-deuda-tecnica.md`.
 
 ---
 

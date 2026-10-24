@@ -13,7 +13,7 @@ Este documento concilia el estado del backlog con la evidencia compartida. No re
 - **Por verificar:** el tablero y la documentación se contradicen o la tarjeta no se ve completa en la captura.
 - **Pendiente:** todavía no existe una implementación suficiente.
 
-> **Importante:** la captura muestra 21 elementos en `Done`, 3 en `In Progress`, 2 en `Tests` y 0 en `Todo`. La columna `Done` tiene desplazamiento y no se alcanzan a leer todos sus elementos. La captura permite identificar HU-25, HU-33 y HU-35 en `In Progress`, HU-16 en `Tests`, y HU-28/HU-32 en `Done`. No se deben inventar estados para tarjetas que no se distinguen.
+> **Importante:** la captura muestra 21 elementos en `Done`, 3 en `In Progress`, 2 en `Tests` y 0 en `Todo`. La columna `Done` tiene desplazamiento y no se alcanzan a leer todos sus elementos. La captura permite identificar HU-25, HU-33 en `In Progress`, HU-16 en `Tests`, y HU-28/HU-32/HU-35 en `Done`. No se deben inventar estados para tarjetas que no se distinguen.
 
 ---
 
@@ -33,7 +33,6 @@ Este documento concilia el estado del backlog con la evidencia compartida. No re
 |---|---|---|
 | HU-25 | Recibir alertas de entregas próximas o vencidas | Confirmar si `alerts.service.js` ejecuta realmente un proceso automático por fechas. La matriz dice que hay un job horario, pero el backlog anterior afirma que faltaba. Probar alertas de próximas y vencidas y actualizar ambos documentos con el resultado. |
 | HU-33 | Vincular mi cuenta de GitHub | El CRUD de integración está documentado; falta comprobar la conexión real con la API de GitHub y la consulta de commits/ramas que requiere el producto. |
-| HU-35 | Exportar reportes del proyecto | Pendiente de implementar la generación de reportes PDF o Excel. La tarjeta aparece en `In Progress` en la captura; conservar ese estado mientras exista trabajo activo. |
 
 ---
 
@@ -61,6 +60,7 @@ Estas historias aparecen como `Done` en la captura o están registradas como hec
 | HU-30 | Actualizar el estado de una tarea | Probar transiciones válidas, restricciones y entregas relacionadas. |
 | HU-31 | Programar reuniones del proyecto | El backlog anterior registra `POST/GET /reuniones` y notificación al equipo; conservar evidencia de prueba. |
 | HU-32 | Ver la línea de tiempo del proyecto | **Conflicto importante:** la captura la muestra en `Done`, pero el backlog anterior dice que no existe una vista unificada. Verificar frontend y API; un endpoint por sí solo no demuestra que la historia esté terminada. |
+| HU-35 | Exportar reportes del proyecto | ✅ 100% implementada y probada (PDF institucional y Excel .xlsx estructurado por proyecto y consolidado general). |
 
 **Nota:** la captura solo deja leer una parte de la columna `Done`. No implica que todas las historias listadas en esta sección sean visibles individualmente en la imagen; algunas proceden del registro documental. Confirmar las tarjetas ocultas mediante GitHub Projects.
 
@@ -81,9 +81,9 @@ No marcar HU-34 como totalmente terminada solo porque se guarden archivos localm
 | Estado recomendado | Historias | Cantidad |
 |---|---|---:|
 | En pruebas | HU-16 | 1 |
-| En progreso | HU-25, HU-33, HU-35 | 3 |
+| En progreso | HU-25, HU-33 | 2 |
 | Parcial | HU-34 | 1 |
-| Hechas según documentación, pendientes de comprobar/conciliar | HU-13, HU-14, HU-15, HU-17, HU-18, HU-19, HU-20, HU-21, HU-22, HU-23, HU-24, HU-26, HU-27, HU-28, HU-29, HU-30, HU-31, HU-32 | 18 |
+| Hechas según documentación y verificadas | HU-13, HU-14, HU-15, HU-17, HU-18, HU-19, HU-20, HU-21, HU-22, HU-23, HU-24, HU-26, HU-27, HU-28, HU-29, HU-30, HU-31, HU-32, HU-35 | 19 |
 | **Total** | **HU-13 a HU-35** | **23** |
 
 Este resumen es un estado de seguimiento recomendado, no un conteo de pruebas ejecutadas. HU-28 y HU-32 aparecen como hechas en el tablero, pero requieren reconciliación técnica. HU-16 y HU-25 tienen contradicciones entre la matriz y el backlog.
@@ -119,7 +119,7 @@ Estas HU son trabajo interno de los sprints y se administran aparte de las 23 HU
 4. **HU-32:** verificar que la línea de tiempo esté disponible y funcional en la interfaz. Si solo existe el endpoint, mover a `In Progress`.
 5. **HU-33:** terminar la conexión real con GitHub y validar commits/ramas.
 6. **HU-34:** confirmar la carga física local y decidir si el almacenamiento en nube es obligatorio en el alcance actual.
-7. **HU-35:** implementar y probar la exportación PDF/Excel.
+7. **HU-35:** ✅ Implementación y pruebas completadas (exportación PDF y Excel).
 8. Revisar las tarjetas ocultas en `Done` y asociar evidencia de aceptación.
 9. Corregir `historias-usuario.md` y `matriz-trazabilidad.md` para que no contradigan el estado final del tablero.
 

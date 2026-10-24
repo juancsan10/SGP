@@ -245,3 +245,46 @@ export const solicitudesService = {
   create:   (data)        => api.post('/solicitudes', data),
   resolver: (id, estado, respuesta) => api.put(`/solicitudes/${id}/resolver`, { estado, respuesta }),
 };
+
+// ── Exportación de Reportes PDF y Excel (HU-35 / RF6.3) ──
+function descargarArchivoBlob(data, nombreArchivo, mimeType) {
+  const blob = data instanceof Blob ? data : new Blob([data], { type: mimeType });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }, 150);
+}
+
+export const reportesService = {
+  getResumen: () => api.get('/reportes/resumen'),
+  descargarProyectoPdf: async (idProyecto, nombre = 'proyecto') => {
+    const res = await api.get(`/reportes/proyectos/${idProyecto}/pdf`, { responseType: 'blob' });
+    const nombreLimpio = String(nombre).replace(/[^a-zA-Z0-9_-]/g, '_');
+    descargarArchivoBlob(res.data, `Reporte_${nombreLimpio}_${idProyecto}.pdf`, 'application/pdf');
+    return res;
+  },
+  descargarProyectoExcel: async (idProyecto, nombre = 'proyecto') => {
+    const res = await api.get(`/reportes/proyectos/${idProyecto}/excel`, { responseType: 'blob' });
+    const nombreLimpio = String(nombre).replace(/[^a-zA-Z0-9_-]/g, '_');
+    descargarArchivoBlob(res.data, `Reporte_${nombreLimpio}_${idProyecto}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    return res;
+  },
+  descargarConsolidadoPdf: async () => {
+    const res = await api.get('/reportes/consolidado/pdf', { responseType: 'blob' });
+    descargarArchivoBlob(res.data, `Reporte_Consolidado_Proyectos_SENA_${Date.now()}.pdf`, 'application/pdf');
+    return res;
+  },
+  descargarConsolidadoExcel: async () => {
+    const res = await api.get('/reportes/consolidado/excel', { responseType: 'blob' });
+    descargarArchivoBlob(res.data, `Reporte_Consolidado_Proyectos_SENA_${Date.now()}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    return res;
+  },
+};
+

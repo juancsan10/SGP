@@ -3,7 +3,7 @@
 - Nomenclatura técnica en español: migración gradual a inglés el próximo trimestre.
 - Cobertura automatizada de pruebas: priorizar API y autorización en el próximo trimestre.
 - RF6.2 almacenamiento en la nube: próximo trimestre.
-- RF6.3 exportación PDF/Excel: próximo trimestre.
+- RF6.3 exportación PDF/Excel: ✅ Resuelto en HU-35 (implementada exportación en PDF institucional y Excel .xlsx estructurado por proyecto y consolidado).
 - RF4.4 WebSocket: la persistencia de notificaciones funciona; tiempo real queda para una iteración posterior.
 - SEC-06 cifrado de `github_token`: pendiente de implementación antes de producción real.
 - SEC-08 migración de JWT desde localStorage a cookie httpOnly: próxima iteración.

@@ -25,7 +25,7 @@
 | Módulo de autenticación JWT en frontend | Juan Manuel Arcila | 📋 Pendiente T5 |
 | Dashboard con indicadores de avance | Juan Manuel Arcila | 📋 Pendiente T5 |
 | Notificaciones en tiempo real | Rubiel Rodriguez | 📋 Pendiente T5 |
-| Exportación de reportes PDF/Excel | Juan Carlos Sanchez | 📋 Pendiente T5 |
+| Exportación de reportes PDF/Excel | Juan Carlos Sanchez | ✅ Completada |
 | Integración con Google Drive | Rubiel Rodriguez | 📋 Pendiente T5 |
 | Pruebas unitarias y de integración | Juan Carlos Sanchez | 📋 Pendiente T5 |
 

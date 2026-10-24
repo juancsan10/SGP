@@ -13,6 +13,7 @@ yarn.lock
 
 # Backend (Node.js)
 *.log
+backend/test-output/
 
 # Sistema
 .DS_Store
@@ -21,3 +22,4 @@ Thumbs.db
 # Backups locales de base de datos
 database/backups/*
 !database/backups/.gitkeep
+

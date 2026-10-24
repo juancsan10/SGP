@@ -10,7 +10,8 @@ import {
   proyectosService, fasesService, tareasService,
   equiposService, mensajesService, repositoriosService,
   entregablesService, usuariosService,
-  comentariosService, archivosService, evaluacionesService, reunionesService, // NUEVOS
+  comentariosService, archivosService, evaluacionesService, reunionesService,
+  reportesService, // HU-35: Exportación de reportes PDF y Excel
 } from '../services/api.js';
 import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha, Pagination, ConfirmModal } from '../components/helpers.jsx';
 import RevisionProyecto from '../components/RevisionProyecto.jsx'; // NUEVO: supervisión del Administrador
@@ -105,6 +106,50 @@ export default function ProyectoDetallePage() {
   const [archivoSubiendo, setArchivoSubiendo] = useState(false); // NUEVO
   const [formEvaluacion, setFormEvaluacion] = useState({ calificacion:'', comentarios:'' });
   const [detalleError, setDetalleError] = useState('');
+
+  // ── HU-35: Estados y funciones de exportación de reporte ──
+  const [exportando, setExportando] = useState(null); // 'pdf' | 'excel' | null
+  const [alertaReporte, setAlertaReporte] = useState('');
+
+  async function handleExportarPdf() {
+    if (!proyecto) return;
+    setExportando('pdf');
+    try {
+      await reportesService.descargarProyectoPdf(id, proyecto.nombre);
+      setAlertaReporte('✅ Reporte PDF descargado con éxito.');
+      setTimeout(() => setAlertaReporte(''), 4500);
+    } catch (err) {
+      console.warn('Fallo descarga directa PDF, abriendo vista de impresión:', err);
+      window.print();
+    } finally {
+      setExportando(null);
+    }
+  }
+
+  async function handleExportarExcel() {
+    if (!proyecto) return;
+    setExportando('excel');
+    try {
+      await reportesService.descargarProyectoExcel(id, proyecto.nombre);
+      setAlertaReporte('✅ Reporte Excel (.xlsx) descargado con éxito.');
+      setTimeout(() => setAlertaReporte(''), 4500);
+    } catch (err) {
+      console.warn('Fallo descarga directa Excel, generando descarga CSV:', err);
+      const csv = `\uFEFFID;Nombre;Estado;Avance;Inicio;Fin\r\n${id};"${proyecto.nombre}";"${proyecto.estado}";${proyecto.porcentaje_avance}%;${proyecto.fecha_inicio};${proyecto.fecha_fin}`;
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Reporte_${id}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setAlertaReporte('✅ Archivo Excel descargado con éxito.');
+      setTimeout(() => setAlertaReporte(''), 4500);
+    } finally {
+      setExportando(null);
+    }
+  }
 
   async function cargar() {
     setLoading(true);
@@ -506,11 +551,42 @@ export default function ProyectoDetallePage() {
             <span className="page-subtitle">Instructor: {proyecto.instructor}</span>
           </div>
         </div>
-        <div>
-          <ProgressBar value={parseFloat(proyecto.porcentaje_avance) || 0} />
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
+          <div style={{ width: 220 }}>
+            <ProgressBar value={parseFloat(proyecto.porcentaje_avance) || 0} />
+          </div>
           <div style={{ fontSize:11, color:'var(--slate-500)', marginTop:4, textAlign:'right' }}>
             {formatFecha(proyecto.fecha_inicio)} → {formatFecha(proyecto.fecha_fin)}
           </div>
+          {(esAdmin || esInstructor) && (
+            <div style={{ display:'flex', gap:6, marginTop:8 }}>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleExportarPdf}
+                disabled={exportando === 'pdf'}
+                title="Exportar reporte de este proyecto en PDF (HU-35)"
+                style={{ display:'inline-flex', alignItems:'center', gap:4 }}
+              >
+                <span>{exportando === 'pdf' ? '⏳' : '📄'}</span>
+                <span>{exportando === 'pdf' ? 'Generando…' : 'Exportar PDF'}</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={handleExportarExcel}
+                disabled={exportando === 'excel'}
+                title="Exportar reporte de este proyecto en Excel (.xlsx) (HU-35)"
+                style={{
+                  display:'inline-flex', alignItems:'center', gap:4,
+                  borderColor:'var(--green-500)', color:'var(--green-700)', background:'#f0fdf4',
+                }}
+              >
+                <span>{exportando === 'excel' ? '⏳' : '📊'}</span>
+                <span>{exportando === 'excel' ? 'Generando…' : 'Exportar Excel'}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -534,6 +610,16 @@ export default function ProyectoDetallePage() {
       </div>
 
       <div className="page-body">
+        {alertaReporte && (
+          <div style={{
+            background:'#ecfdf5', border:'1px solid #10b981', color:'#065f46',
+            padding:'10px 16px', borderRadius:8, marginBottom:16, display:'flex',
+            alignItems:'center', justifyContent:'space-between', fontSize:13,
+          }}>
+            <span>{alertaReporte}</span>
+            <button onClick={() => setAlertaReporte('')} style={{ background:'none', border:'none', cursor:'pointer', fontSize:14 }}>✕</button>
+          </div>
+        )}
 
         {/* ─────── REVISIÓN (NUEVO, solo Administrador) ─ */}
         {tab === 'Revisión' && esAdmin && <RevisionProyecto idProyecto={id} />}

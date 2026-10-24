@@ -81,6 +81,7 @@ y el backend ya implementa rutas/controladores para las **16**:
 | `evaluaciones` | `POST /evaluaciones` · `GET /evaluaciones/:id_entregable` · `PUT /evaluaciones/:id` | RN-016 (solo se evalúa un entregable si el proyecto está en estado "En Revisión") · RN-013 (calificación entre 0 y 100). Solo Instructor/Administrador califican. |
 | `reuniones` | `POST /reuniones` · `GET /reuniones/:id_proyecto` · `PUT /reuniones/:id` · `DELETE /reuniones/:id` | RN-021 (notifica automáticamente a todo el equipo del proyecto al programarse). Solo Instructor/Administrador programan. |
 | `github-integration` | `POST /github-integration` · `GET /github-integration/:id_usuario` · `PUT /github-integration` · `DELETE /github-integration` | Es 1 registro por usuario (su propia cuenta de GitHub). `github_token` **nunca** se expone en las respuestas JSON. Solo el propio usuario o un Administrador pueden consultarlo. |
+| `reportes` | `GET /reportes/proyectos/:id/pdf` · `GET /reportes/proyectos/:id/excel` · `GET /reportes/consolidado/pdf` · `GET /reportes/consolidado/excel` · `GET /reportes/resumen` | HU-35 / RF6.3: Exportación de reportes de avance en formatos nativos PDF institucional y Excel (.xlsx) estructurado en hojas para Instructores y Administradores. |
 
 ## 📦 Dependencias
 
@@ -89,12 +90,11 @@ Este proyecto usa **pnpm** como gestor de paquetes (no `npm`/`yarn`). Instalar c
 pnpm install
 ```
 
-Todas las versiones en `package.json` están **pineadas** (versión exacta, sin `^` ni `~`) y
-fueron revisadas con `pnpm audit` antes de fijarlas — **0 vulnerabilidades conocidas** al
-momento de este commit. Si se agrega una dependencia nueva, se recomienda:
-1. Instalarla con `pnpm add <paquete>@<version-exacta>`
-2. Correr `pnpm audit` y resolver cualquier alerta antes de hacer commit
-3. Confirmar que quedó sin el prefijo `^`/`~` en `package.json`
+Todas las versiones en `package.json` están **pineadas** (versión exacta, sin `^` ni `~`). Para correr la suite de pruebas automatizadas de reportes:
+```bash
+npm test
+# o: node tests/test-reportes.js
+```
 
 ## ⚠️ Pendiente (fuera del alcance de esta corrección)
 
@@ -102,7 +102,6 @@ momento de este commit. Si se agrega una dependencia nueva, se recomienda:
 - Consumo real de la API de GitHub con el token guardado en `github_integration`
   (hoy solo se almacena la credencial; no se listan commits/ramas todavía).
 - WebSockets/polling para mensajes y notificaciones en tiempo real (hoy requieren recargar).
-- Exportación de reportes a PDF/Excel.
 
 ## Referencia
 
