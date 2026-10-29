@@ -41,6 +41,9 @@ importers:
       mysql2:
         specifier: 3.24.2
         version: 3.24.2(@types/node@26.4.0)
+      nodemailer:
+        specifier: 6.9.16
+        version: 6.9.16
     devDependencies:
       nodemon:
         specifier: 3.0.0
@@ -399,6 +402,10 @@ packages:
   negotiator@0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
+
+  nodemailer@6.9.16:
+    resolution: {integrity: sha512-psAuZdTIRN08HKVd/E8ObdV6NO7NTBY3KsC30F7M4H1OnmLCUNaS56FpYxyb26zWLSyYF9Ozch9KYHhHegsiOQ==}
+    engines: {node: '>=6.0.0'}
 
   nodemon@3.0.0:
     resolution: {integrity: sha512-yU9NSp3n+DUSt3S2LmtXss+4kOsmC8ZLpXeGe5mKuLdqkoSRwmaplk2lo5cmve7TPw5MgMcd2cazL0KpUscoSQ==}
@@ -952,6 +959,8 @@ snapshots:
       lru.min: 1.1.4
 
   negotiator@0.6.3: {}
+
+  nodemailer@6.9.16: {}
 
   nodemon@3.0.0:
     dependencies:

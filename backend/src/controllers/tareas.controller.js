@@ -85,12 +85,9 @@ const getAllAdmin = async (req, res) => {
     const [rows] = await db.query(
       `SELECT t.*, p.nombre AS nombre_proyecto,
               CONCAT(ua.nombres,' ',ua.apellidos) AS asignado_nombre, ua.identificacion AS cc_aprendiz,
-              CONCAT(ui.nombres,' ',ui.apellidos) AS instructor_nombre, ui.identificacion AS cc_instructor,
-              et.id_entrega, et.estado AS estado_entrega, et.calificacion,
-              et.observacion_instructor, et.fecha_revision
+              CONCAT(ui.nombres,' ',ui.apellidos) AS instructor_nombre, ui.identificacion AS cc_instructor
        FROM tareas t
        JOIN proyectos p ON p.id_proyecto = t.id_proyecto
-       LEFT JOIN entregas_tareas et ON et.id_tarea = t.id_tarea
        JOIN usuarios ua ON ua.id_usuario = t.id_asignado
        JOIN usuarios ui ON ui.id_usuario = p.id_instructor
        ${where}

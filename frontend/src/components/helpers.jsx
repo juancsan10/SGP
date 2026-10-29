@@ -2,7 +2,6 @@
 // components/helpers.jsx
 // Funciones de utilidad y componentes compartidos
 // =====================================================
-import { useEffect, useRef, useState } from 'react';
 
 // ── Formatear fecha ───────────────────────────────────
 export function formatFecha(fecha) {
@@ -32,8 +31,6 @@ export function estadoBadge(estado) {
     'Cancelado':        'badge-red',
     'Vencido':          'badge-red',
     'Rechazado':        'badge-red',
-    'Rechazada':        'badge-red',   // NUEVO: solicitudes
-    'Atendida':         'badge-green', // NUEVO: solicitudes
   };
   const cls = mapa[estado] || 'badge-slate';
   return <span className={`badge ${cls}`}>{estado || '—'}</span>;
@@ -144,12 +141,12 @@ export function ConfirmModal({ abierto, tipo = 'advertencia', titulo, mensaje, t
     <div className="modal-overlay" onClick={onCancelar}>
       <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
         <div className="modal-body" style={{ textAlign: 'center', paddingTop: 28 }}>
-          <div className={`confirm-icon ${tipo}`} style={{
+          <div style={{
             width: 56, height: 56, borderRadius: '50%', background: estilos.bg,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 26, margin: '0 auto 14px',
           }}>
-            <span>{estilos.icono}</span>
+            {estilos.icono}
           </div>
           <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 8 }}>
             {titulo}
@@ -165,39 +162,4 @@ export function ConfirmModal({ abierto, tipo = 'advertencia', titulo, mensaje, t
       </div>
     </div>
   );
-}
-
-// ── Destino de los portales de modales (NUEVO) ─────────
-// Los modales que se abren desde dentro de una tarjeta se montan con
-// createPortal para quedar por encima del encabezado fijo. Se montan en
-// el contenedor del rol (.role-admin/.role-instructor/.role-aprendiz) y no
-// en <body>, para conservar el color de acento de cada rol.
-export function portalDestino() {
-  return document.querySelector('.role-admin, .role-instructor, .role-aprendiz') || document.body;
-}
-
-// ── Número animado (NUEVO) ─────────────────────────────
-// Cuenta desde el valor anterior (0 al montar) hasta el nuevo valor.
-// Si el sistema pide "reducir movimiento", muestra el número directo.
-export function NumeroAnimado({ valor, duracion = 900 }) {
-  const destino = Number(valor) || 0;
-  const [mostrado, setMostrado] = useState(0);
-  const desde = useRef(0);
-  useEffect(() => {
-    const reducir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reducir || destino === desde.current) { setMostrado(destino); desde.current = destino; return; }
-    const inicio = performance.now();
-    const origen = desde.current;
-    let frame;
-    const paso = (ahora) => {
-      const t = Math.min(1, (ahora - inicio) / duracion);
-      const suave = 1 - Math.pow(1 - t, 3); // ease-out cúbico
-      setMostrado(Math.round(origen + (destino - origen) * suave));
-      if (t < 1) frame = requestAnimationFrame(paso);
-      else desde.current = destino;
-    };
-    frame = requestAnimationFrame(paso);
-    return () => cancelAnimationFrame(frame);
-  }, [destino, duracion]);
-  return <>{mostrado}</>;
 }

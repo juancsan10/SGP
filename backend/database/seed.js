@@ -9,37 +9,6 @@
 require('dotenv').config();
 const mysql  = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
-const fs     = require('fs');
-const path   = require('path');
-
-// Carpeta donde el backend guarda los archivos subidos (la misma que usa
-// src/middlewares/upload.middleware.js). El seed deja aquí un PDF de
-// ejemplo para que los adjuntos sembrados se puedan abrir de verdad.
-const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-const PDF_EJEMPLO = 'ejemplo-documento-requerimientos.pdf';
-
-function crearPdfEjemplo() {
-  if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-  const destino = path.join(UPLOAD_DIR, PDF_EJEMPLO);
-  if (fs.existsSync(destino)) return;
-  const texto = 'SGP SENA - Documento de ejemplo (seed)';
-  const contenido = `BT /F1 18 Tf 60 740 Td (${texto}) Tj ET`;
-  const objetos = [
-    '<< /Type /Catalog /Pages 2 0 R >>',
-    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
-    `<< /Length ${contenido.length} >>\nstream\n${contenido}\nendstream`,
-    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
-  ];
-  let pdf = '%PDF-1.4\n';
-  const offsets = [];
-  objetos.forEach((o, i) => { offsets.push(pdf.length); pdf += `${i + 1} 0 obj\n${o}\nendobj\n`; });
-  const xref = pdf.length;
-  pdf += `xref\n0 ${objetos.length + 1}\n0000000000 65535 f \n`;
-  offsets.forEach(o => { pdf += `${String(o).padStart(10, '0')} 00000 n \n`; });
-  pdf += `trailer\n<< /Size ${objetos.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
-  fs.writeFileSync(destino, pdf);
-}
 
 // ── Configuración de conexión (usa .env si existe) ──
 const DB_CONFIG = {
@@ -49,10 +18,6 @@ const DB_CONFIG = {
   user:     process.env.DB_USER     || 'root',
   password: process.env.DB_PASSWORD || '',
 };
-
-// ── Administrador único del sistema ──────────────────
-const ADMIN_CORREO     = 'rubiel.tads@gmail.com';
-const ADMIN_CONTRASENA = 'ELruby2oo4@';
 
 // ── Fechas relativas a "hoy" ──────────────────────────
 function fechaRelativa(diasDesdeHoy) {
@@ -89,7 +54,6 @@ async function seed() {
     const tablas = [
       'password_reset_tokens', 'entregas_tareas', 'historial_cambios', 'notificaciones', 'mensajes', 'repositorios',
       'comentarios', 'archivos', 'evaluaciones', 'reuniones', 'github_integration', 'solicitudes_equipo',
-      'solicitudes', 'eliminaciones_archivos', 'eliminaciones_usuario',
       'entregables', 'tareas', 'fases_proyecto', 'equipos_proyecto',
       'proyectos', 'usuarios', 'roles',
     ];
@@ -111,17 +75,15 @@ async function seed() {
     // ── USUARIOS ──────────────────────────────────────
     // AMPLIADO: 3 aprendices más (11-13) para dar más variedad de datos
     // y demostrar la paginación con volumen real, no apenas 1-2 páginas.
-    // El sistema tiene UN ÚNICO Administrador (id 1), con credenciales
-    // propias. El resto de cuentas de demo comparten 'Sena2026*'.
     console.log('🔐  Generando hashes de contraseñas...');
     const hash = await bcrypt.hash('Sena2026*', 10);
-    const hashAdmin = await bcrypt.hash(ADMIN_CONTRASENA, 10);
+    console.log('    Hash generado:', hash);
 
     await conn.execute(`
       INSERT INTO usuarios
         (id_usuario, nombres, apellidos, correo, identificacion, contrasena, ficha, programa_formacion, id_rol, estado)
       VALUES
-        (1,  'Rubiel',          'Rodríguez',           ?,                               '1002003001', ?, NULL,   NULL,                          1, 1),
+        (1,  'Diana Patricia',  'Ríos Ocampo',        'diana.rios@sgpsena.local',      '1002003001', ?, NULL,   NULL,                          1, 1),
         (2,  'Laura Marcela',   'Gómez Rodríguez',     'laura.gomez@sgpsena.local',     '1002003002', ?, NULL,   NULL,                          2, 1),
         (3,  'Miguel Ángel',    'Torres Salcedo',      'miguel.torres@sgpsena.local',   '1002003003', ?, NULL,   NULL,                          2, 1),
         (4,  'Carlos Andrés',   'Herrera Martínez',    'carlos.herrera@sgpsena.local',  '1098765001', ?, '2825431', 'ADSO',                    3, 1),
@@ -134,8 +96,8 @@ async function seed() {
         (11, 'Diego',           'Ramírez Ortiz',        'diego.ramirez@sgpsena.local',   '1098765008', ?, '2826150', 'Inteligencia Artificial',  3, 1),
         (12, 'Natalia',         'Cárdenas Ruiz',        'natalia.cardenas@sgpsena.local','1098765009', ?, '2827200', 'Análisis y Desarrollo de Software', 3, 1),
         (13, 'Santiago',        'Molina Vega',          'santiago.molina@sgpsena.local', '1098765010', ?, '2827200', 'Análisis y Desarrollo de Software', 3, 1)
-    `, [ADMIN_CORREO, hashAdmin, ...Array(12).fill(hash)]);
-    console.log('✅  Usuarios insertados (1 Administrador único + 12 cuentas de demo)');
+    `, Array(13).fill(hash));
+    console.log('✅  Usuarios insertados (contraseña: Sena2026*)');
 
     // ── PROYECTOS ───────────────────────────────────────
     // AMPLIADO: 3 proyectos más (5-7), para tener 7 en total — suficiente
@@ -281,12 +243,12 @@ async function seed() {
     // proyectos representados, no solo Sistema Web SENA.
     await conn.execute(`
       INSERT INTO entregas_tareas
-        (id_tarea, id_aprendiz, comentario_aprendiz, url_entrega, ruta_archivo, estado, observacion_instructor, calificacion, fecha_revision)
+        (id_tarea, id_aprendiz, comentario_aprendiz, url_entrega, estado, observacion_instructor, fecha_revision)
       VALUES
-        (1, 4, 'Repositorio creado con la estructura base del proyecto.', 'https://github.com/sena-adso/sistema-web', '/uploads/${PDF_EJEMPLO}', 'Aprobada', 'Buen trabajo, estructura clara y bien organizada.', 92.00, NOW()),
-        (4, 5, 'Avance del frontend, faltan los últimos 2 componentes.',  NULL, NULL, 'Requiere corrección', 'Falta el componente de notificaciones y el responsive en móvil.', 58.00, NOW()),
-        (8, 7, 'Login con JWT implementado, pendiente biometría.',        NULL, NULL, 'Corregida', NULL, NULL, NULL),
-        (11, 11, 'Esquema de base de datos normalizado a 3FN, incluye índices.', 'https://github.com/sena-adso/biblioteca-digital', NULL, 'Aprobada', 'Excelente normalización.', 97.00, NOW())
+        (1, 4, 'Repositorio creado con la estructura base del proyecto.', 'https://github.com/sena-adso/sistema-web', 'Aprobada', 'Buen trabajo, estructura clara y bien organizada.', NOW()),
+        (4, 5, 'Avance del frontend, faltan los últimos 2 componentes.',  NULL, 'Requiere corrección', 'Falta el componente de notificaciones y el responsive en móvil.', NOW()),
+        (8, 7, 'Login con JWT implementado, pendiente biometría.',        NULL, 'Corregida', NULL, NULL),
+        (11, 11, 'Esquema de base de datos normalizado a 3FN, incluye índices.', 'https://github.com/sena-adso/biblioteca-digital', 'Aprobada', 'Excelente normalización.', NOW())
     `);
     console.log('✅  Entregas de tareas insertadas');
 
@@ -370,33 +332,14 @@ async function seed() {
       INSERT INTO comentarios (contenido, id_usuario, id_entregable) VALUES
       ('Buen trabajo con el documento, solo falta detallar el alcance en la sección 3.', 2, 1),
       ('Corregido, gracias por la observación.', 4, 1),
-      ('Los diagramas de casos de uso están completos y bien documentados.', 2, 2),
-      ('Subí la versión final del SRS con el alcance ajustado.', 4, 1),
-      ('Revisaré los diagramas con el equipo antes de la siguiente fase.', 5, 2)
+      ('Los diagramas de casos de uso están completos y bien documentados.', 2, 2)
     `);
     console.log('✅  Comentarios insertados');
 
-    // ── ARCHIVOS ADJUNTOS DE ENTREGABLES ───────────────────
-    // Un PDF real (generado arriba) para que el Administrador pueda abrir
-    // los documentos adjuntos desde el detalle del proyecto.
-    crearPdfEjemplo();
-    await conn.execute(`
-      INSERT INTO archivos (nombre_archivo, ruta_archivo, id_entregable) VALUES
-      ('SRS - Documento de requerimientos.pdf', '/uploads/${PDF_EJEMPLO}', 1),
-      ('Casos de uso - UML.pdf',                '/uploads/${PDF_EJEMPLO}', 2)
-    `);
-    console.log('✅  Archivos de entregables insertados');
-
     // ── EVALUACIONES (RN-016) ─────────────────────────────
-    // RN-016 aplica al CREAR una evaluación (proyecto "En Revisión"). Estas
-    // dos son evaluaciones históricas de una fase ya cerrada, para que la
-    // supervisión del Administrador tenga calificaciones que consultar.
-    await conn.execute(`
-      INSERT INTO evaluaciones (calificacion, comentarios, id_entregable, id_usuario) VALUES
-      (88.50, 'Requerimientos completos; mejorar la trazabilidad con los casos de uso.', 1, 2),
-      (94.00, 'Diagramas claros y consistentes con el SRS.', 2, 2)
-    `);
-    console.log('✅  Evaluaciones insertadas');
+    // Solo se evalúan entregables de proyectos en estado "En Revisión".
+    // Ninguno de los proyectos sembrados está en ese estado todavía, así
+    // que esta tabla queda vacía intencionalmente.
 
     // ── REUNIONES ──────────────────────────────────────────
     // AMPLIADO: reuniones también para los proyectos nuevos.
@@ -419,21 +362,6 @@ async function seed() {
     `);
     console.log('✅  Solicitud de equipo de ejemplo insertada');
 
-    // ── SOLICITUDES AL ADMINISTRADOR (NUEVO) ──────────────
-    // Las genera un Instructor o un Aprendiz; el Administrador las atiende
-    // desde la sección "Solicitudes" de su panel de control.
-    await conn.execute(`
-      INSERT INTO solicitudes (id_solicitante, tipo, asunto, descripcion, id_proyecto, estado, respuesta_admin, id_admin_resuelve, fecha_solicitud, fecha_resolucion) VALUES
-      (4, 'Actualización de datos', 'Corregir mi número de identificación',
-          'Al registrarme digité mal un número de mi cédula. El correcto termina en 0011.', NULL, 'Pendiente', NULL, NULL, NOW() - INTERVAL 1 DAY, NULL),
-      (3, 'Soporte técnico', 'No puedo adjuntar archivos de más de 10 MB',
-          'Los videos de demostración de la app superan el límite. ¿Se puede ampliar o hay otra vía?', 2, 'Pendiente', NULL, NULL, NOW() - INTERVAL 3 HOUR, NULL),
-      (7, 'Acceso o cuenta', 'No me llegaba el correo de recuperación',
-          'Intenté restablecer mi contraseña y no recibí el enlace.', NULL, 'Atendida',
-          'Se verificó el correo registrado; ya puedes solicitar el enlace de nuevo.', 1, NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 4 DAY)
-    `);
-    console.log('✅  Solicitudes al Administrador insertadas');
-
     // ── GITHUB_INTEGRATION ─────────────────────────────────
     await conn.execute(`
       INSERT INTO github_integration (github_username, github_token, id_usuario) VALUES
@@ -445,10 +373,9 @@ async function seed() {
 
     console.log('\n✅✅✅  ¡SEED COMPLETADO EXITOSAMENTE!\n');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`  👤 ${ADMIN_CORREO} → Administrador (único)`);
+    console.log('  Cuentas de acceso (contraseña: Sena2026*)');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('  Cuentas de demo (contraseña: Sena2026*)');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('  👤 diana.rios@sgpsena.local      → Administrador');
     console.log('  👤 laura.gomez@sgpsena.local     → Instructor');
     console.log('  👤 miguel.torres@sgpsena.local   → Instructor');
     console.log('  👤 carlos.herrera@sgpsena.local  → Aprendiz (identificación: 1098765001)');
@@ -459,7 +386,6 @@ async function seed() {
     console.log('  📊 15 tareas · 4 entregas · 12 mensajes · 6 repositorios');
     console.log('  📊 2 envíos de notificaciones del Administrador (pestaña "Enviadas")');
     console.log('  📊 1 solicitud de equipo pendiente de aprobar (proyecto 1, pestaña Equipo)');
-    console.log('  📊 3 solicitudes al Administrador (2 pendientes) · 2 evaluaciones · 2 adjuntos PDF');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   } catch (err) {

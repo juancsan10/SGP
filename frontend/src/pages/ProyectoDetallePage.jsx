@@ -13,7 +13,6 @@ import {
   comentariosService, archivosService, evaluacionesService, reunionesService, // NUEVOS
 } from '../services/api.js';
 import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha, Pagination, ConfirmModal } from '../components/helpers.jsx';
-import RevisionProyecto from '../components/RevisionProyecto.jsx'; // NUEVO: supervisión del Administrador
 
 const LIMITE_ENTREGABLES = 8; // NUEVO: tamaño de página para la pestaña Entregables
 
@@ -33,9 +32,6 @@ export default function ProyectoDetallePage() {
   // tareas, equipo, repositorios, reuniones). Coincide exactamente con la
   // restricción que ya aplica el backend (requireInstructorOwner).
   const canCreate = esInstructor;
-  // NUEVO: el Administrador tiene una pestaña extra, "Revisión", con los
-  // documentos, comentarios, evaluaciones y entregas del proyecto.
-  const tabs = esAdmin ? ['Resumen', 'Revisión', ...TABS.slice(1)] : TABS;
 
   const [tab,       setTab]       = useState('Resumen');
   const [proyecto,  setProyecto]  = useState(null);
@@ -517,7 +513,7 @@ export default function ProyectoDetallePage() {
       {/* ── Pestañas ──────────────────────────────── */}
       <div style={{ background:'var(--white)', borderBottom:'1px solid var(--slate-300)', paddingLeft:28 }}>
         <div style={{ display:'flex', gap:0 }}>
-          {tabs.map(t => (
+          {TABS.map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -534,9 +530,6 @@ export default function ProyectoDetallePage() {
       </div>
 
       <div className="page-body">
-
-        {/* ─────── REVISIÓN (NUEVO, solo Administrador) ─ */}
-        {tab === 'Revisión' && esAdmin && <RevisionProyecto idProyecto={id} />}
 
         {/* ─────── RESUMEN ─────────────────────────── */}
         {tab === 'Resumen' && (
@@ -1181,11 +1174,6 @@ export default function ProyectoDetallePage() {
             </div>
             <div className="modal-body" style={{ maxHeight:'70vh', overflowY:'auto' }}>
               {detalleError && <div className="alert alert-error">{detalleError}</div>}
-              {esAdmin && (
-                <div className="alert alert-info" style={{ marginBottom:14 }}>
-                  Solo lectura: revisas comentarios, documentos y evaluación, pero no comentas ni calificas.
-                </div>
-              )}
 
               {/* Comentarios */}
               <h4 style={{ fontSize:13, marginBottom:8 }}>💬 Comentarios</h4>
@@ -1200,13 +1188,11 @@ export default function ProyectoDetallePage() {
                   </div>
                 ))}
               </div>
-              {!esAdmin && (
-                <form onSubmit={agregarComentario} style={{ display:'flex', gap:8, marginBottom:20 }}>
-                  <input className="form-input" style={{ flex:1 }} placeholder="Escribe un comentario…"
-                    value={nuevoComentario} onChange={e=>setNuevoComentario(e.target.value)} />
-                  <button type="submit" className="btn btn-primary btn-sm" disabled={!nuevoComentario.trim()}>Enviar</button>
-                </form>
-              )}
+              <form onSubmit={agregarComentario} style={{ display:'flex', gap:8, marginBottom:20 }}>
+                <input className="form-input" style={{ flex:1 }} placeholder="Escribe un comentario…"
+                  value={nuevoComentario} onChange={e=>setNuevoComentario(e.target.value)} />
+                <button type="submit" className="btn btn-primary btn-sm" disabled={!nuevoComentario.trim()}>Enviar</button>
+              </form>
 
               {/* Archivos (NUEVO: subida real de binarios) */}
               <h4 style={{ fontSize:13, marginBottom:8 }}>📎 Archivos</h4>
@@ -1219,17 +1205,15 @@ export default function ProyectoDetallePage() {
                     </a>
                     <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                       <span style={{ color:'var(--slate-500)' }}>{formatFecha(a.fecha_subida)}</span>
-                      {!esAdmin && (
-                        <button type="button" onClick={() => borrarArchivo(a.id_archivo)}
-                          style={{ background:'none', border:'none', color:'var(--red-600)', cursor:'pointer', fontSize:12 }}>
-                          Eliminar
-                        </button>
-                      )}
+                      <button type="button" onClick={() => borrarArchivo(a.id_archivo)}
+                        style={{ background:'none', border:'none', color:'var(--red-600)', cursor:'pointer', fontSize:12 }}>
+                        Eliminar
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
-              {!esAdmin && <div style={{ marginBottom:20 }}>
+              <div style={{ marginBottom:20 }}>
                 <label className="btn btn-secondary btn-sm" style={{ cursor: archivoSubiendo ? 'not-allowed' : 'pointer', opacity: archivoSubiendo ? 0.6 : 1 }}>
                   {archivoSubiendo ? 'Subiendo…' : '📤 Adjuntar archivo'}
                   <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" style={{ display:'none' }}
@@ -1238,7 +1222,7 @@ export default function ProyectoDetallePage() {
                 <span style={{ fontSize:11, color:'var(--slate-500)', marginLeft:8 }}>
                   PDF, JPG, PNG o WEBP · máx. 10 MB
                 </span>
-              </div>}
+              </div>
 
               {/* Evaluación — RN-016 */}
               <h4 style={{ fontSize:13, marginBottom:8 }}>📝 Evaluación</h4>
@@ -1254,8 +1238,7 @@ export default function ProyectoDetallePage() {
                   </div>
                 ))}
               </div>
-              {/* CORREGIDO: solo el instructor califica (antes canEdit incluía al Administrador). */}
-              {esInstructor && (
+              {canEdit && (
                 <form onSubmit={calificarEntregable} style={{ display:'flex', flexDirection:'column', gap:8 }}>
                   <p style={{ fontSize:11, color:'var(--slate-500)' }}>
                     RN-016: solo puedes calificar si el proyecto está en estado "En Revisión".

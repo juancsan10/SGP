@@ -59,23 +59,11 @@ export const usuariosService = {
   remove:   (id)       => api.delete(`/usuarios/${id}`), // desactivar (soft)
   // NUEVO
   activar:  (id)       => api.put(`/usuarios/${id}/activar`),
-  // NUEVO: eliminación definitiva con cuestionario (motivo, descripción,
-  // instructor de reemplazo si aplica y archivos de soporte).
-  impactoEliminacion: (id) => api.get(`/usuarios/${id}/impacto-eliminacion`),
-  eliminarConJustificacion: (id, { motivo, descripcion, id_instructor_reemplazo, archivos = [] }) => {
-    const formData = new FormData();
-    formData.append('motivo', motivo);
-    formData.append('descripcion', descripcion);
-    if (id_instructor_reemplazo) formData.append('id_instructor_reemplazo', id_instructor_reemplazo);
-    archivos.forEach(a => formData.append('archivos', a));
-    return api.post(`/usuarios/${id}/eliminacion`, formData, { headers: { 'Content-Type': undefined }, timeout: 60000 });
-  },
+  eliminarPermanente: (id) => api.delete(`/usuarios/${id}/permanente`),
 };
 
 // ── Proyectos ─────────────────────────────────────────
 export const proyectosService = {
-  // NUEVO — Administrador: documentos, comentarios, evaluaciones y entregas (solo lectura).
-  getRevision: (id) => api.get(`/proyectos/${id}/revision`),
   getAll:   ()         => api.get('/proyectos'),
   getById:  (id)       => api.get(`/proyectos/${id}`),
   create:   (data)     => api.post('/proyectos', data),
@@ -161,9 +149,6 @@ export const historialService = {
   getByTabla: (tabla)  => api.get(`/historial/${tabla}`),
   // NUEVO — solo Administrador: dashboard consolidado.
   getEstadisticas: () => api.get('/historial/estadisticas/dashboard'),
-  // NUEVO: usuarios eliminados con su cuestionario y archivos de soporte.
-  getEliminaciones: (params = {}) => api.get('/historial/eliminaciones', { params }),
-  getEliminacion:   (id) => api.get(`/historial/eliminaciones/${id}`),
 };
 
 // ── Comentarios (NUEVO — RN-015) ───────────────────────
@@ -195,7 +180,6 @@ export const entregasService = {
   getByTarea: (idTarea) => api.get(`/entregas/tarea/${idTarea}`),
   // NUEVO — Administrador/Instructor: listado global de supervisión.
   getAllAdmin: (params = {}) => api.get('/entregas', { params }),
-  getDetalle: (idEntrega) => api.get(`/entregas/${idEntrega}/detalle`), // NUEVO
   submit: (idTarea,data) => api.post(`/entregas/tarea/${idTarea}`,data),
   review: (idTarea,data) => api.put(`/entregas/tarea/${idTarea}/revision`,data),
   // NUEVO: sube el binario real de la entrega. Igual que en archivosService,
@@ -235,13 +219,8 @@ export const githubIntegrationService = {
 };
 
 export const agendaService = { calendar: (id) => api.get(`/agenda/${id}/calendario`), timeline: (id) => api.get(`/agenda/${id}/timeline`) };
-export const passwordService = { request: (correo) => api.post('/auth/password-reset/request',{correo}), confirm: (token,nueva_contrasena) => api.post('/auth/password-reset/confirm',{token,nueva_contrasena}) };
-
-// ── Solicitudes al Administrador (NUEVO) ──────────────
-export const solicitudesService = {
-  tipos:    ()            => api.get('/solicitudes/tipos'),
-  mias:     ()            => api.get('/solicitudes/mias'),
-  getAll:   (params = {}) => api.get('/solicitudes', { params }),
-  create:   (data)        => api.post('/solicitudes', data),
-  resolver: (id, estado, respuesta) => api.put(`/solicitudes/${id}/resolver`, { estado, respuesta }),
+export const passwordService = {
+  request: (correo) => api.post('/auth/password-reset/request',{correo}),
+  verify: (correo,token) => api.post('/auth/password-reset/verify',{correo,token}),
+  confirm: (correo,reset_session,nueva_contrasena) => api.post('/auth/password-reset/confirm',{correo,reset_session,nueva_contrasena}),
 };

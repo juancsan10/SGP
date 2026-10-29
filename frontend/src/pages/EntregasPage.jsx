@@ -2,17 +2,14 @@
 // pages/EntregasPage.jsx
 // Aprendiz: entrega/corrige sus tareas (sin cambios).
 // Instructor: revisa/califica entregas (sin cambios).
-// Administrador: revisa (solo lectura) cada entrega: lo que
-// entregó el aprendiz, la calificación y la retroalimentación
-// del instructor. No califica — el backend lo rechaza.
-// Instructor: al revisar asigna una calificación de 0 a 100
-// (obligatoria para aprobar).
+// Administrador: solo supervisión de solo lectura, con
+// búsqueda por cc y paginación — ya NO puede revisar,
+// el backend rechaza esa acción para este rol (NUEVO).
 // =====================================================
 import { useEffect, useState } from 'react';
 import { proyectosService, tareasService, entregasService } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { LoadingCenter, EmptyState, formatFecha, estadoBadge, Pagination } from '../components/helpers.jsx';
-import { CalificacionChip, DetalleEntregaModal } from '../components/CalificacionEntrega.jsx';
 
 export default function EntregasPage() {
   const { esAdmin } = useAuth();
@@ -30,7 +27,6 @@ function EntregasSupervisionAdmin() {
   const [proyecto, setProyecto] = useState('');
   const [estado, setEstado] = useState('');
   const [offset, setOffset] = useState(0);
-  const [entregaVer, setEntregaVer] = useState(null); // NUEVO
 
   async function cargar() {
     setLoading(true); setError('');
@@ -101,8 +97,8 @@ function EntregasSupervisionAdmin() {
                 <table>
                   <thead>
                     <tr>
-                      <th>Tarea</th><th>Proyecto</th><th>Estado</th><th>Calificación</th>
-                      <th>Aprendiz (cc)</th><th>Instructor (cc)</th><th>Fecha</th><th></th>
+                      <th>Tarea</th><th>Proyecto</th><th>Estado</th>
+                      <th>Aprendiz (cc)</th><th>Instructor (cc)</th><th>Fecha</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -111,13 +107,9 @@ function EntregasSupervisionAdmin() {
                         <td><strong>{e.titulo_tarea}</strong></td>
                         <td><span className="badge badge-slate">{e.nombre_proyecto}</span></td>
                         <td>{estadoBadge(e.estado)}</td>
-                        <td><CalificacionChip valor={e.calificacion} /></td>
                         <td style={{ fontSize:12 }}>{e.aprendiz_nombre}<br/><span style={{ color:'var(--slate-500)' }}>{e.cc_aprendiz || '—'}</span></td>
                         <td style={{ fontSize:12 }}>{e.instructor_nombre}<br/><span style={{ color:'var(--slate-500)' }}>{e.cc_instructor || '—'}</span></td>
                         <td style={{ fontSize:12 }}>{formatFecha(e.fecha_entrega)}</td>
-                        <td>
-                          <button className="btn btn-secondary btn-sm" onClick={() => setEntregaVer(e.id_entrega)}>👁️ Revisar</button>
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -128,8 +120,6 @@ function EntregasSupervisionAdmin() {
           </>
         )}
       </div>
-
-      {entregaVer && <DetalleEntregaModal idEntrega={entregaVer} onClose={() => setEntregaVer(null)} />}
     </div>
   );
 }
@@ -142,7 +132,7 @@ function EntregasOperativas() {
   const [modal, setModal] = useState(null);
   const [entrega, setEntrega] = useState(null);
   const [form, setForm] = useState({ comentario_aprendiz: '', url_entrega: '', ruta_archivo: '' });
-  const [revision, setRevision] = useState({ estado: 'Aprobada', observacion_instructor: '', calificacion: '' });
+  const [revision, setRevision] = useState({ estado: 'Aprobada', observacion_instructor: '' });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [subiendoArchivo, setSubiendoArchivo] = useState(false);
@@ -183,7 +173,6 @@ function EntregasOperativas() {
         setRevision({
           estado: r.data.data?.estado === 'Requiere corrección' ? 'Requiere corrección' : 'Aprobada',
           observacion_instructor: r.data.data?.observacion_instructor || '',
-          calificacion: r.data.data?.calificacion ?? '',
         });
       }
     } catch (e) {
@@ -331,7 +320,7 @@ function EntregasOperativas() {
                         <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" style={{ display: 'none' }}
                           disabled={subiendoArchivo} onChange={subirArchivo} />
                       </label>
-                      <span className="form-hint" style={{ display: 'inline-flex', marginLeft: 8 }}>
+                      <span style={{ fontSize: 11, color: 'var(--slate-500)', marginLeft: 8 }}>
                         PDF, JPG, PNG o WEBP · máx. 10 MB
                       </span>
                     </div>
@@ -360,14 +349,6 @@ function EntregasOperativas() {
                         <option>Requiere corrección</option>
                         <option>Aprobada</option>
                       </select>
-                    </div>
-                    {/* NUEVO: calificación 0-100, obligatoria para aprobar */}
-                    <div className="form-group">
-                      <label className="form-label">Calificación (0 a 100){revision.estado === 'Aprobada' ? ' *' : ''}</label>
-                      <input className="form-input" type="number" min="0" max="100" step="0.1" style={{ maxWidth: 140 }}
-                        value={revision.calificacion}
-                        onChange={e => setRevision({ ...revision, calificacion: e.target.value })} />
-                      <span className="form-hint">Obligatoria para aprobar la entrega</span>
                     </div>
                     <div className="form-group">
                       <label className="form-label">Retroalimentación</label>

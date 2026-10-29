@@ -50,9 +50,9 @@ const create = async (req, res) => {
 const getByEntregable = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT ev.*, COALESCE(CONCAT(u.nombres, ' ', u.apellidos), 'Usuario eliminado') AS evaluador_nombre
+      `SELECT ev.*, CONCAT(u.nombres, ' ', u.apellidos) AS evaluador_nombre
        FROM evaluaciones ev
-       LEFT JOIN usuarios u ON ev.id_usuario = u.id_usuario
+       JOIN usuarios u ON ev.id_usuario = u.id_usuario
        WHERE ev.id_entregable = ? ORDER BY ev.fecha_evaluacion DESC`,
       [req.params.id_entregable]
     );

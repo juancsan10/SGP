@@ -36,6 +36,13 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET - copia .env.example a .env y define uno de 32+ caracteres}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-2h}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      MAIL_MODE: ${MAIL_MODE:-console}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-SGP SENA <no-reply@sgpsena.local>}
     volumes:
       # NUEVO: persiste los archivos subidos por los usuarios (multer,
       # ver backend/src/middlewares/upload.middleware.js) entre reinicios

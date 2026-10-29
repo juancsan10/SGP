@@ -29,11 +29,10 @@ const create = async (req, res) => {
 const getByEntregable = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT c.*, COALESCE(CONCAT(u.nombres, ' ', u.apellidos), 'Usuario eliminado') AS autor_nombre,
-              COALESCE(r.nombre_rol, '—') AS autor_rol
+      `SELECT c.*, CONCAT(u.nombres, ' ', u.apellidos) AS autor_nombre, r.nombre_rol AS autor_rol
        FROM comentarios c
-       LEFT JOIN usuarios u ON c.id_usuario = u.id_usuario
-       LEFT JOIN roles r ON u.id_rol = r.id_rol
+       JOIN usuarios u ON c.id_usuario = u.id_usuario
+       JOIN roles r ON u.id_rol = r.id_rol
        WHERE c.id_entregable = ? ORDER BY c.fecha_comentario ASC`,
       [req.params.id_entregable]
     );

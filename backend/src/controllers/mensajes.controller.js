@@ -104,8 +104,8 @@ const update = async (req, res) => {
 const getByProyecto = async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT m.*, COALESCE(CONCAT(u.nombres, ' ', u.apellidos), 'Usuario eliminado') AS remitente_nombre
-       FROM mensajes m LEFT JOIN usuarios u ON m.id_remitente = u.id_usuario
+      `SELECT m.*, CONCAT(u.nombres, ' ', u.apellidos) AS remitente_nombre
+       FROM mensajes m JOIN usuarios u ON m.id_remitente = u.id_usuario
        WHERE m.id_proyecto = ? ORDER BY m.fecha_envio ASC`,
       [req.params.id_proyecto]
     );
@@ -141,9 +141,9 @@ const getRecientes = async (req, res) => {
     const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
 
     const [rows] = await db.query(
-      `SELECT m.*, COALESCE(CONCAT(u.nombres,' ',u.apellidos), 'Usuario eliminado') AS remitente_nombre, p.nombre AS proyecto_nombre
+      `SELECT m.*, CONCAT(u.nombres,' ',u.apellidos) AS remitente_nombre, p.nombre AS proyecto_nombre
        FROM mensajes m
-       LEFT JOIN usuarios u ON u.id_usuario = m.id_remitente
+       JOIN usuarios u ON u.id_usuario = m.id_remitente
        JOIN proyectos p ON p.id_proyecto = m.id_proyecto
        ${where}
        ORDER BY m.fecha_envio DESC

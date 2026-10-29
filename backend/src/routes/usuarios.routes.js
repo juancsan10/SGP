@@ -4,15 +4,12 @@ const {verifyToken,requireRole,requireSelfOrAdmin}=require('../middlewares/auth.
 const { validate } = require('../middlewares/validation.middleware');
 const { idParam, optionalText, pagination } = require('../validators/common.validators');
 const { body } = require('express-validator');
-const { upload } = require('../middlewares/upload.middleware');
 
 const profileValidators = [
   optionalText('nombres', 100),
   optionalText('apellidos', 100),
   optionalText('ficha', 50),
-  optionalText('programa_formacion', 150),
-  optionalText('correo', 150),          // solo Administrador (se valida en el controlador)
-  optionalText('identificacion', 30)    // solo Administrador (se valida en el controlador)
+  optionalText('programa_formacion', 150)
 ];
 
 const passwordValidators = [
@@ -30,10 +27,6 @@ router.put('/:id',verifyToken,requireSelfOrAdmin(),[idParam('id'),...profileVali
 router.put('/:id/password',verifyToken,requireSelfOrAdmin(),[idParam('id'),...passwordValidators],validate,ctrl.changePassword);
 // NUEVO — solo Administrador: reactivar y eliminar permanentemente.
 router.put('/:id/activar',verifyToken,requireRole('Administrador'),[idParam('id')],validate,ctrl.activar);
-// NUEVO: eliminación definitiva SIEMPRE con cuestionario (motivo,
-// descripción y archivos de soporte). Reemplaza al antiguo
-// DELETE /:id/permanente, que no pedía justificación.
-router.get('/:id/impacto-eliminacion',verifyToken,requireRole('Administrador'),[idParam('id')],validate,ctrl.impactoEliminacion);
-router.post('/:id/eliminacion',verifyToken,requireRole('Administrador'),upload.array('archivos',5),[idParam('id')],validate,ctrl.eliminarConJustificacion);
+router.delete('/:id/permanente',verifyToken,requireRole('Administrador'),[idParam('id')],validate,ctrl.eliminarPermanente);
 router.delete('/:id',verifyToken,requireRole('Administrador'),[idParam('id')],validate,ctrl.remove);
 module.exports=router;

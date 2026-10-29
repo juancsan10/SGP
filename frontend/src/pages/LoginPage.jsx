@@ -1,13 +1,14 @@
 // =====================================================
 // pages/LoginPage.jsx
-// Pantalla de inicio de sesión — identidad "Proyecto SENA"
+// Pantalla de inicio de sesión — identidad "Bitácora de Taller"
 // con escena de personajes cinéticos (ojos que siguen el cursor
 // y reaccionan al formulario) y sello de ingreso.
 // =====================================================
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { authService, passwordService } from '../services/api.js';
+import { authService } from '../services/api.js';
+import PasswordRecovery from '../components/PasswordRecovery.jsx';
 import Character from '../components/characters/Character.jsx';
 import './LoginPage.css';
 
@@ -28,7 +29,6 @@ export default function LoginPage() {
   const [tilted, setTilted] = useState(false);
 
   const [resetOpen, setResetOpen] = useState(false);
-  const [resetMsg, setResetMsg] = useState('');
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true));
@@ -76,17 +76,6 @@ export default function LoginPage() {
     }
   }
 
-  async function handleResetRequest(e) {
-    e.preventDefault();
-    setResetMsg('');
-    try {
-      const r = await passwordService.request(correo);
-      setResetMsg(r.data.data?.reset_url ? `Enlace: ${r.data.data.reset_url}` : r.data.message);
-    } catch (err) {
-      setResetMsg(err.response?.data?.message || 'No fue posible generar el enlace');
-    }
-  }
-
   return (
     <div className={`sgp-login ${mounted ? 'is-mounted' : ''}`}>
       <section className="sgp-login__hero">
@@ -96,7 +85,7 @@ export default function LoginPage() {
           <div className="sgp-login__mark">
             <span className="sgp-login__mark-glyph">SGP</span>
           </div>
-          <h1 className="sgp-login__headline">Gestiona tu Proyecto SENA</h1>
+          <h1 className="sgp-login__headline">Abre tu bitácora de proyecto</h1>
           <p className="sgp-login__subhead">
             Cada fase, tarea y entrega queda registrada en un solo lugar, con su
             avance y su historia completa, para que el trabajo de convertir una
@@ -167,7 +156,7 @@ export default function LoginPage() {
         >
           <div className="sgp-login__card-head">
             <h2>Bienvenido de vuelta</h2>
-            <p>Ingresa con tu correo institucional para continuar con tu Proyecto SENA.</p>
+            <p>Ingresa con tu correo institucional para continuar tu bitácora.</p>
           </div>
 
           <label className="sgp-field">
@@ -223,28 +212,18 @@ export default function LoginPage() {
             <button
               type="button"
               className="sgp-login__link"
-              onClick={() => setResetOpen((v) => !v)}
+              onClick={() => setResetOpen(true)}
             >
               ¿Olvidaste tu contraseña?
             </button>
           </div>
 
           {resetOpen && (
-            <div className="sgp-login__reset">
-              <p>Te enviamos un enlace de recuperación a tu correo.</p>
-              <div className="sgp-login__reset-row">
-                <input
-                  type="email"
-                  placeholder="Tu correo"
-                  value={correo}
-                  onChange={(e) => setCorreo(e.target.value)}
-                />
-                <button type="button" onClick={handleResetRequest}>
-                  Generar enlace
-                </button>
-              </div>
-              {resetMsg && <small>{resetMsg}</small>}
-            </div>
+            <PasswordRecovery
+              initialEmail={correo}
+              onClose={() => setResetOpen(false)}
+              onDone={(mail) => { setResetOpen(false); setCorreo(mail); setContrasena(''); }}
+            />
           )}
 
           {error && (
@@ -274,6 +253,7 @@ export default function LoginPage() {
 
           <details className="sgp-login__demo">
             <summary>📌 Cuentas de demo</summary>
+            <div className="sgp-login__demo-row"><span>Admin</span><code>diana.rios@sgpsena.local</code></div>
             <div className="sgp-login__demo-row"><span>Instructor</span><code>laura.gomez@sgpsena.local</code></div>
             <div className="sgp-login__demo-row"><span>Aprendiz</span><code>carlos.herrera@sgpsena.local</code></div>
             <div className="sgp-login__demo-row"><span>Contraseña</span><code>Sena2026*</code></div>
