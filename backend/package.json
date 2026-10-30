@@ -33,6 +33,7 @@
   "devDependencies": {
     "@vitest/coverage-v8": "4.1.11",
     "nodemon": "3.0.0",
+    "supertest": "7.1.4",
     "vitest": "4.1.11"
   },
   "packageManager": "pnpm@9.15.0",
