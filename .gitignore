@@ -21,3 +21,8 @@ Thumbs.db
 # Backups locales de base de datos
 database/backups/*
 !database/backups/.gitkeep
+
+# Reportes de pruebas (se generan al correr los tests)
+coverage/
+e2e/test-results/
+e2e/playwright-report/

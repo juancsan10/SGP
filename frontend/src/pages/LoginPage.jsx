@@ -192,6 +192,9 @@ export default function LoginPage() {
             >
               <input
                 type={showPassword ? 'text' : 'password'}
+                // El <label> también envuelve el botón "Ver", así que sin esto el
+                // nombre accesible del campo quedaba "Contraseña Ver".
+                aria-label="Contraseña"
                 autoComplete="current-password"
                 placeholder="••••••••"
                 value={contrasena}
