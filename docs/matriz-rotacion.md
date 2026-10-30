@@ -13,7 +13,7 @@ Reglas:
 
 | Integrante (usuario GitHub) | S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 |
 |---|---|---|---|---|---|---|---|---|---|
-| Rubiel Rodríguez (@usuario) | E2E: login exitoso | API: permisos por rol y reglas de proyectos| Front: EliminarUsuarioModal | | | | | | |
+| Rubiel Rodríguez (@usuario) | E2E: login exitoso | API: permisos por rol y reglas de proyectos| Front: EliminarUsuarioModal |E2E: seguridad y errores del API| | | | | |
 | Juan Manuel Arcila (@usuario) | | | | | | | | | |
 | Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta | | | | | | | | |
 
