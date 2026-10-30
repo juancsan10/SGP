@@ -42,7 +42,7 @@ const create = async (req, res) => {
     await registrarCambio('evaluaciones', result.insertId, 'INSERT', id_usuario);
     return res.status(201).json({ success: true, message: 'Evaluación registrada', data: { id_evaluacion: result.insertId } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -58,7 +58,7 @@ const getByEntregable = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -79,7 +79,7 @@ const update = async (req, res) => {
     await registrarCambio('evaluaciones', req.params.id, 'UPDATE', req.user?.id);
     return res.json({ success: true, message: 'Evaluación actualizada' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 

@@ -21,7 +21,7 @@ const create = async (req, res) => {
     await registrarCambio('comentarios', result.insertId, 'INSERT', id_usuario);
     return res.status(201).json({ success: true, message: 'Comentario agregado', data: { id_comentario: result.insertId } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -39,7 +39,7 @@ const getByEntregable = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -57,7 +57,7 @@ const update = async (req, res) => {
     await registrarCambio('comentarios', req.params.id, 'UPDATE', req.user.id);
     return res.json({ success: true, message: 'Comentario actualizado' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -74,7 +74,7 @@ const remove = async (req, res) => {
     await registrarCambio('comentarios', req.params.id, 'DELETE', req.user.id);
     return res.json({ success: true, message: 'Comentario eliminado' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 

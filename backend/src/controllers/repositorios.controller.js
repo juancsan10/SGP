@@ -18,7 +18,7 @@ const create = async (req, res) => {
     await registrarCambio('repositorios', result.insertId, 'INSERT', req.user?.id);
     return res.status(201).json({ success: true, message: 'Repositorio vinculado', data: { id_repositorio: result.insertId } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -31,7 +31,7 @@ const getByProyecto = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -46,7 +46,7 @@ const update = async (req, res) => {
     if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Repositorio no encontrado' });
     return res.json({ success: true, message: 'Repositorio actualizado' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -63,7 +63,7 @@ const toggleEstado = async (req, res) => {
     await registrarCambio('repositorios', req.params.id, activo ? 'ACTIVAR' : 'DESACTIVAR', req.user?.id);
     return res.json({ success: true, message: activo ? 'Repositorio habilitado' : 'Repositorio deshabilitado' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -102,7 +102,7 @@ const setSemaforo = async (req, res) => {
     await registrarCambio('repositorios', req.params.id, 'SEMAFORO_' + estado_semaforo.toUpperCase(), req.user?.id);
     return res.json({ success: true, message: 'Estado de semáforo actualizado' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 

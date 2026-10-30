@@ -22,4 +22,19 @@ export default defineConfig({
       },
     },
   },
+  test: {
+    // DOM simulado para los tests de componentes con Testing Library
+    environment: 'jsdom',
+    setupFiles: ['./tests/setup.js'],
+    passWithNoTests: true,
+    coverage: {
+      // Se mide la lógica de la interfaz. Quedan fuera el arranque (main.jsx),
+      // que solo monta la app, y el cliente HTTP (services/api.js), que solo
+      // llama al backend y se prueba con MSW en la semana 5.
+      include: ['src/**/*.{js,jsx}'],
+      exclude: ['src/main.jsx', 'src/services/api.js'],
+      // Línea base de la semana 1. Este número solo puede subir.
+      thresholds: { lines: 0, branches: 0, functions: 0, statements: 0 },
+    },
+  },
 })

@@ -59,6 +59,12 @@ app.use((req, res) => {
 
 // ─── Error handler ───────────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
+  // JSON mal formado en el cuerpo: es un error de quien envía la petición (400),
+  // no del servidor. Antes caía en el 500 genérico de abajo.
+  if (err.type === 'entity.parse.failed') {
+    return res.status(400).json({ success: false, message: 'JSON inválido' });
+  }
+
   // NUEVO: errores de multer (subida de archivos) se traducen a 400 con un
   // mensaje claro, en vez de caer en el 500 genérico de abajo.
   if (err instanceof multer.MulterError) {

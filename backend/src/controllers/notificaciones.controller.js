@@ -10,7 +10,7 @@ const getByUsuario = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -24,7 +24,7 @@ const marcarLeida = async (req, res) => {
     if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Notificación no encontrada' });
     return res.json({ success: true, message: 'Notificación marcada como leída' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -37,7 +37,7 @@ const marcarTodasLeidas = async (req, res) => {
     );
     return res.json({ success: true, message: 'Todas las notificaciones marcadas como leídas' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -100,7 +100,7 @@ const broadcast = async (req, res) => {
     await registrarCambio('notificaciones', null, `BROADCAST_${destinatarios.length}_USUARIOS`, req.user?.id);
     return res.status(201).json({ success: true, message: `Notificación enviada a ${destinatarios.length} usuario(s)` });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -138,7 +138,7 @@ const getEnviadas = async (req, res) => {
 
     return res.json({ success: true, data: rows, meta: { total, limit, offset } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
