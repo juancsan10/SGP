@@ -31,7 +31,7 @@ const create = async (req, res) => {
     await registrarCambio('reuniones', result.insertId, 'INSERT', req.user?.id);
     return res.status(201).json({ success: true, message: 'Reunión programada', data: { id_reunion: result.insertId } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -44,7 +44,7 @@ const getByProyecto = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -61,7 +61,7 @@ const update = async (req, res) => {
     await registrarCambio('reuniones', req.params.id, 'UPDATE', req.user?.id);
     return res.json({ success: true, message: 'Reunión actualizada' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -73,7 +73,7 @@ const remove = async (req, res) => {
     await registrarCambio('reuniones', req.params.id, 'DELETE', req.user?.id);
     return res.json({ success: true, message: 'Reunión cancelada' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
