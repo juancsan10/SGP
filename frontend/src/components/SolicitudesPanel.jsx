@@ -59,13 +59,13 @@ function ModalResolver({ accion, onClose, onHecho }) {
               </div>
             </div>
             <div className="form-group">
-              <label className="form-label">{esEquipo ? 'Observación (opcional)' : 'Respuesta para el solicitante *'}</label>
-              <textarea className="form-textarea" rows={4} value={respuesta} maxLength={2000}
+              <label className="form-label" htmlFor="resolver-respuesta">{esEquipo ? 'Observación (opcional)' : 'Respuesta para el solicitante *'}</label>
+              <textarea id="resolver-respuesta" className="form-textarea" rows={4} value={respuesta} maxLength={2000}
                 onChange={e => setRespuesta(e.target.value)}
                 placeholder={atender ? 'Explica qué se hizo o cómo se resolvió…' : 'Explica por qué no procede…'} />
               <span className="form-hint">El solicitante la recibirá como notificación.</span>
             </div>
-            {error && <div className="alert alert-error">{error}</div>}
+            {error && <div className="alert alert-error" role="alert">{error}</div>}
           </div>
           <div className="modal-footer">
             <button type="button" className="btn btn-secondary" onClick={onClose}>Cancelar</button>
@@ -131,7 +131,7 @@ function SolicitudesAdmin() {
             <option value="Aprendiz">Aprendices</option>
           </select>
         </div>
-        {error && <div className="alert alert-error">{error}</div>}
+        {error && <div className="alert alert-error" role="alert">{error}</div>}
         {aviso && <div className="alert alert-success">{aviso}</div>}
 
         {filtro === 'Pendiente' && bajas.length > 0 && (
@@ -243,7 +243,7 @@ function MisSolicitudes() {
       </div>
       <div className="card-body">
         {aviso && <div className="alert alert-success">{aviso}</div>}
-        {error && !modal && <div className="alert alert-error">{error}</div>}
+        {error && !modal && <div className="alert alert-error" role="alert">{error}</div>}
         {filas.length === 0 ? (
           <p style={{ fontSize: 13, color: 'var(--slate-500)' }}>
             ¿Necesitas corregir tus datos, soporte técnico o ayuda con tu cuenta o proyecto? Envía una solicitud al administrador.
@@ -280,31 +280,31 @@ function MisSolicitudes() {
               <div className="modal-body">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div className="form-group">
-                    <label className="form-label">Tipo *</label>
-                    <select className="form-select" value={form.tipo} onChange={e => setForm({ ...form, tipo: e.target.value })} required>
+                    <label className="form-label" htmlFor="solicitud-tipo">Tipo *</label>
+                    <select id="solicitud-tipo" className="form-select" value={form.tipo} onChange={e => setForm({ ...form, tipo: e.target.value })} required>
                       <option value="">Selecciona…</option>
                       {tipos.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Proyecto (opcional)</label>
-                    <select className="form-select" value={form.id_proyecto} onChange={e => setForm({ ...form, id_proyecto: e.target.value })}>
+                    <label className="form-label" htmlFor="solicitud-proyecto">Proyecto (opcional)</label>
+                    <select id="solicitud-proyecto" className="form-select" value={form.id_proyecto} onChange={e => setForm({ ...form, id_proyecto: e.target.value })}>
                       <option value="">Ninguno</option>
                       {proyectos.map(p => <option key={p.id_proyecto} value={p.id_proyecto}>{p.nombre}</option>)}
                     </select>
                   </div>
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Asunto *</label>
-                  <input className="form-input" maxLength={150} value={form.asunto} onChange={e => setForm({ ...form, asunto: e.target.value })}
+                  <label className="form-label" htmlFor="solicitud-asunto">Asunto *</label>
+                  <input id="solicitud-asunto" className="form-input" maxLength={150} value={form.asunto} onChange={e => setForm({ ...form, asunto: e.target.value })}
                     placeholder="Ej. Corregir mi número de identificación" />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Descripción *</label>
-                  <textarea className="form-textarea" rows={4} maxLength={5000} value={form.descripcion}
+                  <label className="form-label" htmlFor="solicitud-descripcion">Descripción *</label>
+                  <textarea id="solicitud-descripcion" className="form-textarea" rows={4} maxLength={5000} value={form.descripcion}
                     onChange={e => setForm({ ...form, descripcion: e.target.value })} placeholder="Cuéntale al administrador qué necesitas…" />
                 </div>
-                {error && <div className="alert alert-error">{error}</div>}
+                {error && <div className="alert alert-error" role="alert">{error}</div>}
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setModal(false)}>Cancelar</button>
