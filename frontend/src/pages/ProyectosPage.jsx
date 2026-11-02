@@ -166,31 +166,31 @@ export default function ProyectosPage() {
                 {error && <div className="alert alert-error">{error}</div>}
 
                 <div className="form-group">
-                  <label className="form-label">Nombre *</label>
-                  <input className="form-input" value={form.nombre}
+                  <label className="form-label" htmlFor="proyecto-nombre">Nombre *</label>
+                  <input id="proyecto-nombre" className="form-input" value={form.nombre}
                     onChange={e => setForm({...form, nombre: e.target.value})} required />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Descripción</label>
-                  <textarea className="form-textarea" value={form.descripcion}
+                  <label className="form-label" htmlFor="proyecto-descripcion">Descripción</label>
+                  <textarea id="proyecto-descripcion" className="form-textarea" value={form.descripcion}
                     onChange={e => setForm({...form, descripcion: e.target.value})} />
                 </div>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                   <div className="form-group">
-                    <label className="form-label">Fecha inicio *</label>
-                    <input className="form-input" type="date" value={form.fecha_inicio}
+                    <label className="form-label" htmlFor="proyecto-inicio">Fecha inicio *</label>
+                    <input id="proyecto-inicio" className="form-input" type="date" value={form.fecha_inicio}
                       onChange={e => setForm({...form, fecha_inicio: e.target.value})} required />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Fecha fin</label>
-                    <input className="form-input" type="date" value={form.fecha_fin}
+                    <label className="form-label" htmlFor="proyecto-fin">Fecha fin</label>
+                    <input id="proyecto-fin" className="form-input" type="date" value={form.fecha_fin}
                       onChange={e => setForm({...form, fecha_fin: e.target.value})} />
                   </div>
                 </div>
                 {(esAdmin) && (
                   <div className="form-group">
-                    <label className="form-label">Instructor *</label>
-                    <select className="form-select" value={form.id_instructor}
+                    <label className="form-label" htmlFor="proyecto-instructor">Instructor *</label>
+                    <select id="proyecto-instructor" className="form-select" value={form.id_instructor}
                       onChange={e => setForm({...form, id_instructor: e.target.value})} required>
                       <option value="">Seleccionar instructor</option>
                       {instructores.map(u => (
