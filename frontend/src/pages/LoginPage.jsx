@@ -72,7 +72,10 @@ export default function LoginPage() {
       setTimeout(() => navigate('/dashboard'), 500);
     } catch (err) {
       setStatus('idle');
-      reactSurprise(err.response?.data?.message || 'Error al iniciar sesión');
+      // Si es un error de validación, el detalle viene en errors[] y "message"
+      // solo dice "Error de validación": se muestra el detalle.
+      const datos = err.response?.data;
+      reactSurprise(datos?.errors?.[0]?.mensaje || datos?.message || 'Error al iniciar sesión');
     }
   }
 

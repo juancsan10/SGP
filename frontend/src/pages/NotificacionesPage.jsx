@@ -281,12 +281,12 @@ export default function NotificacionesPage() {
             </div>
             <form onSubmit={enviarBroadcast}>
               <div className="modal-body">
-                {errorCrear && <div className="alert alert-error">{errorCrear}</div>}
+                {errorCrear && <div className="alert alert-error" role="alert">{errorCrear}</div>}
                 {okCrear && <div className="alert alert-success">{okCrear}</div>}
 
                 <div className="form-group">
-                  <label className="form-label">Destinatarios *</label>
-                  <select className="form-select" value={form.rol_destino}
+                  <label className="form-label" htmlFor="notif-destinatarios">Destinatarios *</label>
+                  <select id="notif-destinatarios" className="form-select" value={form.rol_destino}
                     onChange={e => setForm({ ...form, rol_destino: e.target.value })}>
                     <option value="Aprendiz">Todos los aprendices</option>
                     <option value="Instructor">Todos los instructores</option>
@@ -295,21 +295,21 @@ export default function NotificacionesPage() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Título *</label>
-                  <input className="form-input" value={form.titulo}
+                  <label className="form-label" htmlFor="notif-titulo">Título *</label>
+                  <input id="notif-titulo" className="form-input" value={form.titulo}
                     onChange={e => setForm({ ...form, titulo: e.target.value })} required maxLength={150} />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Mensaje *</label>
-                  <textarea className="form-textarea" value={form.mensaje}
+                  <label className="form-label" htmlFor="notif-mensaje">Mensaje *</label>
+                  <textarea id="notif-mensaje" className="form-textarea" value={form.mensaje}
                     onChange={e => setForm({ ...form, mensaje: e.target.value })} required />
                 </div>
 
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                   <div className="form-group">
-                    <label className="form-label">Tipo</label>
-                    <select className="form-select" value={form.tipo}
+                    <label className="form-label" htmlFor="notif-tipo">Tipo</label>
+                    <select id="notif-tipo" className="form-select" value={form.tipo}
                       onChange={e => setForm({ ...form, tipo: e.target.value })}>
                       <option value="informativo">ℹ️ Informativo</option>
                       <option value="mantenimiento">🛠️ Mantenimiento</option>
@@ -317,8 +317,8 @@ export default function NotificacionesPage() {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Prioridad</label>
-                    <select className="form-select" value={form.prioridad}
+                    <label className="form-label" htmlFor="notif-prioridad">Prioridad</label>
+                    <select id="notif-prioridad" className="form-select" value={form.prioridad}
                       onChange={e => setForm({ ...form, prioridad: e.target.value })}>
                       <option value="Baja">🟢 Baja</option>
                       <option value="Media">🟡 Media</option>
