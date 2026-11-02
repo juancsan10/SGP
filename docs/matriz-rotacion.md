@@ -15,7 +15,7 @@ Reglas:
 |---|---|---|---|---|---|---|---|---|---|
 | Rubiel Rodríguez (@usuario) | E2E: login exitoso | API: permisos por rol y reglas de proyectos| Front: EliminarUsuarioModal | | | | | | |
 | Juan Manuel Arcila (@usuario) | | | | | | | | | |
-| Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta |E2E: CI + rutas protegidas y páginas | | | | | | | |
+| Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta |E2E: CI + rutas protegidas y páginas | Front: SolicitudesPanel| | | | | | |
 
 Grupo de 3: rotamos entre Front, API y E2E (la capa BD se cubre desde la semana 6).
 
