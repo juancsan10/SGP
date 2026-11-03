@@ -87,7 +87,7 @@ const verifyResetCode = async (req, res) => {
       await db.query('UPDATE password_reset_tokens SET intentos=intentos+1 WHERE id_token=?', [r.id_token]);
       const quedan = RESET_MAX_INTENTOS - (r.intentos + 1);
       if (quedan <= 0) await db.query('UPDATE password_reset_tokens SET expires_at=NOW() WHERE id_token=?', [r.id_token]);
-      return malo(quedan > 0 ? `Código incorrecto. Te quedan ${quedan} intento${quedan === 1 ? '' : 's'}.` : 'Demasiados intentos. Solicita un código nuevo.', { attempts_left: Math.max(quedan, 0), locked: quedan <= 0 });
+      return malo(quedan > 0 ? (quedan === 1 ? 'Código incorrecto. Te queda 1 intento.' : `Código incorrecto. Te quedan ${quedan} intentos.`) : 'Demasiados intentos. Solicita un código nuevo.', { attempts_left: Math.max(quedan, 0), locked: quedan <= 0 });
     }
     const sesion = crypto.randomBytes(32).toString('hex');
     await db.query('UPDATE password_reset_tokens SET verificado_at=NOW(),sesion_hash=?,sesion_expires_at=DATE_ADD(NOW(),INTERVAL ? MINUTE) WHERE id_token=?', [hmac(sesion), RESET_SESSION_MIN, r.id_token]);

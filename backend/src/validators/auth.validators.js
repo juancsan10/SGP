@@ -88,29 +88,45 @@ const resetRequestValidators = [
     .normalizeEmail(NORMALIZE_EMAIL_OPTS)
 ];
 
-const correoReset = body('correo').trim().notEmpty().withMessage('El correo es requerido')
-  .isEmail().withMessage('El correo no tiene un formato válido').normalizeEmail();
+const correoReset = body('correo')
+  .trim()
+  .notEmpty()
+  .withMessage('El correo es requerido')
+  .isEmail()
+  .withMessage('El correo no tiene un formato válido')
+  .normalizeEmail(NORMALIZE_EMAIL_OPTS);
 
 /**
- * Paso 2: verificación del código de 6 dígitos
+ * Recuperación de contraseña — paso 2: verificación del código de 6 dígitos
  */
 const resetVerifyValidators = [
   correoReset,
-  body('token').trim().matches(/^\d{6}$/).withMessage('El código debe tener 6 dígitos')
+  body('token')
+    .trim()
+    .matches(/^\d{6}$/)
+    .withMessage('El código debe tener 6 dígitos')
 ];
 
 /**
- * Paso 3: nueva contraseña (requiere la sesión entregada al verificar el código)
+ * Recuperación de contraseña — paso 3: nueva contraseña
+ * (requiere la sesión entregada al verificar el código)
  */
 const resetConfirmValidators = [
   correoReset,
-  body('reset_session').trim().isHexadecimal().isLength({ min: 64, max: 64 })
+  body('reset_session')
+    .trim()
+    .isHexadecimal()
+    .isLength({ min: 64, max: 64 })
     .withMessage('La sesión de recuperación no es válida'),
   body('nueva_contrasena')
-    .notEmpty().withMessage('La nueva contraseña es requerida')
-    .isLength({ min: 8, max: 72 }).withMessage('La contraseña debe tener entre 8 y 72 caracteres')
-    .matches(/[A-Za-z]/).withMessage('Debe incluir al menos una letra')
-    .matches(/\d/).withMessage('Debe incluir al menos un número')
+    .notEmpty()
+    .withMessage('La nueva contraseña es requerida')
+    .isLength({ min: 8, max: 72 })
+    .withMessage('La contraseña debe tener entre 8 y 72 caracteres')
+    .matches(/[A-Za-z]/)
+    .withMessage('Debe incluir al menos una letra')
+    .matches(/\d/)
+    .withMessage('Debe incluir al menos un número')
 ];
 
 /**

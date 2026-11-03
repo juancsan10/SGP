@@ -254,7 +254,7 @@ CREATE TABLE reuniones (
     FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto)
 );
 
--- Recuperación de contraseña (flujo en 3 pasos: solicitar -> verificar código -> nueva contraseña).
+-- Recuperación de contraseña (HU-16, flujo en 3 pasos: solicitar -> verificar código -> nueva contraseña).
 -- Nunca se guarda el código ni la sesión en claro: solo su hash HMAC-SHA256.
 CREATE TABLE password_reset_tokens (
     id_token INT AUTO_INCREMENT PRIMARY KEY,
