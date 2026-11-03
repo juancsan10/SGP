@@ -254,14 +254,22 @@ CREATE TABLE reuniones (
     FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto)
 );
 
+-- Recuperación de contraseña (flujo en 3 pasos: solicitar -> verificar código -> nueva contraseña).
+-- Nunca se guarda el código ni la sesión en claro: solo su hash HMAC-SHA256.
 CREATE TABLE password_reset_tokens (
     id_token INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
-    token VARCHAR(128) NOT NULL UNIQUE,
-    expires_at DATETIME NOT NULL,
-    used BOOLEAN DEFAULT FALSE,
+    token_hash CHAR(64) NOT NULL,                 -- hash del código de 6 dígitos enviado por correo
+    expires_at DATETIME NOT NULL,                 -- vence a los 3 minutos
+    intentos TINYINT UNSIGNED NOT NULL DEFAULT 0, -- intentos fallidos de verificación (máx. 5)
+    verificado_at DATETIME NULL,                  -- cuándo se validó el código
+    sesion_hash CHAR(64) NULL,                    -- hash de la sesión que habilita el cambio de contraseña
+    sesion_expires_at DATETIME NULL,              -- la sesión dura 5 minutos tras verificar
+    used BOOLEAN NOT NULL DEFAULT FALSE,
+    ip VARCHAR(64) NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+    INDEX idx_prt_usuario (id_usuario),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );
 
 CREATE TABLE github_integration (
