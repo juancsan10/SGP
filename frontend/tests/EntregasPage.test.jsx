@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import EntregasPage from '../src/pages/EntregasPage.jsx';
@@ -85,7 +85,7 @@ describe('EntregasPage', () => {
     await user.type(comentarioInput, 'Entrega de casos de prueba terminada');
     await user.type(enlaceInput, 'https://github.com/sgp/entregas/1');
 
-    await user.click(screen.getByRole('button', { name: 'Enviar entrega' }));
+    await user.click(screen.getByRole('button', { name: /Enviar sin archivo/i }));
 
     await waitFor(() => {
       expect(entregasService.submit).toHaveBeenCalledWith(10, expect.objectContaining({
@@ -107,9 +107,8 @@ describe('EntregasPage', () => {
     await user.click(btnEntregar);
 
     const archivoInvalido = new File(['contenido ejecutable'], 'virus.exe', { type: 'application/x-msdownload' });
-    const inputArchivo = screen.getByLabelText(/Archivo/i, { selector: 'input' });
-
-    await user.upload(inputArchivo, archivoInvalido);
+    const inputArchivo = document.getElementById('entrega-archivo');
+    fireEvent.change(inputArchivo, { target: { files: [archivoInvalido] } });
 
     const alerta = await screen.findByRole('alert');
     expect(alerta).toHaveTextContent('Solo se permiten archivos PDF, JPG, PNG o WEBP');
