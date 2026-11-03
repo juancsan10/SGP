@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { proyectosService, usuariosService } from '../services/api.js';
 import { estadoBadge, ProgressBar, LoadingCenter, EmptyState, formatFecha, Pagination } from '../components/helpers.jsx';
+import { filtrarProyectos } from '../utils/filtros.js';
 
 const LIMITE = 6; // NUEVO: tamaño de página (paginación aplicada a todos los roles)
 
@@ -77,10 +78,7 @@ export default function ProyectosPage() {
     }
   }
 
-  const proyectosFiltrados = proyectos.filter(p =>
-    p.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
-    (p.instructor || '').toLowerCase().includes(filtro.toLowerCase())
-  );
+  const proyectosFiltrados = filtrarProyectos(proyectos, filtro);
   // NUEVO: paginación del lado del cliente (no hay endpoint paginado aún para este listado)
   const proyectosPagina = proyectosFiltrados.slice(offset, offset + LIMITE);
 
