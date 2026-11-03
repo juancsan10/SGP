@@ -109,7 +109,7 @@ export default function AppLayout() {
                     <span className="sidebar-dot-badge" />
                   )}
                 </span>
-                <span className="nav-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <span className="nav-label">
                   <span>{item.label}</span>
                   {item.path === '/notificaciones' && noLeidas > 0 && (
                     <span className="sidebar-notif-pill" id="sidebar-notif-badge">

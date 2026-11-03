@@ -214,7 +214,7 @@ export default function NotificacionesPage() {
 
       {errorLista && (
         <div style={{ padding: '12px 28px' }}>
-          <div className="alert alert-danger" role="alert">{errorLista}</div>
+          <div className="alert alert-error" role="alert">{errorLista}</div>
         </div>
       )}
 
@@ -305,7 +305,7 @@ export default function NotificacionesPage() {
       {/* ── PESTAÑA: ENVIADAS (solo Admin) ── */}
       {esAdmin && tab === 'enviadas' && (
         <div className="content-area">
-          {errorEnviadas && <div className="alert alert-danger">{errorEnviadas}</div>}
+          {errorEnviadas && <div className="alert alert-error">{errorEnviadas}</div>}
           {loadingEnviadas ? (
             <LoadingCenter />
           ) : enviadas.length === 0 ? (
@@ -355,15 +355,15 @@ export default function NotificacionesPage() {
 
       {/* Modal solo Administrador: crear notificación */}
       {modalCrear && (
-        <div className="modal-backdrop" onClick={() => setModalCrear(false)}>
-          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+        <div className="modal-overlay" onClick={() => setModalCrear(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
             <div className="modal-header">
               <span className="modal-title">Nueva notificación en tiempo real</span>
               <button className="modal-close" onClick={() => setModalCrear(false)}>×</button>
             </div>
             <form onSubmit={enviarBroadcast}>
               <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {errorCrear && <div className="alert alert-danger">{errorCrear}</div>}
+                {errorCrear && <div className="alert alert-error">{errorCrear}</div>}
                 {okCrear && <div className="alert alert-success">{okCrear}</div>}
 
                 <div className="form-group">

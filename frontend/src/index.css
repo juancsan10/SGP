@@ -415,6 +415,9 @@ tbody tr:hover td { background: var(--slate-50); }
   font-weight: 600;
 }
 .nav-link .icon { font-size: 15px; width: 18px; text-align: center; }
+/* El texto del link vive en una clase (no en style inline) para que
+   .sidebar-contraido .nav-label { display:none } pueda ocultarlo. */
+.nav-label { display: flex; align-items: center; justify-content: space-between; width: 100%; }
 .sidebar-footer { padding: 12px 10px; border-top: 1px solid rgba(255,255,255,.08); }
 .sidebar-user {
   display: flex; align-items: center; gap: 10px;
