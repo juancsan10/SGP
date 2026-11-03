@@ -9,6 +9,7 @@ import { proyectosService, tareasService } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, EmptyState, formatFecha, Pagination } from '../components/helpers.jsx';
 import { CalificacionChip, DetalleEntregaModal } from '../components/CalificacionEntrega.jsx';
+import { filtrarTareas } from '../utils/filtros.js';
 
 const LIMITE = 10;
 
@@ -53,13 +54,7 @@ function TareasAprendiz() {
   }, []);
   useEffect(() => { setOffset(0); }, [filtro, estado]); // NUEVO: vuelve a la página 1 al filtrar
 
-  const tareasFiltradas = tareas.filter(t => {
-    const matchTexto = t.titulo.toLowerCase().includes(filtro.toLowerCase()) ||
-                       (t.asignado_nombre || '').toLowerCase().includes(filtro.toLowerCase()) ||
-                       (t.proyecto_nombre || '').toLowerCase().includes(filtro.toLowerCase());
-    const matchEstado = !estado || t.estado === estado;
-    return matchTexto && matchEstado;
-  });
+  const tareasFiltradas = filtrarTareas(tareas, filtro, estado);
   const tareasPagina = tareasFiltradas.slice(offset, offset + LIMITE); // NUEVO
 
   if (loading) return (

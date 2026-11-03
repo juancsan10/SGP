@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ConfirmModal } from './helpers.jsx';
+import { getNavItems } from '../utils/navegacion.js';
 
 // La preferencia de contraído/expandido se recuerda en este navegador.
 const CLAVE_SIDEBAR = 'sgp_sidebar_contraido';
@@ -18,27 +19,7 @@ function guardarContraido(valor) {
   try { localStorage.setItem(CLAVE_SIDEBAR, valor ? '1' : '0'); } catch { /* almacenamiento no disponible */ }
 }
 
-// Definición de ítems del menú
-function getNavItems(esAdmin, esInstructor) {
-  const items = [
-    { label: 'Principal', section: true },
-    { path: '/dashboard',      icon: '🏠', label: 'Inicio' },
-    { path: '/proyectos',      icon: '📁', label: 'Proyectos' },
-    { path: '/tareas',         icon: '✅', label: 'Mis Tareas' },
-    { path: '/entregas',       icon: '📤', label: 'Entregas' },
-    { path: '/notificaciones', icon: '🔔', label: 'Notificaciones' },
-    { path: '/calendario', icon: '🗓️', label: 'Calendario' },
-    { path: '/timeline', icon: '📈', label: 'Línea de tiempo' },
-  ];
 
-  if (esAdmin || esInstructor) {
-    items.push({ label: 'Administración', section: true });
-    items.push({ path: '/usuarios',  icon: '👥', label: 'Usuarios' });
-    items.push({ path: '/historial', icon: '📋', label: 'Historial' });
-  }
-
-  return items;
-}
 
 export default function AppLayout() {
   const { usuario, logout, esAdmin, esInstructor, rolClase } = useAuth();
