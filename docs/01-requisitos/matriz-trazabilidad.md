@@ -37,7 +37,7 @@ código real en la rama `test` al momento de escribir esto):
 | RF1.1 Registro de usuarios | RN-008 | — | HU-13 | `POST /auth/register` | ✅ |
 | RF1.2 Autenticación segura | RN-006, RNF3.1 | CU-001 | HU-14 | `POST /auth/login` (JWT + bcrypt + rate limit) | ✅ |
 | RF1.3 Gestión de roles | RN-005, RN-025 | — | HU-15 | `GET/PUT/DELETE /usuarios`, `POST /auth/users` (solo Admin) | ✅ |
-| RF1.4 Recuperación de contraseña | — | — | HU-16 | `POST /auth/password-reset/request`, `/confirm` | ✅ |
+| RF1.4 Recuperación de contraseña | — | — | HU-16 | `POST /auth/password-reset/request`, `/verify`, `/confirm` | ✅ |
 
 ### RF2 — Gestión de Proyectos
 
