@@ -185,8 +185,8 @@ Este documento complementa [`../rf-rnf/requisitos-funcionales-no-funcionales.md`
 **Quiero** ver notificaciones nuevas sin recargar la página
 **Para** enterarme al instante de mensajes o asignaciones nuevas
 
-**Requisito relacionado:** RF4.4 / RN-021 · **Caso de uso:** CU-009
-**Estado:** ⬜ Pendiente — las notificaciones se generan y guardan correctamente (RN-021), pero requiere recargar; falta WebSocket o polling automático (documentado en `docs/07-deuda-tecnica.md`)
+**Requisito relacionado:** RF4.4 / RN-021 · **Caso de uso:** CU-009 · **Endpoint:** `GET/PUT /notificaciones`, WebSocket `/ws`, SSE `/api/v1/notificaciones/stream`
+**Estado:** ✅ Hecho — Implementado con WebSocket nativo (`/ws`) y canal SSE de respaldo (`/api/v1/notificaciones/stream`); actualización en tiempo real automática sin recargar, indicador en vivo y alertas tipo toast.
 
 ---
 
@@ -268,12 +268,12 @@ Este documento complementa [`../rf-rnf/requisitos-funcionales-no-funcionales.md`
 
 | Estado | Cantidad | Historias |
 |---|---|---|
-| ✅ Hecho | 18 | HU-13 a HU-27, HU-29, HU-30, HU-31, HU-32 |
+| ✅ Hecho | 19 | HU-13 a HU-32 |
 | 🟡 Parcial | 2 | HU-33, HU-34 |
-| ⬜ Pendiente | 2 | HU-28, HU-35 |
+| ⬜ Pendiente | 1 | HU-35 |
 
-**18 de 23 historias completamente implementadas y verificadas (≈78%)**, 2 parciales
-con una limitación puntual documentada, y 2 sin iniciar por decisión del equipo
+**19 de 23 historias completamente implementadas y verificadas (≈83%)**, 2 parciales
+con una limitación puntual documentada, y 1 sin iniciar por decisión del equipo
 (no por olvido) — ver `docs/07-deuda-tecnica.md`.
 
 > ✍️ **Autor:** Equipo de Desarrollo — Sistema de Gestión de Proyectos SENA

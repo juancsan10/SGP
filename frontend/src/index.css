@@ -712,3 +712,87 @@ tbody tr:hover td { background: var(--slate-50); }
 .role-admin .progress-bar,.role-instructor .progress-bar,.role-aprendiz .progress-bar{background:var(--role-primary)}
 .role-admin .sidebar-avatar,.role-instructor .sidebar-avatar,.role-aprendiz .sidebar-avatar{background:var(--role-primary)}
 .role-admin .sidebar-brand-icon,.role-instructor .sidebar-brand-icon,.role-aprendiz .sidebar-brand-icon{background:var(--role-primary)}
+
+/* ── Notificaciones en Tiempo Real (RF4.4 / HU-28) ─────── */
+.sidebar-notif-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 2px 5px rgba(220, 38, 38, 0.4);
+  animation: pop-in 0.25s ease-out;
+}
+
+.sidebar-dot-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #dc2626;
+  box-shadow: 0 0 0 2px var(--surface-sidebar, #1e293b);
+  animation: pulse-ring 2s infinite;
+}
+
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.live-indicator-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: livePulse 1.8s infinite;
+}
+
+@keyframes livePulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.notif-card-new {
+  animation: highlightNew 2.5s ease-out forwards;
+}
+
+@keyframes highlightNew {
+  0% {
+    background-color: rgba(59, 130, 246, 0.15);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}

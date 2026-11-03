@@ -65,12 +65,12 @@ código real en la rama `test` al momento de escribir esto):
 | RF4.1 Mensajería interna | — | CU-008 | HU-26 | `POST/GET /mensajes` | ✅ |
 | RF4.2 Comentarios en tareas/entregables | RN-015 | — | HU-23 / HU-27 | `POST/GET /comentarios` | ✅ |
 | RF4.3 Comunicación docente-aprendiz | — | CU-008 | HU-26 | mismo canal de `/mensajes` (no hay canal separado) | ✅ |
-| RF4.4 Notificaciones en tiempo real | RN-021 | CU-009 | HU-28 | `GET/PUT /notificaciones` — **persistentes, no push en vivo** | 🟡 |
+| RF4.4 Notificaciones en tiempo real | RN-021 | CU-009 | HU-28 | `GET/PUT /notificaciones`, WebSocket `/ws`, SSE `/api/v1/notificaciones/stream` | ✅ |
 
 > **RF4.4 en detalle:** las notificaciones se generan y se guardan correctamente
-> (ej. al programar una reunión, RN-021), pero el usuario debe recargar o
-> volver a consultar `/notificaciones` para verlas — no hay WebSocket ni
-> polling automático todavía. Documentado también en `docs/07-deuda-tecnica.md`.
+> (RN-021) y ahora se emiten automáticamente en tiempo real mediante WebSocket
+> nativo (`/ws`) y canal SSE de respaldo. La interfaz web se actualiza al instante
+> sin requerir recargar la página.
 
 ### RF5 — Gestión de Tareas y Cronograma
 
@@ -133,15 +133,14 @@ arquitectura o de proceso. Se documenta cómo se verificó cada uno, no solo si 
 
 | Categoría | Hecho ✅ | Parcial 🟡 | Pendiente ⬜ | Total |
 |---|---|---|---|---|
-| Requisitos Funcionales (RF) | 20 | 3 | 1 | 24 |
+| Requisitos Funcionales (RF) | 21 | 2 | 1 | 24 |
 | Requisitos No Funcionales (RNF) | 5 | 4 | 7 | 16 |
 
-**Cobertura funcional real: 83% completo, 12.5% parcial, 4% sin iniciar.**
+**Cobertura funcional real: 87.5% completo, 8.3% parcial, 4% sin iniciar.**
 
-Los 2 pendientes funcionales que quedan por decisión propia del equipo
-(no por olvido): **RF6.3 exportación de reportes** y la porción de
-**tiempo real** de RF4.4 — ambos documentados desde hace varias sesiones
-en `docs/07-deuda-tecnica.md` como trabajo futuro, no como omisiones.
+El único pendiente funcional que queda por decisión propia del equipo
+(no por olvido): **RF6.3 exportación de reportes** — documentado en
+`docs/07-deuda-tecnica.md` como trabajo futuro.
 
 ---
 
