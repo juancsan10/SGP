@@ -235,7 +235,12 @@ export const githubIntegrationService = {
 };
 
 export const agendaService = { calendar: (id) => api.get(`/agenda/${id}/calendario`), timeline: (id) => api.get(`/agenda/${id}/timeline`) };
-export const passwordService = { request: (correo) => api.post('/auth/password-reset/request',{correo}), confirm: (token,nueva_contrasena) => api.post('/auth/password-reset/confirm',{token,nueva_contrasena}) };
+// Recuperación de contraseña (HU-16): solicitar código -> verificarlo -> nueva contraseña.
+export const passwordService = {
+  request: (correo) => api.post('/auth/password-reset/request',{correo}),
+  verify: (correo,token) => api.post('/auth/password-reset/verify',{correo,token}),
+  confirm: (correo,reset_session,nueva_contrasena) => api.post('/auth/password-reset/confirm',{correo,reset_session,nueva_contrasena}),
+};
 
 // ── Solicitudes al Administrador (NUEVO) ──────────────
 export const solicitudesService = {

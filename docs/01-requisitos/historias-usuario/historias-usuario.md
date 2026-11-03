@@ -55,8 +55,8 @@ Este documento complementa [`../rf-rnf/requisitos-funcionales-no-funcionales.md`
 **Quiero** poder restablecerla de forma segura
 **Para** no quedar bloqueado fuera del sistema
 
-**Requisito relacionado:** RF1.4 · **Endpoint:** `POST /auth/password-reset/request`, `/confirm`
-**Estado:** ✅ Hecho — tabla `password_reset_tokens`, enlace de un solo uso, página `ResetPasswordPage.jsx`
+**Requisito relacionado:** RF1.4 · **Endpoint:** `POST /auth/password-reset/request`, `/verify`, `/confirm`
+**Estado:** ✅ Hecho — código de 6 dígitos enviado por correo (vence en 3 min, máx. 5 intentos), sesión de 5 min para fijar la nueva contraseña, `PasswordRecovery.jsx` (modal y ruta `/reset-password`). Ver `docs/RECUPERACION_CONTRASENA.md`
 
 ---
 
