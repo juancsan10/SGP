@@ -1,6 +1,6 @@
 # Matriz de rotación de capas
 
-**Grupo**: SGP SENA — Sistema de Gestión de Proyectos · **Ficha**: _número_ · **Stack**: React + Express + MySQL
+**Grupo**: SGP SENA — Sistema de Gestión de Proyectos · **Ficha**: 3228970 · **Stack**: React + Express + MySQL
 
 Capas: **Front** (React) · **API** (backend) · **BD** (integración) · **E2E** (Playwright)
 
@@ -13,15 +13,15 @@ Reglas:
 
 | Integrante (usuario GitHub) | S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 |
 |---|---|---|---|---|---|---|---|---|---|
-| Rubiel Rodríguez (@usuario) | E2E: login exitoso | API: permisos por rol y reglas de proyectos | Front: EliminarUsuarioModal | | | | | | |
-| Juan Manuel Arcila (@JuanArcila1) | E2E: campos vacíos | Front: validaciones, filtros y paginación | Front: EntregasPage | | | | | | |
-| Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta | E2E: CI + rutas protegidas y páginas | Front: SolicitudesPanel | | | | | | |
+| Rubiel Rodríguez (@Rubloxil) | E2E: login exitoso | API: permisos por rol y reglas de proyectos | Front: EliminarUsuarioModal | E2E: seguridad y errores del API | | | | | |
+| Juan Manuel Arcila (@JuanArcila1) | E2E: campos vacíos | Front: validaciones, filtros y paginación | Front: EntregasPage | API: proyectos |Front: contrato del API | | | | |
+| Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta | E2E: CI + rutas protegidas y páginas | Front: SolicitudesPanel |  | | | | | |
 
 Grupo de 3: rotamos entre Front, API y E2E (la capa BD se cubre desde la semana 6).
 
 ## Regla de rama
 
-Pendiente: se configura en la semana 2 junto con el CI.
+Ruleset `test y main protegidas` activo desde la semana 2 sobre `main`, `develop` y `test`: PR obligatorio con 1 aprobación y checks `frontend` y `backend` en verde.
 
 ## Cobertura semanal
 

@@ -27,7 +27,7 @@ const create = async (req, res) => {
     await registrarCambio('github_integration', result.insertId, 'INSERT', id_usuario);
     return res.status(201).json({ success: true, message: 'Cuenta de GitHub vinculada', data: { id_integration: result.insertId } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -46,7 +46,7 @@ const getByUsuario = async (req, res) => {
     if (rows.length === 0) return res.status(404).json({ success: false, message: 'Este usuario no ha vinculado GitHub aún' });
     return res.json({ success: true, data: rows[0] });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -66,7 +66,7 @@ const update = async (req, res) => {
     await registrarCambio('github_integration', id_usuario, 'UPDATE', id_usuario);
     return res.json({ success: true, message: 'Integración de GitHub actualizada' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -79,7 +79,7 @@ const remove = async (req, res) => {
     await registrarCambio('github_integration', id_usuario, 'DELETE', id_usuario);
     return res.json({ success: true, message: 'Cuenta de GitHub desvinculada' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 

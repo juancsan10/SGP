@@ -67,4 +67,38 @@ describe('NotificacionesPage', () => {
     const encabezado = await screen.findByRole('button', { name: '+ Nueva notificación' });
     expect(within(encabezado.parentElement).getByRole('button', { name: /Marcar todas como leídas/ })).toBeInTheDocument();
   });
+
+  it('should send the admin notification to apprentices and instructors', async () => {
+    // Arrange
+    notificacionesService.broadcast.mockResolvedValueOnce({ data: { message: 'Notificación enviada a 12 usuario(s)' } });
+    const user = userEvent.setup();
+    renderConSesion(<NotificacionesPage />, { usuario: ADMIN });
+
+    // Act
+    await user.click(await screen.findByRole('button', { name: '+ Nueva notificación' }));
+    await user.selectOptions(screen.getByLabelText('Destinatarios'), 'Todos');
+    await user.type(screen.getByLabelText('Título'), 'Mantenimiento');
+    await user.type(screen.getByLabelText('Mensaje'), 'El sábado no habrá servicio');
+    await user.selectOptions(screen.getByLabelText('Tipo'), 'mantenimiento');
+    await user.click(screen.getByRole('button', { name: 'Enviar en tiempo real' }));
+
+    // Assert: los mismos campos que valida el backend en POST /notificaciones/broadcast
+    expect(notificacionesService.broadcast).toHaveBeenCalledWith({
+      titulo: 'Mantenimiento', mensaje: 'El sábado no habrá servicio', tipo: 'mantenimiento', prioridad: 'Media', rol_destino: 'Todos',
+    });
+    expect(await screen.findByText('Notificación enviada a 12 usuario(s)')).toBeInTheDocument();
+  });
+
+  it('should show the backend error inside the form when the notification cannot be sent', async () => {
+    notificacionesService.broadcast.mockRejectedValueOnce({ response: { data: { message: 'No se encontraron usuarios destinatarios' } } });
+    const user = userEvent.setup();
+    renderConSesion(<NotificacionesPage />, { usuario: ADMIN });
+
+    await user.click(await screen.findByRole('button', { name: '+ Nueva notificación' }));
+    await user.type(screen.getByLabelText('Título'), 'Aviso');
+    await user.type(screen.getByLabelText('Mensaje'), 'Prueba');
+    await user.click(screen.getByRole('button', { name: 'Enviar en tiempo real' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('No se encontraron usuarios destinatarios');
+  });
 });

@@ -125,7 +125,7 @@ const getAllAdmin = async (req,res) => {
       params
     );
     return res.json({success:true,data:rows,meta:{total,limit,offset}});
-  } catch(err){ return res.status(500).json({success:false,message:err.message}); }
+  } catch(err){ console.error(err); return res.status(500).json({success:false,message:'Error interno del servidor'}); }
 };
 
 // GET /api/v1/entregas/:id/detalle  (NUEVO — solo lectura)

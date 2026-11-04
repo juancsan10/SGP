@@ -363,11 +363,11 @@ export default function NotificacionesPage() {
             </div>
             <form onSubmit={enviarBroadcast}>
               <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {errorCrear && <div className="alert alert-error">{errorCrear}</div>}
+                {errorCrear && <div className="alert alert-error" role="alert">{errorCrear}</div>}
                 {okCrear && <div className="alert alert-success">{okCrear}</div>}
 
                 <div className="form-group">
-                  <label className="form-label">Destinatarios</label>
+                  <label className="form-label" htmlFor="form-rol-destino">Destinatarios</label>
                   <select
                     className="form-select"
                     id="form-rol-destino"
@@ -382,7 +382,7 @@ export default function NotificacionesPage() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div className="form-group">
-                    <label className="form-label">Tipo</label>
+                    <label className="form-label" htmlFor="form-tipo">Tipo</label>
                     <select
                       className="form-select"
                       id="form-tipo"
@@ -396,7 +396,7 @@ export default function NotificacionesPage() {
                     </select>
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Prioridad</label>
+                    <label className="form-label" htmlFor="form-prioridad">Prioridad</label>
                     <select
                       className="form-select"
                       id="form-prioridad"
@@ -411,7 +411,7 @@ export default function NotificacionesPage() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Título</label>
+                  <label className="form-label" htmlFor="form-titulo">Título</label>
                   <input
                     type="text"
                     className="form-input"
@@ -424,7 +424,7 @@ export default function NotificacionesPage() {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Mensaje</label>
+                  <label className="form-label" htmlFor="form-mensaje">Mensaje</label>
                   <textarea
                     className="form-textarea"
                     id="form-mensaje"
