@@ -36,7 +36,7 @@ export default defineConfig({
       include: ['src/**/*.{js,jsx}'],
       exclude: ['src/main.jsx'],
       // Línea base de la semana 1. Este número solo puede subir.
-      thresholds: { lines: 0, branches: 0, functions: 0, statements: 0 },
+      thresholds: { lines: 35, branches: 28, functions: 29, statements: 33 },
     },
   },
 })
