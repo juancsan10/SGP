@@ -1,6 +1,12 @@
 const db = require('../config/db');
 const { registrarCambio } = require('../services/historial.service');
 
+function sumarMeses(fecha, meses) {
+  const resultado = new Date(fecha);
+  resultado.setUTCMonth(resultado.getUTCMonth() + meses);
+  return resultado;
+}
+
 // POST /api/v1/proyectos
 const create = async (req, res) => {
   try {
@@ -19,10 +25,11 @@ const create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'RN-011: La fecha de fin debe ser posterior a la fecha de inicio' });
     }
 
-    // RN-004: duración entre 1 y 6 meses
+    // RN-004: duración entre 1 y 6 meses de calendario. Antes se contaban
+    // meses de 30 días, así que 1 ene → 1 jul (181 días) se rechazaba.
     if (fecha_fin) {
-      const diffMonths = (new Date(fecha_fin) - new Date(fecha_inicio)) / (1000 * 60 * 60 * 24 * 30);
-      if (diffMonths < 1 || diffMonths > 6) {
+      const fin = new Date(fecha_fin);
+      if (fin < sumarMeses(fecha_inicio, 1) || fin > sumarMeses(fecha_inicio, 6)) {
         return res.status(400).json({ success: false, message: 'RN-004: Los proyectos deben durar entre 1 y 6 meses' });
       }
     }

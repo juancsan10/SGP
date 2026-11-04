@@ -13,9 +13,9 @@ Reglas:
 
 | Integrante (usuario GitHub) | S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 |
 |---|---|---|---|---|---|---|---|---|---|
-| Rubiel Rodríguez (@usuario) | E2E: login exitoso | | | | | | | | |
-| Juan Manuel Arcila (@JuanArcila1) | E2E: campos vacíos | | | | | | | | |
-| Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta | | | | | | | | |
+| Rubiel Rodríguez (@usuario) | E2E: login exitoso | API: permisos por rol y reglas de proyectos | | | | | | | |
+| Juan Manuel Arcila (@JuanArcila1) | E2E: campos vacíos | Front: validaciones, filtros y paginación | | | | | | | |
+| Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta | E2E: CI + rutas protegidas y páginas | | | | | | | |
 
 Grupo de 3: rotamos entre Front, API y E2E (la capa BD se cubre desde la semana 6).
 
@@ -29,7 +29,8 @@ Anota la cobertura real al cerrar cada semana. El umbral de la semana siguiente 
 
 | Semana | Frontend (%) | Backend (%) | Umbral configurado para la semana siguiente |
 |---|---|---|---|
-| S1 (línea base) | S2 | 35.63 | 34.3 | Frontend 35 · Backend 34 (líneas) | | 0 | 0 en la config (línea base) |
+| S1 (línea base) | 0 | 0 | 0 en la config (línea base) |
+| S2 | 35.63 | 34.3 | Frontend 35 · Backend 34 (líneas) |
 
 > La línea base es 0% porque el proyecto no tenía pruebas unitarias y los E2E no cuentan para la cobertura. Se mide con `pnpm test` en `frontend/` y en `backend/`.
 
