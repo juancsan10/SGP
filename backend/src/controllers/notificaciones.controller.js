@@ -1,5 +1,11 @@
+// =====================================================
+// controllers/notificaciones.controller.js
+// Manejo de notificaciones con soporte en tiempo real (RF4.4 / HU-28)
+// =====================================================
 const db = require('../config/db');
 const { registrarCambio } = require('../services/historial.service');
+const realtimeService = require('../services/realtime.service');
+const notificacionesService = require('../services/notificaciones.service');
 
 // GET /api/v1/notificaciones/:id_usuario
 const getByUsuario = async (req, res) => {
@@ -17,11 +23,23 @@ const getByUsuario = async (req, res) => {
 // PUT /api/v1/notificaciones/:id — marcar como leída (RN-022)
 const marcarLeida = async (req, res) => {
   try {
+    const [[notif]] = await db.query(
+      `SELECT id_usuario FROM notificaciones WHERE id_notificacion = ?`,
+      [req.params.id]
+    );
+    if (!notif) return res.status(404).json({ success: false, message: 'Notificación no encontrada' });
+
     const [result] = await db.query(
       `UPDATE notificaciones SET leida = 1 WHERE id_notificacion = ?`,
       [req.params.id]
     );
     if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Notificación no encontrada' });
+
+    // Sincronizar en tiempo real entre sesiones del usuario
+    realtimeService.emitirEventoUsuario(notif.id_usuario, 'NOTIFICACION_LEIDA', {
+      id_notificacion: Number(req.params.id)
+    });
+
     return res.json({ success: true, message: 'Notificación marcada como leída' });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
@@ -35,6 +53,12 @@ const marcarTodasLeidas = async (req, res) => {
       `UPDATE notificaciones SET leida = 1 WHERE id_usuario = ?`,
       [req.params.id_usuario]
     );
+
+    // Sincronizar en tiempo real entre sesiones del usuario
+    realtimeService.emitirEventoUsuario(req.params.id_usuario, 'TODAS_LEIDAS', {
+      id_usuario: Number(req.params.id_usuario)
+    });
+
     return res.json({ success: true, message: 'Todas las notificaciones marcadas como leídas' });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
@@ -59,8 +83,6 @@ const broadcast = async (req, res) => {
     }
     const tipoFinal = TIPOS_VALIDOS.includes(tipo) ? tipo : 'informativo';
     const prioridadFinal = PRIORIDADES_VALIDAS.includes(prioridad) ? prioridad : 'Media';
-    // NUEVO: una sola fecha calculada una vez, compartida por todas las
-    // filas de este envío (ver comentario en el INSERT más abajo).
     const fechaEnvio = new Date();
 
     let destinatarios = [];
@@ -82,33 +104,29 @@ const broadcast = async (req, res) => {
       return res.status(404).json({ success: false, message: 'No se encontraron usuarios destinatarios' });
     }
 
-    await Promise.all(destinatarios.map(id =>
-      db.query(
-        // NUEVO: id_creador guarda quién envió el broadcast (antes no se
-        // registraba, así que un Administrador no tenía forma de ver las
-        // notificaciones que él mismo había creado). fecha_envio se pasa
-        // explícita (en vez de dejarla en DEFAULT CURRENT_TIMESTAMP) para
-        // que TODAS las filas de este mismo envío compartan exactamente
-        // el mismo valor — así se pueden agrupar de forma confiable en
-        // getEnviadas() sin depender de que las inserciones caigan en el
-        // mismo segundo por casualidad.
-        `INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario, id_creador, fecha_envio) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [titulo, mensaje, tipoFinal, prioridadFinal, id, req.user.id, fechaEnvio]
-      )
-    ));
+    // Inserción en BD y notificación instantánea vía WebSocket/SSE a cada destinatario
+    await notificacionesService.crearYNotificarMultiples({
+      ids_usuarios: destinatarios,
+      titulo,
+      mensaje,
+      tipo: tipoFinal,
+      prioridad: prioridadFinal,
+      id_creador: req.user.id,
+      fecha_envio: fechaEnvio
+    });
 
     await registrarCambio('notificaciones', null, `BROADCAST_${destinatarios.length}_USUARIOS`, req.user?.id);
-    return res.status(201).json({ success: true, message: `Notificación enviada a ${destinatarios.length} usuario(s)` });
+    return res.status(201).json({
+      success: true,
+      message: `Notificación enviada a ${destinatarios.length} usuario(s) en tiempo real`,
+      destinatariosCount: destinatarios.length
+    });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
 // GET /api/v1/notificaciones/enviadas  (NUEVO — solo Administrador)
-// Muestra las notificaciones que el propio Administrador ha creado por
-// broadcast, agrupadas por envío (un broadcast a 10 aprendices genera 10
-// filas en la tabla, pero aquí se ve como UN solo envío con el conteo de
-// destinatarios y cuántos ya la leyeron).
 const getEnviadas = async (req, res) => {
   try {
     const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
@@ -142,4 +160,37 @@ const getEnviadas = async (req, res) => {
   }
 };
 
-module.exports = { getByUsuario, marcarLeida, marcarTodasLeidas, broadcast, getEnviadas };
+// GET /api/v1/notificaciones/stream — Canal Server-Sent Events (SSE) secundario
+const stream = (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  realtimeService.registerSseClient(req.user.id, res);
+
+  res.write(`data: ${JSON.stringify({ type: 'CONECTADO_SSE', id_usuario: req.user.id })}\n\n`);
+
+  const keepAlive = setInterval(() => {
+    res.write(': keep-alive\n\n');
+  }, 25000);
+
+  req.on('close', () => {
+    clearInterval(keepAlive);
+  });
+};
+
+// GET /api/v1/notificaciones/realtime/stats — Métricas de conexiones en vivo
+const stats = (req, res) => {
+  return res.json({ success: true, data: realtimeService.getStats() });
+};
+
+module.exports = {
+  getByUsuario,
+  marcarLeida,
+  marcarTodasLeidas,
+  broadcast,
+  getEnviadas,
+  stream,
+  stats
+};
