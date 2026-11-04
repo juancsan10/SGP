@@ -65,4 +65,16 @@ describe('LoginPage', () => {
 
     expect(localStorage.getItem('sgp_last_email')).toBe('carlos@sena.edu.co');
   });
+
+  it('should show which field is wrong when the backend answers a validation error', async () => {
+    authService.login.mockRejectedValueOnce({ response: { status: 400, data: {
+      success: false, message: 'Error de validación',
+      errors: [{ campo: 'correo', mensaje: 'El correo no tiene un formato válido' }],
+    } } });
+    renderConSesion(<LoginPage />);
+
+    await ingresar('carlos.herrera', 'Sena2026*');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('El correo no tiene un formato válido');
+  });
 });

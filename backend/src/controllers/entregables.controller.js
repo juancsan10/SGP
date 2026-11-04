@@ -46,7 +46,7 @@ const create = async (req, res) => {
     await registrarCambio('entregables', result.insertId, 'INSERT', req.user?.id);
     return res.status(201).json({ success: true, message: 'Entregable creado', data: { id_entregable: result.insertId } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -59,7 +59,7 @@ const getByFase = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -104,7 +104,7 @@ const update = async (req, res) => {
     await registrarCambio('entregables', req.params.id, 'UPDATE', req.user?.id);
     return res.json({ success: true, message: 'Entregable actualizado' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -116,7 +116,7 @@ const remove = async (req, res) => {
     await registrarCambio('entregables', req.params.id, 'DELETE', req.user?.id);
     return res.json({ success: true, message: 'Entregable eliminado' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 

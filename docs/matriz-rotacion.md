@@ -1,6 +1,6 @@
 # Matriz de rotación de capas
 
-**Grupo**: SGP SENA — Sistema de Gestión de Proyectos · **Ficha**: _número_ · **Stack**: React + Express + MySQL
+**Grupo**: SGP SENA — Sistema de Gestión de Proyectos · **Ficha**: 3228970 · **Stack**: React + Express + MySQL
 
 Capas: **Front** (React) · **API** (backend) · **BD** (integración) · **E2E** (Playwright)
 
@@ -13,15 +13,15 @@ Reglas:
 
 | Integrante (usuario GitHub) | S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 |
 |---|---|---|---|---|---|---|---|---|---|
-| Rubiel Rodríguez (@usuario) | E2E: login exitoso | API: permisos por rol y reglas de proyectos | | | | | | | |
-| Juan Manuel Arcila (@JuanArcila1) | E2E: campos vacíos | Front: validaciones, filtros y paginación | | | | | | | |
-| Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta | E2E: CI + rutas protegidas y páginas | | | | | | | |
+| Rubiel Rodríguez (@Rubloxil) | E2E: login exitoso | API: permisos por rol y reglas de proyectos | Front: EliminarUsuarioModal | E2E: seguridad y errores del API | | | | | |
+| Juan Manuel Arcila (@JuanArcila1) | E2E: campos vacíos | Front: validaciones, filtros y paginación | Front: EntregasPage | API: proyectos | | | | | |
+| Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta | E2E: CI + rutas protegidas y páginas | Front: SolicitudesPanel | Front: contrato del API | | | | | |
 
 Grupo de 3: rotamos entre Front, API y E2E (la capa BD se cubre desde la semana 6).
 
 ## Regla de rama
 
-Pendiente: se configura en la semana 2 junto con el CI.
+Ruleset `test y main protegidas` activo desde la semana 2 sobre `main`, `develop` y `test`: PR obligatorio con 1 aprobación y checks `frontend` y `backend` en verde.
 
 ## Cobertura semanal
 
@@ -30,6 +30,9 @@ Anota la cobertura real al cerrar cada semana. El umbral de la semana siguiente 
 | Semana | Frontend (%) | Backend (%) | Umbral configurado para la semana siguiente |
 |---|---|---|---|
 | S1 (línea base) | 0 | 0 | 0 en la config (línea base) |
+| S2 | 35.63 | 34.3 | Frontend 35 · Backend 34 (líneas) |
+| S3 | 46.75 | 43.01 | Frontend 46 · Backend 43 (líneas) |
+| S4 | 55.43 | 53.1 | Frontend 55 · Backend 53 (líneas) |
 
 > La línea base es 0% porque el proyecto no tenía pruebas unitarias y los E2E no cuentan para la cobertura. Se mide con `pnpm test` en `frontend/` y en `backend/`.
 

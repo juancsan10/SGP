@@ -58,7 +58,7 @@ const create = async (req, res) => {
     await registrarCambio('tareas', result.insertId, 'INSERT', req.user?.id);
     return res.status(201).json({ success: true, message: 'Tarea creada', data: { id_tarea: result.insertId } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -109,7 +109,7 @@ const getAllAdmin = async (req, res) => {
     );
     return res.json({ success: true, data: rows, meta: { total, limit, offset } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -124,7 +124,7 @@ const getByProyecto = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -174,7 +174,7 @@ const update = async (req, res) => {
     await registrarCambio('tareas', req.params.id, 'UPDATE', req.user?.id);
     return res.json({ success: true, message: 'Tarea actualizada' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -186,7 +186,7 @@ const remove = async (req, res) => {
     await registrarCambio('tareas', req.params.id, 'DELETE', req.user?.id);
     return res.json({ success: true, message: 'Tarea eliminada' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -224,7 +224,7 @@ const getRecientes = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 

@@ -90,7 +90,7 @@ function EntregasSupervisionAdmin() {
         </div>
 
         {/* NUEVO: aviso visible si falla la carga */}
-        {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
+        {error && <div className="alert alert-error" role="alert" style={{ marginBottom: 16 }}>{error}</div>}
 
         {entregas.length === 0 ? (
           <EmptyState icon="📤" titulo="Sin entregas" desc="No hay entregas que coincidan con los filtros." />
@@ -166,7 +166,7 @@ function EntregasOperativas() {
   }
   useEffect(() => { cargar(); }, []);
 
-  const visibles = tareas.filter(t => esAprendiz ? Number(t.id_asignado) === Number(usuario?.id_usuario) : true);
+  const visibles = tareas.filter(t => esAprendiz ? Number(t.id_asignado) === Number(usuario?.id ?? usuario?.id_usuario) : true);
 
   async function abrir(t, tipo) {
     setError(''); setEntrega(null); setModal({ t, tipo });
@@ -277,7 +277,7 @@ function EntregasOperativas() {
                       <td>{t.asignado_nombre}</td>
                       <td>{formatFecha(t.fecha_vencimiento)}</td>
                       <td>
-                        {esAprendiz && Number(t.id_asignado) === Number(usuario?.id_usuario) && (
+                        {esAprendiz && Number(t.id_asignado) === Number(usuario?.id ?? usuario?.id_usuario) && (
                           <button className="btn btn-primary btn-sm" onClick={() => abrir(t, 'entrega')}>📤 Entregar / corregir</button>
                         )}
                         {esInstructor && (
@@ -303,32 +303,32 @@ function EntregasOperativas() {
             <form onSubmit={modal.tipo === 'entrega' ? enviar : revisar}>
               <div className="modal-body">
                 <strong>{modal.t.titulo}</strong>
-                {error && <div className="alert alert-error">{error}</div>}
+                {error && <div className="alert alert-error" role="alert">{error}</div>}
                 {entrega?.estado && <div className="badge badge-blue">Estado: {entrega.estado}</div>}
 
                 {modal.tipo === 'entrega' ? (
                   <>
                     <div className="form-group">
-                      <label className="form-label">Comentario</label>
-                      <textarea className="form-textarea" value={form.comentario_aprendiz}
+                      <label className="form-label" htmlFor="entrega-comentario">Comentario</label>
+                      <textarea id="entrega-comentario" className="form-textarea" value={form.comentario_aprendiz}
                         onChange={e => setForm({ ...form, comentario_aprendiz: e.target.value })} />
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Enlace</label>
-                      <input className="form-input" type="url" value={form.url_entrega}
+                      <label className="form-label" htmlFor="entrega-enlace">Enlace</label>
+                      <input id="entrega-enlace" className="form-input" type="url" value={form.url_entrega}
                         onChange={e => setForm({ ...form, url_entrega: e.target.value })} placeholder="https://…" />
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Archivo</label>
+                      <label className="form-label" htmlFor="entrega-archivo">Archivo</label>
                       {form.ruta_archivo && (
                         <p style={{ fontSize: 12, marginBottom: 6 }}>
                           <a href={form.ruta_archivo} target="_blank" rel="noreferrer">📄 Ver archivo actual</a>
                         </p>
                       )}
-                      <label className="btn btn-secondary btn-sm" style={{ cursor: subiendoArchivo ? 'not-allowed' : 'pointer', opacity: subiendoArchivo ? 0.6 : 1 }}>
+                      <label htmlFor="entrega-archivo" className="btn btn-secondary btn-sm" style={{ cursor: subiendoArchivo ? 'not-allowed' : 'pointer', opacity: subiendoArchivo ? 0.6 : 1 }}>
                         {subiendoArchivo ? 'Subiendo…' : '📎 Adjuntar y enviar con archivo'}
-                        <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" style={{ display: 'none' }}
+                        <input id="entrega-archivo" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" style={{ display: 'none' }}
                           disabled={subiendoArchivo} onChange={subirArchivo} />
                       </label>
                       <span className="form-hint" style={{ display: 'inline-flex', marginLeft: 8 }}>
