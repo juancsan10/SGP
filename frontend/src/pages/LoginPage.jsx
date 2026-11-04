@@ -7,7 +7,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { authService, passwordService } from '../services/api.js';
+import { authService } from '../services/api.js';
+import PasswordRecovery from '../components/PasswordRecovery.jsx';
 import Character from '../components/characters/Character.jsx';
 import './LoginPage.css';
 
@@ -28,7 +29,6 @@ export default function LoginPage() {
   const [tilted, setTilted] = useState(false);
 
   const [resetOpen, setResetOpen] = useState(false);
-  const [resetMsg, setResetMsg] = useState('');
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setMounted(true));
@@ -73,17 +73,6 @@ export default function LoginPage() {
     } catch (err) {
       setStatus('idle');
       reactSurprise(err.response?.data?.message || 'Error al iniciar sesión');
-    }
-  }
-
-  async function handleResetRequest(e) {
-    e.preventDefault();
-    setResetMsg('');
-    try {
-      const r = await passwordService.request(correo);
-      setResetMsg(r.data.data?.reset_url ? `Enlace: ${r.data.data.reset_url}` : r.data.message);
-    } catch (err) {
-      setResetMsg(err.response?.data?.message || 'No fue posible generar el enlace');
     }
   }
 
@@ -192,6 +181,9 @@ export default function LoginPage() {
             >
               <input
                 type={showPassword ? 'text' : 'password'}
+                // El <label> también envuelve el botón "Ver", así que sin esto el
+                // nombre accesible del campo quedaba "Contraseña Ver".
+                aria-label="Contraseña"
                 autoComplete="current-password"
                 placeholder="••••••••"
                 value={contrasena}
@@ -222,28 +214,18 @@ export default function LoginPage() {
             <button
               type="button"
               className="sgp-login__link"
-              onClick={() => setResetOpen((v) => !v)}
+              onClick={() => setResetOpen(true)}
             >
               ¿Olvidaste tu contraseña?
             </button>
           </div>
 
           {resetOpen && (
-            <div className="sgp-login__reset">
-              <p>Te enviamos un enlace de recuperación a tu correo.</p>
-              <div className="sgp-login__reset-row">
-                <input
-                  type="email"
-                  placeholder="Tu correo"
-                  value={correo}
-                  onChange={(e) => setCorreo(e.target.value)}
-                />
-                <button type="button" onClick={handleResetRequest}>
-                  Generar enlace
-                </button>
-              </div>
-              {resetMsg && <small>{resetMsg}</small>}
-            </div>
+            <PasswordRecovery
+              initialEmail={correo}
+              onClose={() => setResetOpen(false)}
+              onDone={(mail) => { setResetOpen(false); setCorreo(mail); setContrasena(''); }}
+            />
           )}
 
           {error && (

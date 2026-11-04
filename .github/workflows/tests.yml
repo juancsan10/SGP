@@ -1,0 +1,56 @@
+name: tests
+
+on:
+  push:
+    branches: [main, develop, test]
+  pull_request:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      # Corre los tests con cobertura: si baja del umbral de vite.config.js, el job queda en rojo
+      - run: pnpm test
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          package_json_file: backend/package.json
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      # Los tests unitarios no usan la BD: reemplazan db.query con stubs
+      - run: pnpm test
+
+  evidencia-individual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Commits de test por autor esta semana
+        run: |
+          echo "### Commits de test por autor desde el lunes" >> "$GITHUB_STEP_SUMMARY"
+          git shortlog -sn --since="last Monday" HEAD -- '*tests/*' '*.test.*' '*e2e/*' >> "$GITHUB_STEP_SUMMARY"

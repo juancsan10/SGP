@@ -1,0 +1,25 @@
+// =====================================================
+// utils/navegacion.js
+// Elementos de menú según el rol del usuario
+// =====================================================
+
+export function getNavItems(esAdmin = false, esInstructor = false) {
+  const items = [
+    { label: 'Principal', section: true },
+    { path: '/dashboard',      icon: '🏠', label: 'Inicio' },
+    { path: '/proyectos',      icon: '📁', label: 'Proyectos' },
+    { path: '/tareas',         icon: '✅', label: 'Mis Tareas' },
+    { path: '/entregas',       icon: '📤', label: 'Entregas' },
+    { path: '/notificaciones', icon: '🔔', label: 'Notificaciones' },
+    { path: '/calendario',     icon: '🗓️', label: 'Calendario' },
+    { path: '/timeline',       icon: '📈', label: 'Línea de tiempo' },
+  ];
+
+  if (esAdmin || esInstructor) {
+    items.push({ label: 'Administración', section: true });
+    items.push({ path: '/usuarios',  icon: '👥', label: 'Usuarios' });
+    items.push({ path: '/historial', icon: '📋', label: 'Historial' });
+  }
+
+  return items;
+}

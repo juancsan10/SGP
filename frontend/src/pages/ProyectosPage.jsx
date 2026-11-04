@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { proyectosService, usuariosService } from '../services/api.js';
 import { estadoBadge, ProgressBar, LoadingCenter, EmptyState, formatFecha, Pagination } from '../components/helpers.jsx';
+import { filtrarProyectos } from '../utils/filtros.js';
 
 const LIMITE = 6; // NUEVO: tamaño de página (paginación aplicada a todos los roles)
 
@@ -77,10 +78,7 @@ export default function ProyectosPage() {
     }
   }
 
-  const proyectosFiltrados = proyectos.filter(p =>
-    p.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
-    (p.instructor || '').toLowerCase().includes(filtro.toLowerCase())
-  );
+  const proyectosFiltrados = filtrarProyectos(proyectos, filtro);
   // NUEVO: paginación del lado del cliente (no hay endpoint paginado aún para este listado)
   const proyectosPagina = proyectosFiltrados.slice(offset, offset + LIMITE);
 
@@ -166,31 +164,31 @@ export default function ProyectosPage() {
                 {error && <div className="alert alert-error">{error}</div>}
 
                 <div className="form-group">
-                  <label className="form-label">Nombre *</label>
-                  <input className="form-input" value={form.nombre}
+                  <label className="form-label" htmlFor="proyecto-nombre">Nombre *</label>
+                  <input id="proyecto-nombre" className="form-input" value={form.nombre}
                     onChange={e => setForm({...form, nombre: e.target.value})} required />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Descripción</label>
-                  <textarea className="form-textarea" value={form.descripcion}
+                  <label className="form-label" htmlFor="proyecto-descripcion">Descripción</label>
+                  <textarea id="proyecto-descripcion" className="form-textarea" value={form.descripcion}
                     onChange={e => setForm({...form, descripcion: e.target.value})} />
                 </div>
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                   <div className="form-group">
-                    <label className="form-label">Fecha inicio *</label>
-                    <input className="form-input" type="date" value={form.fecha_inicio}
+                    <label className="form-label" htmlFor="proyecto-inicio">Fecha inicio *</label>
+                    <input id="proyecto-inicio" className="form-input" type="date" value={form.fecha_inicio}
                       onChange={e => setForm({...form, fecha_inicio: e.target.value})} required />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Fecha fin</label>
-                    <input className="form-input" type="date" value={form.fecha_fin}
+                    <label className="form-label" htmlFor="proyecto-fin">Fecha fin</label>
+                    <input id="proyecto-fin" className="form-input" type="date" value={form.fecha_fin}
                       onChange={e => setForm({...form, fecha_fin: e.target.value})} />
                   </div>
                 </div>
                 {(esAdmin) && (
                   <div className="form-group">
-                    <label className="form-label">Instructor *</label>
-                    <select className="form-select" value={form.id_instructor}
+                    <label className="form-label" htmlFor="proyecto-instructor">Instructor *</label>
+                    <select id="proyecto-instructor" className="form-select" value={form.id_instructor}
                       onChange={e => setForm({...form, id_instructor: e.target.value})} required>
                       <option value="">Seleccionar instructor</option>
                       {instructores.map(u => (

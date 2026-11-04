@@ -86,20 +86,17 @@ export function EmptyState({ icon = '📭', titulo, desc, accion }) {
   );
 }
 
+import { calcularTotalPaginas, obtenerPaginaActual, generarRangoPaginas } from '../utils/paginacion.js';
+
 // ── Componente: paginación numerada (NUEVO, reutilizable en cualquier
 //    sección que liste datos con meta.total/limit/offset) ────────────
 export function Pagination({ total, limit, offset, onChange }) {
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const currentPage = Math.floor(offset / limit) + 1;
+  const totalPages = calcularTotalPaginas(total, limit);
+  const currentPage = obtenerPaginaActual(offset, limit);
   if (totalPages <= 1) return null;
 
   const irA = (pagina) => onChange(Math.max(0, (pagina - 1) * limit));
-
-  const paginas = [];
-  for (let p = 1; p <= totalPages; p++) {
-    if (p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1) paginas.push(p);
-    else if (paginas[paginas.length - 1] !== '…') paginas.push('…');
-  }
+  const paginas = generarRangoPaginas(total, limit, offset);
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 20 }}>

@@ -7,13 +7,9 @@ import { Link } from 'react-router-dom';
 import { usuariosService, authService, passwordService } from '../services/api.js';
 import { LoadingCenter, EmptyState, formatFecha, Pagination, ConfirmModal } from '../components/helpers.jsx';
 import EliminarUsuarioModal from '../components/EliminarUsuarioModal.jsx'; // NUEVO: cuestionario de eliminación
+import { validarNombre, validarCorreo, validarCc, validarPassword } from '../utils/validaciones.js';
 
 const LIMITE = 10;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const validarNombre = (v) => v.trim().length >= 2 && v.trim().length <= 100;
-const validarCorreo = (v) => EMAIL_REGEX.test(v.trim());
-const validarCc = (v) => /^[0-9]{5,15}$/.test(v.trim()); // NUEVO
-const validarPassword = (v) => v.length >= 8 && /[A-Za-z]/.test(v) && /[0-9]/.test(v);
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState([]);
@@ -169,6 +165,9 @@ export default function UsuariosPage() {
     if (!validarNombre(formCrear.nombres)) errs.nombres = 'Debe tener entre 2 y 100 caracteres';
     if (!validarNombre(formCrear.apellidos)) errs.apellidos = 'Debe tener entre 2 y 100 caracteres';
     if (!validarCorreo(formCrear.correo)) errs.correo = 'Correo electrónico no válido';
+    if (formCrear.identificacion && !validarCc(formCrear.identificacion)) {
+      errs.identificacion = 'La identificación (cc) debe tener entre 5 y 15 dígitos, sin puntos ni espacios';
+    }
     if (!validarPassword(formCrear.contrasena)) errs.contrasena = 'Mínimo 8 caracteres, con al menos una letra y un número';
     setErroresCrear(errs);
     return Object.keys(errs).length === 0;
@@ -443,15 +442,15 @@ export default function UsuariosPage() {
                 {errorCrear && <div className="alert alert-error">{errorCrear}</div>}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div className="form-group">
-                    <label className="form-label">Nombres *</label>
-                    <input className={`form-input ${erroresCrear.nombres ? 'input-error' : ''}`}
+                    <label className="form-label" htmlFor="crear-nombres">Nombres *</label>
+                    <input id="crear-nombres" className={`form-input ${erroresCrear.nombres ? 'input-error' : ''}`}
                       value={formCrear.nombres}
                       onChange={e => setFormCrear({ ...formCrear, nombres: e.target.value })} required />
                     {erroresCrear.nombres && <span className="field-error">{erroresCrear.nombres}</span>}
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Apellidos *</label>
-                    <input className={`form-input ${erroresCrear.apellidos ? 'input-error' : ''}`}
+                    <label className="form-label" htmlFor="crear-apellidos">Apellidos *</label>
+                    <input id="crear-apellidos" className={`form-input ${erroresCrear.apellidos ? 'input-error' : ''}`}
                       value={formCrear.apellidos}
                       onChange={e => setFormCrear({ ...formCrear, apellidos: e.target.value })} required />
                     {erroresCrear.apellidos && <span className="field-error">{erroresCrear.apellidos}</span>}
@@ -460,24 +459,25 @@ export default function UsuariosPage() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div className="form-group">
-                    <label className="form-label">Correo electrónico *</label>
-                    <input className={`form-input ${erroresCrear.correo ? 'input-error' : ''}`} type="email"
+                    <label className="form-label" htmlFor="crear-correo">Correo electrónico *</label>
+                    <input id="crear-correo" className={`form-input ${erroresCrear.correo ? 'input-error' : ''}`} type="email"
                       placeholder="nombre@sena.edu.co"
                       value={formCrear.correo}
                       onChange={e => setFormCrear({ ...formCrear, correo: e.target.value })} required />
                     {erroresCrear.correo && <span className="field-error">{erroresCrear.correo}</span>}
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Identificación (cc)</label>
-                    <input className="form-input" value={formCrear.identificacion}
+                    <label className="form-label" htmlFor="crear-identificacion">Identificación (cc)</label>
+                    <input id="crear-identificacion" className={`form-input ${erroresCrear.identificacion ? 'input-error' : ''}`} value={formCrear.identificacion}
                       onChange={e => setFormCrear({ ...formCrear, identificacion: e.target.value.replace(/[^A-Za-z0-9.-]/g, '') })} />
+                    {erroresCrear.identificacion && <span className="field-error">{erroresCrear.identificacion}</span>}
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div className="form-group">
-                    <label className="form-label">Contraseña temporal *</label>
-                    <input className={`form-input ${erroresCrear.contrasena ? 'input-error' : ''}`} type="password"
+                    <label className="form-label" htmlFor="crear-contrasena">Contraseña temporal *</label>
+                    <input id="crear-contrasena" className={`form-input ${erroresCrear.contrasena ? 'input-error' : ''}`} type="password"
                       value={formCrear.contrasena}
                       onChange={e => setFormCrear({ ...formCrear, contrasena: e.target.value })} required />
                     {erroresCrear.contrasena
