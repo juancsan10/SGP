@@ -47,13 +47,19 @@ const create = async (req, res) => {
       [id_proyecto, id_remitente]
     );
 
-    await notificacionesService.crearYNotificarMultiples({
-      ids_usuarios: miembros.map(m => m.id_usuario),
-      titulo: 'Nuevo mensaje',
-      mensaje: contenido.substring(0, 100),
-      tipo: 'mensaje',
-      prioridad: 'Media'
-    });
+    // El mensaje ya quedó guardado: si el aviso falla se registra, pero no se responde 500
+    // (la persona lo reenviaría y quedaría duplicado en el chat del proyecto).
+    try {
+      await notificacionesService.crearYNotificarMultiples({
+        ids_usuarios: miembros.map(m => m.id_usuario),
+        titulo: 'Nuevo mensaje',
+        mensaje: contenido.substring(0, 100),
+        tipo: 'mensaje',
+        prioridad: 'Media'
+      });
+    } catch (avisoErr) {
+      console.error('[notificaciones] No se pudo avisar el nuevo mensaje:', avisoErr.message);
+    }
 
     return res.status(201).json({ success: true, message: 'Mensaje enviado', data: { id_mensaje: result.insertId } });
   } catch (err) {
