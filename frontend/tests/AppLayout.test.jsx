@@ -1,9 +1,15 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Route, Routes } from 'react-router-dom';
 import AppLayout from '../src/components/AppLayout.jsx';
 import { renderConSesion } from './render-con-sesion.jsx';
+
+// Stub: NotificacionesProvider pide las notificaciones al montar. Sin esto el test salía a la red
+// real (ECONNREFUSED 127.0.0.1:3000) y dependía de que no hubiera un backend corriendo.
+vi.mock('../src/services/api.js', () => ({
+  notificacionesService: { getByUsuario: vi.fn().mockResolvedValue({ data: { data: [] } }) },
+}));
 
 const INSTRUCTOR = { id: 2, nombres: 'Laura', apellidos: 'Gómez', rol: 'Instructor' };
 
