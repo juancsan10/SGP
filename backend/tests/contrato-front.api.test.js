@@ -109,8 +109,9 @@ describe('GET /api/v1/notificaciones/:id_usuario', () => {
 describe('acciones de NotificacionesPage', () => {
   it('should mark as read a notification of the logged user', async () => {
     vi.spyOn(db, 'query')
-      .mockResolvedValueOnce([[{ id_usuario: 4 }]])  // requireNotificationOwner
-      .mockResolvedValueOnce([{ affectedRows: 1 }]); // UPDATE
+      .mockResolvedValueOnce([[{ id_usuario: 4 }]])                    // requireNotificationOwner
+      .mockResolvedValueOnce([[{ id_notificacion: 10, id_usuario: 4 }]]) // SELECT para avisar en tiempo real (HU-28)
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);                   // UPDATE
 
     const res = await request(app).put('/api/v1/notificaciones/10').set('Authorization', tokenDe(APRENDIZ));
 
@@ -139,7 +140,7 @@ describe('acciones de NotificacionesPage', () => {
 
     // Assert
     expect(res.status).toBe(201);
-    expect(res.body.message).toBe('Notificación enviada a 2 usuario(s)');
+    expect(res.body.message).toBe('Notificación enviada a 2 usuario(s) en tiempo real');
     expect(query.mock.calls[0][1]).toEqual([['Aprendiz', 'Instructor']]);
   });
 
