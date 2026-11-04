@@ -76,11 +76,11 @@ describe('NotificacionesPage', () => {
 
     // Act
     await user.click(await screen.findByRole('button', { name: '+ Nueva notificación' }));
-    await user.selectOptions(screen.getByLabelText('Destinatarios *'), 'Todos');
-    await user.type(screen.getByLabelText('Título *'), 'Mantenimiento');
-    await user.type(screen.getByLabelText('Mensaje *'), 'El sábado no habrá servicio');
+    await user.selectOptions(screen.getByLabelText('Destinatarios'), 'Todos');
+    await user.type(screen.getByLabelText('Título'), 'Mantenimiento');
+    await user.type(screen.getByLabelText('Mensaje'), 'El sábado no habrá servicio');
     await user.selectOptions(screen.getByLabelText('Tipo'), 'mantenimiento');
-    await user.click(screen.getByRole('button', { name: 'Enviar notificación' }));
+    await user.click(screen.getByRole('button', { name: 'Enviar en tiempo real' }));
 
     // Assert: los mismos campos que valida el backend en POST /notificaciones/broadcast
     expect(notificacionesService.broadcast).toHaveBeenCalledWith({
@@ -95,9 +95,9 @@ describe('NotificacionesPage', () => {
     renderConSesion(<NotificacionesPage />, { usuario: ADMIN });
 
     await user.click(await screen.findByRole('button', { name: '+ Nueva notificación' }));
-    await user.type(screen.getByLabelText('Título *'), 'Aviso');
-    await user.type(screen.getByLabelText('Mensaje *'), 'Prueba');
-    await user.click(screen.getByRole('button', { name: 'Enviar notificación' }));
+    await user.type(screen.getByLabelText('Título'), 'Aviso');
+    await user.type(screen.getByLabelText('Mensaje'), 'Prueba');
+    await user.click(screen.getByRole('button', { name: 'Enviar en tiempo real' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('No se encontraron usuarios destinatarios');
   });
