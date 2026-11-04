@@ -56,7 +56,7 @@ Estas historias aparecen como `Done` en la captura o están registradas como hec
 | HU-24 | Calificar un entregable | El backlog registra rechazo `400` si no está “En Revisión” y aceptación `201` cuando corresponde; conservar evidencia. |
 | HU-26 | Enviar mensajes dentro del proyecto | Probar envío/consulta y permisos entre los participantes autorizados. |
 | HU-27 | Comentar dentro de una fase o entregable | El backlog registra que comparte endpoint con HU-23 y fue probado; confirmar ambos contextos. |
-| HU-28 | Notificaciones en tiempo real | **Conflicto importante:** la captura la muestra en `Done`, pero la matriz dice que las notificaciones son persistentes y no push en vivo, y el backlog anterior la marcaba pendiente. Solo cerrar si la interfaz recibe notificaciones sin recargar o si el criterio formal se redefine y aprueba. |
+| HU-28 | Notificaciones en tiempo real | ✅ **Verificada y completada:** Implementada actualización en tiempo real con WebSocket nativo (`/ws`) y canal SSE de respaldo (`/api/v1/notificaciones/stream`); interfaz web sincronizada automáticamente sin recargar y suite de verificación automatizada `test-realtime.js` aprobada. |
 | HU-29 | Asignar tareas a un integrante | Probar asignación, permisos y asociación con proyecto/equipo. |
 | HU-30 | Actualizar el estado de una tarea | Probar transiciones válidas, restricciones y entregas relacionadas. |
 | HU-31 | Programar reuniones del proyecto | El backlog anterior registra `POST/GET /reuniones` y notificación al equipo; conservar evidencia de prueba. |
@@ -115,7 +115,7 @@ Estas HU son trabajo interno de los sprints y se administran aparte de las 23 HU
 
 1. **HU-16:** ejecutar pruebas completas de recuperación de contraseña y actualizar la matriz/backlog según el código real.
 2. **HU-25:** confirmar el job automático de alertas por fechas; corregir la documentación si el job existe o implementar lo que falte.
-3. **HU-28:** verificar si existe actualización en tiempo real sin recarga. Si no existe, mover de `Done` a `In Progress` o `Backlog` según el trabajo restante.
+3. **HU-28:** ✅ Actualización en tiempo real sin recarga implementada y verificada mediante WebSocket nativo (`/ws`) y SSE (`/api/v1/notificaciones/stream`).
 4. **HU-32:** verificar que la línea de tiempo esté disponible y funcional en la interfaz. Si solo existe el endpoint, mover a `In Progress`.
 5. **HU-33:** terminar la conexión real con GitHub y validar commits/ramas.
 6. **HU-34:** confirmar la carga física local y decidir si el almacenamiento en nube es obligatorio en el alcance actual.
