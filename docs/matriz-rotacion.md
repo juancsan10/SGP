@@ -14,8 +14,8 @@ Reglas:
 | Integrante (usuario GitHub) | S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 |
 |---|---|---|---|---|---|---|---|---|---|
 | Rubiel Rodríguez (@Rubloxil) | E2E: login exitoso | API: permisos por rol y reglas de proyectos | Front: EliminarUsuarioModal | E2E: seguridad y errores del API | | | | | |
-| Juan Manuel Arcila (@JuanArcila1) | E2E: campos vacíos | Front: validaciones, filtros y paginación | Front: EntregasPage | API: proyectos |Front: contrato del API | | | | |
-| Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta | E2E: CI + rutas protegidas y páginas | Front: SolicitudesPanel |  | | | | | |
+| Juan Manuel Arcila (@JuanArcila1) | E2E: campos vacíos | Front: validaciones, filtros y paginación | Front: EntregasPage | API: proyectos | | | | | |
+| Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta | E2E: CI + rutas protegidas y páginas | Front: SolicitudesPanel | Front: contrato del API | | | | | |
 
 Grupo de 3: rotamos entre Front, API y E2E (la capa BD se cubre desde la semana 6).
 
