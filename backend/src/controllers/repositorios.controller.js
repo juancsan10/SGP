@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { registrarCambio } = require('../services/historial.service');
+const notificacionesService = require('../services/notificaciones.service');
 
 // POST /api/v1/repositorios
 const create = async (req, res) => {
@@ -89,13 +90,14 @@ const setSemaforo = async (req, res) => {
       );
       if (proy.length) {
         const nivel = estado_semaforo === 'rojo' ? 'incumplimiento grave' : 'observación';
-        await db.query(
-          `INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario) VALUES (?, ?, 'advertencia', ?, ?)`,
-          [`Repositorio marcado en ${estado_semaforo}`,
-           `El repositorio del proyecto "${proy[0].nombre}" fue marcado como ${nivel} por el administrador.${observacion ? ' Observación: ' + observacion : ''}`,
-           estado_semaforo === 'rojo' ? 'Alta' : 'Media',
-           proy[0].id_instructor]
-        );
+        await notificacionesService.crearYNotificar({
+          titulo: `Repositorio marcado en ${estado_semaforo}`,
+          mensaje: `El repositorio del proyecto "${proy[0].nombre}" fue marcado como ${nivel} por el administrador.${observacion ? ' Observación: ' + observacion : ''}`,
+          tipo: 'advertencia',
+          prioridad: estado_semaforo === 'rojo' ? 'Alta' : 'Media',
+          id_usuario: proy[0].id_instructor,
+          id_creador: req.user?.id
+        });
       }
     }
 
