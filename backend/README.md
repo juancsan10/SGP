@@ -101,7 +101,7 @@ momento de este commit. Si se agrega una dependencia nueva, se recomienda:
 - Subida física de archivos (hoy `archivos` solo guarda nombre + ruta como texto).
 - Consumo real de la API de GitHub con el token guardado en `github_integration`
   (hoy solo se almacena la credencial; no se listan commits/ramas todavía).
-- WebSockets/polling para mensajes y notificaciones en tiempo real (hoy requieren recargar).
+- Notificaciones en tiempo real vía WebSocket (/ws) y canal SSE: implementado y activo.
 - Exportación de reportes a PDF/Excel.
 
 ## Referencia

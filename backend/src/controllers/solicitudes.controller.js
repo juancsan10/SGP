@@ -6,6 +6,7 @@
 // =====================================================
 const db = require('../config/db');
 const { registrarCambio } = require('../services/historial.service');
+const notificacionesService = require('../services/notificaciones.service');
 
 const TIPOS = ['Actualización de datos', 'Soporte técnico', 'Acceso o cuenta', 'Proyecto o equipo', 'Otro'];
 const ESTADOS = ['Pendiente', 'Atendida', 'Rechazada'];
@@ -48,12 +49,18 @@ const create = async (req, res) => {
       `INSERT INTO solicitudes (id_solicitante, tipo, asunto, descripcion, id_proyecto) VALUES (?, ?, ?, ?, ?)`,
       [req.user.id, tipo, asunto, descripcion, idProyecto]);
 
-    // Aviso al Administrador (único) en sus notificaciones.
-    await db.query(
-      `INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario)
-       SELECT ?, ?, 'sistema', 'Media', u.id_usuario FROM usuarios u JOIN roles r ON r.id_rol = u.id_rol
-       WHERE r.nombre_rol = 'Administrador' AND u.estado = 1`,
-      [`Nueva solicitud: ${tipo}`, `${asunto} — revísala en la sección Solicitudes del panel de control.`]);
+    // Aviso al Administrador en tiempo real (RF4.4)
+    const [admins] = await db.query(
+      `SELECT u.id_usuario FROM usuarios u JOIN roles r ON r.id_rol = u.id_rol WHERE r.nombre_rol = 'Administrador' AND u.estado = 1`
+    );
+    await notificacionesService.crearYNotificarMultiples({
+      ids_usuarios: admins.map(a => a.id_usuario),
+      titulo: `Nueva solicitud: ${tipo}`,
+      mensaje: `${asunto} — revísala en la sección Solicitudes del panel de control.`,
+      tipo: 'sistema',
+      prioridad: 'Media',
+      id_creador: req.user.id
+    });
 
     await registrarCambio('solicitudes', r.insertId, 'INSERT', req.user.id);
     return res.status(201).json({ success: true, message: 'Solicitud enviada al Administrador', data: { id_solicitud: r.insertId } });
@@ -118,9 +125,16 @@ const resolver = async (req, res) => {
     await db.query(
       `UPDATE solicitudes SET estado = ?, respuesta_admin = ?, id_admin_resuelve = ?, fecha_resolucion = NOW() WHERE id_solicitud = ?`,
       [estado, respuesta, req.user.id, sol.id_solicitud]);
-    await db.query(
-      `INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario, id_creador) VALUES (?, ?, 'sistema', 'Media', ?, ?)`,
-      [`Tu solicitud fue ${estado.toLowerCase()}`, `"${sol.asunto}": ${respuesta}`, sol.id_solicitante, req.user.id]);
+
+    // Notificación en tiempo real al solicitante
+    await notificacionesService.crearYNotificar({
+      titulo: `Tu solicitud fue ${estado.toLowerCase()}`,
+      mensaje: `"${sol.asunto}": ${respuesta}`,
+      tipo: 'sistema',
+      prioridad: 'Media',
+      id_usuario: sol.id_solicitante,
+      id_creador: req.user.id
+    });
     await registrarCambio('solicitudes', sol.id_solicitud, estado.toUpperCase(), req.user.id);
     return res.json({ success: true, message: `Solicitud ${estado.toLowerCase()}` });
   } catch (err) {

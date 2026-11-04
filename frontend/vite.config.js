@@ -12,6 +12,11 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
       },
+      // Proxy para WebSocket de notificaciones en tiempo real (RF4.4 / HU-28)
+      '/ws': {
+        target: 'ws://localhost:3000',
+        ws: true,
+      },
       // NUEVO: los enlaces de descarga/vista de archivos subidos apuntan
       // a rutas relativas "/uploads/...". Sin este proxy, en desarrollo
       // el navegador las pediría contra el propio Vite (5173) en vez del
