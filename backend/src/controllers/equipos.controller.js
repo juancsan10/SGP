@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { registrarCambio } = require('../services/historial.service');
+const notificacionesService = require('../services/notificaciones.service');
 
 // POST /api/v1/equipos
 const create = async (req, res) => {
@@ -53,7 +54,7 @@ const create = async (req, res) => {
     await registrarCambio('equipos_proyecto', result.insertId, 'INSERT', req.user?.id);
     return res.status(201).json({ success: true, message: 'Miembro añadido al equipo', data: { id_equipo: result.insertId } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -70,7 +71,7 @@ const getByProyecto = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -112,7 +113,7 @@ const remove = async (req, res) => {
     await registrarCambio('equipos_proyecto', req.params.id, 'DELETE', req.user?.id);
     return res.json({ success: true, message: 'Miembro removido del equipo' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -136,7 +137,7 @@ const listSolicitudes = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -161,18 +162,20 @@ const resolverSolicitud = async (req, res) => {
       await db.query('DELETE FROM equipos_proyecto WHERE id_equipo = ?', [sol[0].id_equipo]);
     }
 
-    // Notifica al instructor que solicitó, con el resultado.
-    await db.query(
-      `INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario) VALUES (?, ?, 'sistema', 'Media', ?)`,
-      [`Solicitud de eliminación ${nuevoEstado.toLowerCase()}`,
-       `Tu solicitud para remover a un aprendiz del equipo fue ${nuevoEstado.toLowerCase()} por el administrador.${observacion_admin ? ' Observación: ' + observacion_admin : ''}`,
-       sol[0].id_instructor_solicita]
-    );
+    // Notifica en tiempo real al instructor que solicitó, con el resultado.
+    await notificacionesService.crearYNotificar({
+      titulo: `Solicitud de eliminación ${nuevoEstado.toLowerCase()}`,
+      mensaje: `Tu solicitud para remover a un aprendiz del equipo fue ${nuevoEstado.toLowerCase()} por el administrador.${observacion_admin ? ' Observación: ' + observacion_admin : ''}`,
+      tipo: 'sistema',
+      prioridad: 'Media',
+      id_usuario: sol[0].id_instructor_solicita,
+      id_creador: req.user.id
+    });
 
     await registrarCambio('solicitudes_equipo', req.params.id, nuevoEstado.toUpperCase(), req.user.id);
     return res.json({ success: true, message: `Solicitud ${nuevoEstado.toLowerCase()}` });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 

@@ -88,7 +88,7 @@ export default function EliminarUsuarioModal({ usuario, onClose, onEliminado }) 
         </div>
         <form onSubmit={eliminar}>
           <div className="modal-body" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
-            {errorCarga && <div className="alert alert-error">{errorCarga}</div>}
+            {errorCarga && <div className="alert alert-error" role="alert">{errorCarga}</div>}
             {!info && !errorCarga && <LoadingCenter />}
             {info && (
               <>
@@ -120,11 +120,11 @@ export default function EliminarUsuarioModal({ usuario, onClose, onEliminado }) 
 
                 {requiereReemplazo && (
                   <div className="form-group">
-                    <label className="form-label">¿A qué instructor se reasignan sus {info.impacto.proyectos} proyecto(s)? *</label>
+                    <label className="form-label" htmlFor="eliminar-reemplazo">¿A qué instructor se reasignan sus {info.impacto.proyectos} proyecto(s)? *</label>
                     {info.instructoresDisponibles.length === 0 ? (
-                      <div className="alert alert-error">No hay otro instructor activo. Crea o activa uno antes de eliminar a este usuario.</div>
+                      <div className="alert alert-error" role="alert">No hay otro instructor activo. Crea o activa uno antes de eliminar a este usuario.</div>
                     ) : (
-                      <select className="form-select" value={reemplazo} onChange={e => setReemplazo(e.target.value)} required>
+                      <select id="eliminar-reemplazo" className="form-select" value={reemplazo} onChange={e => setReemplazo(e.target.value)} required>
                         <option value="">Selecciona un instructor…</option>
                         {info.instructoresDisponibles.map(i => (
                           <option key={i.id_usuario} value={i.id_usuario}>{i.nombre}{i.identificacion ? ` (cc ${i.identificacion})` : ''}</option>
@@ -135,16 +135,16 @@ export default function EliminarUsuarioModal({ usuario, onClose, onEliminado }) 
                 )}
 
                 <div className="form-group">
-                  <label className="form-label">1. ¿Por qué se elimina este usuario? *</label>
-                  <select className="form-select" value={motivo} onChange={e => setMotivo(e.target.value)} required>
+                  <label className="form-label" htmlFor="eliminar-motivo">1. ¿Por qué se elimina este usuario? *</label>
+                  <select id="eliminar-motivo" className="form-select" value={motivo} onChange={e => setMotivo(e.target.value)} required>
                     <option value="">Selecciona un motivo…</option>
                     {info.motivos.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">2. Describe la situación *</label>
-                  <textarea className="form-textarea" rows={4} maxLength={5000} value={descripcion}
+                  <label className="form-label" htmlFor="eliminar-descripcion">2. Describe la situación *</label>
+                  <textarea id="eliminar-descripcion" className="form-textarea" rows={4} maxLength={5000} value={descripcion}
                     onChange={e => setDescripcion(e.target.value)}
                     placeholder="Explica los hechos, fechas y quién lo solicitó o autorizó…" />
                   <span className="form-hint" style={{ color: descripcion.trim().length >= 20 ? 'var(--green-700)' : undefined }}>
@@ -181,7 +181,7 @@ export default function EliminarUsuarioModal({ usuario, onClose, onEliminado }) 
                   <span>Entiendo que la eliminación es <strong>definitiva</strong> y que este cuestionario quedará registrado en el historial.</span>
                 </label>
 
-                {error && <div className="alert alert-error" style={{ marginTop: 12 }}>{error}</div>}
+                {error && <div className="alert alert-error" role="alert" style={{ marginTop: 12 }}>{error}</div>}
               </>
             )}
           </div>

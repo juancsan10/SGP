@@ -24,7 +24,7 @@ const create = async (req, res) => {
     await registrarCambio('archivos', result.insertId, 'INSERT', req.user?.id);
     return res.status(201).json({ success: true, message: 'Archivo registrado', data: { id_archivo: result.insertId } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -53,7 +53,7 @@ const uploadFile = async (req, res) => {
       data: { id_archivo: result.insertId, nombre_archivo: req.file.originalname, ruta_archivo: rutaPublica, tamano_bytes: req.file.size },
     });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -66,7 +66,7 @@ const getByEntregable = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -92,7 +92,7 @@ const remove = async (req, res) => {
     await registrarCambio('archivos', req.params.id, 'DELETE', req.user?.id);
     return res.json({ success: true, message: 'Archivo eliminado' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 

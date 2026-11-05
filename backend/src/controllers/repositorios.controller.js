@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { registrarCambio } = require('../services/historial.service');
+const notificacionesService = require('../services/notificaciones.service');
 
 // POST /api/v1/repositorios
 const create = async (req, res) => {
@@ -18,7 +19,7 @@ const create = async (req, res) => {
     await registrarCambio('repositorios', result.insertId, 'INSERT', req.user?.id);
     return res.status(201).json({ success: true, message: 'Repositorio vinculado', data: { id_repositorio: result.insertId } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -31,7 +32,7 @@ const getByProyecto = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -46,7 +47,7 @@ const update = async (req, res) => {
     if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Repositorio no encontrado' });
     return res.json({ success: true, message: 'Repositorio actualizado' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -63,7 +64,7 @@ const toggleEstado = async (req, res) => {
     await registrarCambio('repositorios', req.params.id, activo ? 'ACTIVAR' : 'DESACTIVAR', req.user?.id);
     return res.json({ success: true, message: activo ? 'Repositorio habilitado' : 'Repositorio deshabilitado' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -89,20 +90,21 @@ const setSemaforo = async (req, res) => {
       );
       if (proy.length) {
         const nivel = estado_semaforo === 'rojo' ? 'incumplimiento grave' : 'observación';
-        await db.query(
-          `INSERT INTO notificaciones (titulo, mensaje, tipo, prioridad, id_usuario) VALUES (?, ?, 'advertencia', ?, ?)`,
-          [`Repositorio marcado en ${estado_semaforo}`,
-           `El repositorio del proyecto "${proy[0].nombre}" fue marcado como ${nivel} por el administrador.${observacion ? ' Observación: ' + observacion : ''}`,
-           estado_semaforo === 'rojo' ? 'Alta' : 'Media',
-           proy[0].id_instructor]
-        );
+        await notificacionesService.crearYNotificar({
+          titulo: `Repositorio marcado en ${estado_semaforo}`,
+          mensaje: `El repositorio del proyecto "${proy[0].nombre}" fue marcado como ${nivel} por el administrador.${observacion ? ' Observación: ' + observacion : ''}`,
+          tipo: 'advertencia',
+          prioridad: estado_semaforo === 'rojo' ? 'Alta' : 'Media',
+          id_usuario: proy[0].id_instructor,
+          id_creador: req.user?.id
+        });
       }
     }
 
     await registrarCambio('repositorios', req.params.id, 'SEMAFORO_' + estado_semaforo.toUpperCase(), req.user?.id);
     return res.json({ success: true, message: 'Estado de semáforo actualizado' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 

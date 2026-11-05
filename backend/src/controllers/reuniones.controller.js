@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const { registrarCambio } = require('../services/historial.service');
+const notificacionesService = require('../services/notificaciones.service');
 
 // POST /api/v1/reuniones
 const create = async (req, res) => {
@@ -15,23 +16,23 @@ const create = async (req, res) => {
       [titulo, descripcion || null, fecha_reunion, lugar || null, id_proyecto]
     );
 
-    // Notificar a los miembros del equipo del proyecto (RN-021)
+    // Notificar en tiempo real a los miembros del equipo del proyecto (RN-021 / RF4.4)
     const [miembros] = await db.query(
       `SELECT DISTINCT id_usuario FROM equipos_proyecto WHERE id_proyecto = ?`,
       [id_proyecto]
     );
-    const notifPromises = miembros.map(m =>
-      db.query(
-        `INSERT INTO notificaciones (titulo, mensaje, tipo, id_usuario) VALUES ('Nueva reunión programada', ?, 'sistema', ?)`,
-        [`${titulo} — ${new Date(fecha_reunion).toLocaleString('es-CO')}`, m.id_usuario]
-      )
-    );
-    await Promise.all(notifPromises);
+    await notificacionesService.crearYNotificarMultiples({
+      ids_usuarios: miembros.map(m => m.id_usuario),
+      titulo: 'Nueva reunión programada',
+      mensaje: `${titulo} — ${new Date(fecha_reunion).toLocaleString('es-CO')}`,
+      tipo: 'sistema',
+      prioridad: 'Media'
+    });
 
     await registrarCambio('reuniones', result.insertId, 'INSERT', req.user?.id);
     return res.status(201).json({ success: true, message: 'Reunión programada', data: { id_reunion: result.insertId } });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -44,7 +45,7 @@ const getByProyecto = async (req, res) => {
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -61,7 +62,7 @@ const update = async (req, res) => {
     await registrarCambio('reuniones', req.params.id, 'UPDATE', req.user?.id);
     return res.json({ success: true, message: 'Reunión actualizada' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
@@ -73,7 +74,7 @@ const remove = async (req, res) => {
     await registrarCambio('reuniones', req.params.id, 'DELETE', req.user?.id);
     return res.json({ success: true, message: 'Reunión cancelada' });
   } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
 };
 
