@@ -236,7 +236,7 @@ function MisSolicitudes() {
   const valido = form.tipo && form.asunto.trim().length >= 5 && form.descripcion.trim().length >= 10;
 
   return (
-    <div className="card" style={{ marginTop: 20 }}>
+    <div className="card">
       <div className="card-header" style={{ justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><span>📨</span><strong>Mis solicitudes al Administrador</strong></div>
         <button className="btn btn-primary btn-sm" onClick={() => { setError(''); setModal(true); }}>+ Nueva solicitud</button>

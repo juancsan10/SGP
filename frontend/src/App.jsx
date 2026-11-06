@@ -17,6 +17,7 @@ import HistorialPage      from './pages/HistorialPage.jsx';
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import CalendarioPage from './pages/CalendarioPage.jsx';
 import TimelinePage from './pages/TimelinePage.jsx';
+import SolicitudesPage from './pages/SolicitudesPage.jsx';
 
 // Layout
 import AppLayout from './components/AppLayout.jsx';
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="proyectos/:id"  element={<ProyectoDetallePage />} />
         <Route path="tareas"         element={<TareasPage />} />
         <Route path="entregas"       element={<EntregasPage />} />
+        <Route path="solicitudes"    element={<SolicitudesPage />} />
         <Route path="notificaciones" element={<NotificacionesPage />} />
         <Route path="calendario" element={<CalendarioPage />} />
         <Route path="timeline" element={<TimelinePage />} />

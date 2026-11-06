@@ -13,6 +13,7 @@ export function getNavItems(esAdmin = false, esInstructor = false) {
     { path: '/proyectos',      icon: '📁', label: 'Proyectos' },
     { path: '/tareas',         icon: '✅', label: supervisa ? 'Tareas' : 'Mis Tareas' },
     { path: '/entregas',       icon: '📤', label: 'Entregas' },
+    { path: '/solicitudes',    icon: '📨', label: 'Solicitudes' },
     { path: '/notificaciones', icon: '🔔', label: 'Notificaciones' },
     { path: '/calendario',     icon: '🗓️', label: 'Calendario' },
     { path: '/timeline',       icon: '📈', label: 'Línea de tiempo' },
