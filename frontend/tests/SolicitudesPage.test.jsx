@@ -8,6 +8,8 @@ vi.mock('../src/services/api.js', () => ({
   solicitudesService: { mias: vi.fn(), tipos: vi.fn(), create: vi.fn(), getAll: vi.fn(), resolver: vi.fn() },
   equiposService: { listSolicitudes: vi.fn(), resolverSolicitud: vi.fn() },
   proyectosService: { getAll: vi.fn() },
+  // El contexto global carga la bandeja de notificaciones al montar
+  notificacionesService: { getByUsuario: vi.fn().mockResolvedValue({ data: { data: [] } }) },
 }));
 
 beforeEach(() => {

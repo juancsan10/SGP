@@ -8,6 +8,8 @@ import { renderConSesion } from './render-con-sesion.jsx';
 vi.mock('../src/services/api.js', () => ({
   agendaService: { calendar: vi.fn() },
   proyectosService: { getAll: vi.fn() },
+  // El contexto global carga la bandeja de notificaciones al montar
+  notificacionesService: { getByUsuario: vi.fn().mockResolvedValue({ data: { data: [] } }) },
 }));
 
 const EVENTOS = [
