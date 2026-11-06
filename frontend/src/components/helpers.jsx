@@ -130,6 +130,7 @@ export function Pagination({ total, limit, offset, onChange }) {
 //    Reemplaza el confirm() nativo del navegador para acciones sensibles
 //    (desactivar, eliminar) con un aviso más claro y botones diferenciados. ──
 export function ConfirmModal({ abierto, tipo = 'advertencia', titulo, mensaje, textoConfirmar = 'Confirmar', textoCancelar = 'Cancelar', cargando = false, onConfirmar, onCancelar }) {
+  const ref = useModalAccesible(abierto, cargando ? undefined : onCancelar);
   if (!abierto) return null;
   const estilos = {
     advertencia: { icono: '⚠️', color: 'var(--amber-700)', bg: 'var(--amber-100)', btn: 'btn-primary' },
@@ -139,7 +140,8 @@ export function ConfirmModal({ abierto, tipo = 'advertencia', titulo, mensaje, t
 
   return (
     <div className="modal-overlay" onClick={onCancelar}>
-      <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+      <div className="modal" ref={ref} role="alertdialog" aria-modal="true" aria-labelledby="confirm-titulo" aria-describedby="confirm-mensaje"
+        style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
         <div className="modal-body" style={{ textAlign: 'center', paddingTop: 28 }}>
           <div className={`confirm-icon ${tipo}`} style={{
             width: 56, height: 56, borderRadius: '50%', background: estilos.bg,
@@ -148,10 +150,10 @@ export function ConfirmModal({ abierto, tipo = 'advertencia', titulo, mensaje, t
           }}>
             <span>{estilos.icono}</span>
           </div>
-          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 8 }}>
+          <h3 id="confirm-titulo" style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 700, color: 'var(--slate-900)', marginBottom: 8 }}>
             {titulo}
           </h3>
-          <p style={{ fontSize: 13.5, color: 'var(--slate-600)', lineHeight: 1.5 }}>{mensaje}</p>
+          <p id="confirm-mensaje" style={{ fontSize: 13.5, color: 'var(--slate-600)', lineHeight: 1.5 }}>{mensaje}</p>
         </div>
         <div className="modal-footer" style={{ justifyContent: 'center' }}>
           <button className="btn btn-secondary" onClick={onCancelar} disabled={cargando}>{textoCancelar}</button>
@@ -197,4 +199,67 @@ export function NumeroAnimado({ valor, duracion = 900 }) {
     return () => cancelAnimationFrame(frame);
   }, [destino, duracion]);
   return <>{mostrado}</>;
+}
+
+// ── Avisos (modales) accesibles y consistentes (NUEVO) ─────────
+// useModalAccesible: al abrir, enfoca el primer campo del aviso; con Escape
+// lo cierra; al cerrar, devuelve el foco al botón que lo abrió.
+const SELECTOR_CAMPOS = 'input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled])';
+const SELECTOR_ENFOCABLES = `${SELECTOR_CAMPOS}, button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])`;
+
+export function useModalAccesible(abierto, onClose) {
+  const ref = useRef(null);
+  const cerrarRef = useRef(onClose);
+  cerrarRef.current = onClose;
+
+  useEffect(() => {
+    if (!abierto) return undefined;
+    const previo = document.activeElement;
+    const nodo = ref.current;
+    // Primero un campo del formulario; si no hay, cualquier botón del aviso.
+    const primero = nodo?.querySelector(SELECTOR_CAMPOS) || nodo?.querySelector(SELECTOR_ENFOCABLES);
+    primero?.focus();
+
+    function alTeclear(e) {
+      if (e.key === 'Escape') { e.stopPropagation(); cerrarRef.current?.(); return; }
+      if (e.key !== 'Tab' || !nodo) return;
+      // El foco no sale del aviso mientras está abierto.
+      const enfocables = [...nodo.querySelectorAll(SELECTOR_ENFOCABLES)];
+      if (!enfocables.length) return;
+      const [inicio, fin] = [enfocables[0], enfocables[enfocables.length - 1]];
+      if (e.shiftKey && document.activeElement === inicio) { e.preventDefault(); fin.focus(); }
+      else if (!e.shiftKey && document.activeElement === fin) { e.preventDefault(); inicio.focus(); }
+    }
+    document.addEventListener('keydown', alTeclear);
+    return () => {
+      document.removeEventListener('keydown', alTeclear);
+      if (previo && typeof previo.focus === 'function' && document.contains(previo)) previo.focus();
+    };
+  }, [abierto]);
+
+  return ref;
+}
+
+// ModalHeader: encabezado de todos los avisos — ícono en chip del color del
+// rol, título, una línea que explica para qué sirve y botón de cerrar accesible.
+export function ModalHeader({ id, icono, titulo, descripcion, onClose }) {
+  return (
+    <div className="modal-header modal-header-rico">
+      <div className="modal-header-main">
+        {icono && <span className="modal-icon" aria-hidden="true">{icono}</span>}
+        <div>
+          <h2 className="modal-title" id={id}>{titulo}</h2>
+          {descripcion && <p className="modal-subtitle">{descripcion}</p>}
+        </div>
+      </div>
+      {onClose && (
+        <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar aviso">×</button>
+      )}
+    </div>
+  );
+}
+
+// Nota estándar del pie de los formularios.
+export function NotaObligatorios() {
+  return <span className="modal-footer-nota">Los campos con * son obligatorios</span>;
 }
