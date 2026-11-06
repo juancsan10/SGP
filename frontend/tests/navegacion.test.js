@@ -37,4 +37,12 @@ describe('navegación según rol (lógica pura)', () => {
     expect(rutas).toContain('/historial');
     expect(items.some(i => i.label === 'Administración')).toBe(true);
   });
+
+  it('muestra «Tareas» a Instructor y Administrador y «Mis Tareas» solo al Aprendiz', () => {
+    const etiqueta = (admin, instructor) => getNavItems(admin, instructor).find(i => i.path === '/tareas').label;
+
+    expect(etiqueta(false, true)).toBe('Tareas');
+    expect(etiqueta(true, false)).toBe('Tareas');
+    expect(etiqueta(false, false)).toBe('Mis Tareas');
+  });
 });
