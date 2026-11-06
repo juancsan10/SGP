@@ -178,13 +178,16 @@ export function portalDestino() {
 // ── Número animado (NUEVO) ─────────────────────────────
 // Cuenta desde el valor anterior (0 al montar) hasta el nuevo valor.
 // Si el sistema pide "reducir movimiento", muestra el número directo.
+const prefiereSinMovimiento = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
 export function NumeroAnimado({ valor, duracion = 900 }) {
   const destino = Number(valor) || 0;
-  const [mostrado, setMostrado] = useState(0);
-  const desde = useRef(0);
+  // Con "reducir movimiento" el número correcto se pinta desde el primer render
+  // (antes se pintaba 0 y se corregía en un efecto: parpadeo y prueba intermitente).
+  const [mostrado, setMostrado] = useState(() => (prefiereSinMovimiento() ? destino : 0));
+  const desde = useRef(prefiereSinMovimiento() ? destino : 0);
   useEffect(() => {
-    const reducir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reducir || destino === desde.current) { setMostrado(destino); desde.current = destino; return; }
+    if (prefiereSinMovimiento() || destino === desde.current) { setMostrado(destino); desde.current = destino; return; }
     const inicio = performance.now();
     const origen = desde.current;
     let frame;
