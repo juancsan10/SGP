@@ -11,7 +11,7 @@
 import { useEffect, useState } from 'react';
 import { proyectosService, tareasService, entregasService } from '../services/api.js';
 import { useAuth } from '../context/AuthContext.jsx';
-import { LoadingCenter, EmptyState, formatFecha, estadoBadge, Pagination } from '../components/helpers.jsx';
+import { LoadingCenter, EmptyState, formatFecha, estadoBadge, Pagination, ModalHeader, useModalAccesible } from '../components/helpers.jsx';
 import { CalificacionChip, DetalleEntregaModal } from '../components/CalificacionEntrega.jsx';
 
 export default function EntregasPage() {
@@ -141,6 +141,7 @@ function EntregasOperativas() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [entrega, setEntrega] = useState(null);
+  const refModal = useModalAccesible(!!modal, () => setModal(null));
   const [form, setForm] = useState({ comentario_aprendiz: '', url_entrega: '', ruta_archivo: '' });
   const [revision, setRevision] = useState({ estado: 'Aprobada', observacion_instructor: '', calificacion: '' });
   const [error, setError] = useState('');
@@ -295,11 +296,13 @@ function EntregasOperativas() {
 
       {modal && (
         <div className="modal-overlay" onClick={() => setModal(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">{modal.tipo === 'entrega' ? 'Entrega de tarea' : 'Revisión de entrega'}</span>
-              <button className="modal-close" onClick={() => setModal(null)}>×</button>
-            </div>
+          <div className="modal" ref={refModal} role="dialog" aria-modal="true" aria-labelledby="entrega-titulo" onClick={e => e.stopPropagation()}>
+            <ModalHeader id="entrega-titulo" icono={modal.tipo === 'entrega' ? '📤' : '📝'}
+              titulo={modal.tipo === 'entrega' ? 'Entrega de tarea' : 'Revisión de entrega'}
+              descripcion={modal.tipo === 'entrega'
+                ? 'Adjunta tu trabajo; el instructor lo revisará y te dejará su calificación.'
+                : 'Califica la entrega y deja una observación que el aprendiz pueda usar para mejorar.'}
+              onClose={() => setModal(null)} />
             <form onSubmit={modal.tipo === 'entrega' ? enviar : revisar}>
               <div className="modal-body">
                 <strong>{modal.t.titulo}</strong>

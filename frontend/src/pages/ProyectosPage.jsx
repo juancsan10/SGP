@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { proyectosService, usuariosService } from '../services/api.js';
-import { estadoBadge, ProgressBar, LoadingCenter, EmptyState, formatFecha, Pagination } from '../components/helpers.jsx';
+import { estadoBadge, ProgressBar, LoadingCenter, EmptyState, formatFecha, Pagination, ModalHeader, NotaObligatorios, useModalAccesible } from '../components/helpers.jsx';
 import { filtrarProyectos } from '../utils/filtros.js';
 
 const LIMITE = 6; // NUEVO: tamaño de página (paginación aplicada a todos los roles)
@@ -19,6 +19,7 @@ export default function ProyectosPage() {
   const [instructores,setInstructores]= useState([]);
   const [loading,     setLoading]     = useState(true);
   const [modal,       setModal]       = useState(false);
+  const refModal = useModalAccesible(modal, () => setModal(false));
   const [form,        setForm]        = useState({ nombre:'', descripcion:'', fecha_inicio:'', fecha_fin:'', id_instructor:'' });
   const [saving,      setSaving]      = useState(false);
   const [error,       setError]       = useState('');
@@ -154,18 +155,19 @@ export default function ProyectosPage() {
       {/* Modal crear proyecto */}
       {modal && (
         <div className="modal-overlay" onClick={() => setModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">Nuevo proyecto</span>
-              <button className="modal-close" onClick={() => setModal(false)}>×</button>
-            </div>
+          <div className="modal" ref={refModal} role="dialog" aria-modal="true" aria-labelledby="nuevo-proyecto-titulo" onClick={e => e.stopPropagation()}>
+            <ModalHeader id="nuevo-proyecto-titulo" icono="📁" titulo="Nuevo proyecto"
+              descripcion={esAdmin
+                ? 'Registra el proyecto formativo y asígnale el instructor responsable.'
+                : 'Registra tu proyecto formativo; después podrás crear sus fases, tareas y equipo.'}
+              onClose={() => setModal(false)} />
             <form onSubmit={handleCrear}>
               <div className="modal-body">
-                {error && <div className="alert alert-error">{error}</div>}
+                {error && <div className="alert alert-error" role="alert">{error}</div>}
 
                 <div className="form-group">
                   <label className="form-label" htmlFor="proyecto-nombre">Nombre *</label>
-                  <input id="proyecto-nombre" className="form-input" value={form.nombre}
+                  <input id="proyecto-nombre" className="form-input" placeholder="Ej: Sistema de inventario para la ficha 2758431" value={form.nombre}
                     onChange={e => setForm({...form, nombre: e.target.value})} required />
                 </div>
                 <div className="form-group">
@@ -173,7 +175,7 @@ export default function ProyectosPage() {
                   <textarea id="proyecto-descripcion" className="form-textarea" value={form.descripcion}
                     onChange={e => setForm({...form, descripcion: e.target.value})} />
                 </div>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <div className="form-grid-2">
                   <div className="form-group">
                     <label className="form-label" htmlFor="proyecto-inicio">Fecha inicio *</label>
                     <input id="proyecto-inicio" className="form-input" type="date" value={form.fecha_inicio}
@@ -181,7 +183,7 @@ export default function ProyectosPage() {
                   </div>
                   <div className="form-group">
                     <label className="form-label" htmlFor="proyecto-fin">Fecha fin</label>
-                    <input id="proyecto-fin" className="form-input" type="date" value={form.fecha_fin}
+                    <input id="proyecto-fin" className="form-input" type="date" value={form.fecha_fin} min={form.fecha_inicio || undefined}
                       onChange={e => setForm({...form, fecha_fin: e.target.value})} />
                   </div>
                 </div>
@@ -201,6 +203,7 @@ export default function ProyectosPage() {
                 )}
               </div>
               <div className="modal-footer">
+                <NotaObligatorios />
                 <button type="button" className="btn btn-secondary" onClick={() => setModal(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
                   {saving ? 'Creando…' : 'Crear proyecto'}

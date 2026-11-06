@@ -70,6 +70,7 @@ export default function ProyectoDetallePage() {
   const [modalEntregable, setModalEntregable] = useState(false); // NUEVO
   const [modalReunion,    setModalReunion]    = useState(false); // NUEVO
   const [modalDetalle,    setModalDetalle]    = useState(false); // NUEVO: comentarios+archivos+evaluación
+  const refDetalle = useModalAccesible(modalDetalle, () => setModalDetalle(false));
   const [offsetEntregables, setOffsetEntregables] = useState(0); // NUEVO: paginación de la pestaña Entregables
   const [offsetTareasTab, setOffsetTareasTab] = useState(0); // NUEVO: paginación de la pestaña Tareas
   const [offsetEquipo, setOffsetEquipo] = useState(0); // NUEVO: paginación de la pestaña Equipo
@@ -1207,11 +1208,10 @@ export default function ProyectoDetallePage() {
           Comentarios (RN-015) · Archivos · Evaluación (RN-016)      ─── */}
       {modalDetalle && entregableSel && (
         <div className="modal-overlay" onClick={() => setModalDetalle(false)}>
-          <div className="modal" onClick={e=>e.stopPropagation()} style={{ maxWidth:560 }}>
-            <div className="modal-header">
-              <span className="modal-title">{entregableSel.nombre}</span>
-              <button className="modal-close" onClick={() => setModalDetalle(false)}>×</button>
-            </div>
+          <div className="modal" ref={refDetalle} role="dialog" aria-modal="true" aria-labelledby="detalle-entregable-titulo" onClick={e=>e.stopPropagation()} style={{ maxWidth:560 }}>
+            <ModalHeader id="detalle-entregable-titulo" icono="📦" titulo={entregableSel.nombre}
+              descripcion="Comentarios, documentos y evaluación de este entregable."
+              onClose={() => setModalDetalle(false)} />
             <div className="modal-body" style={{ maxHeight:'70vh', overflowY:'auto' }}>
               {detalleError && <div className="alert alert-error">{detalleError}</div>}
               {esAdmin && (

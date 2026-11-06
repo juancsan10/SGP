@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { historialService } from '../services/api.js';
-import { LoadingCenter, EmptyState, Pagination, portalDestino, NumeroAnimado } from '../components/helpers.jsx';
+import { LoadingCenter, EmptyState, Pagination, portalDestino, NumeroAnimado, ModalHeader, useModalAccesible } from '../components/helpers.jsx';
 
 const ACCIONES = {
   INSERT: { label: 'Creación',  cls: 'badge-green' },
@@ -25,6 +25,7 @@ const ETIQUETAS_RESUMEN = {
 
 function DetalleEliminacion({ id, onClose }) {
   const [d, setD] = useState(null);
+  const ref = useModalAccesible(true, onClose);
   const [error, setError] = useState('');
   useEffect(() => {
     historialService.getEliminacion(id)
@@ -35,11 +36,9 @@ function DetalleEliminacion({ id, onClose }) {
   // Portal: se monta en <body> para quedar por encima del encabezado fijo.
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <span className="modal-title">Justificación de eliminación</span>
-          <button className="modal-close" onClick={onClose}>×</button>
-        </div>
+      <div className="modal" ref={ref} role="dialog" aria-modal="true" aria-labelledby="justificacion-titulo" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
+        <ModalHeader id="justificacion-titulo" icono="📋" titulo="Justificación de eliminación"
+          descripcion="Motivo, descripción y soportes que se registraron al eliminar la cuenta." onClose={onClose} />
         <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
           {error && <div className="alert alert-error">{error}</div>}
           {!d && !error && <LoadingCenter />}

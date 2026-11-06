@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNotificaciones } from '../context/NotificacionesContext.jsx';
 import { notificacionesService } from '../services/api.js';
-import { LoadingCenter, EmptyState, Pagination } from '../components/helpers.jsx';
+import { LoadingCenter, EmptyState, Pagination, ModalHeader, useModalAccesible } from '../components/helpers.jsx';
 
 const LIMITE = 10; // Tamaño de página
 
@@ -52,6 +52,7 @@ export default function NotificacionesPage() {
 
   // Solo Administrador: modal para crear notificación
   const [modalCrear, setModalCrear] = useState(false);
+  const refModalCrear = useModalAccesible(modalCrear, () => setModalCrear(false));
   const [form, setForm] = useState({ titulo: '', mensaje: '', tipo: 'informativo', prioridad: 'Media', rol_destino: 'Aprendiz' });
   const [enviando, setEnviando] = useState(false);
   const [errorCrear, setErrorCrear] = useState('');
@@ -356,11 +357,10 @@ export default function NotificacionesPage() {
       {/* Modal solo Administrador: crear notificación */}
       {modalCrear && (
         <div className="modal-overlay" onClick={() => setModalCrear(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <div className="modal-header">
-              <span className="modal-title">Nueva notificación en tiempo real</span>
-              <button className="modal-close" onClick={() => setModalCrear(false)}>×</button>
-            </div>
+          <div className="modal" ref={refModalCrear} role="dialog" aria-modal="true" aria-labelledby="nueva-notificacion-titulo" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+            <ModalHeader id="nueva-notificacion-titulo" icono="📣" titulo="Nueva notificación en tiempo real"
+              descripcion="Llega al instante a las personas conectadas y queda guardada en su bandeja."
+              onClose={() => setModalCrear(false)} />
             <form onSubmit={enviarBroadcast}>
               <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {errorCrear && <div className="alert alert-error" role="alert">{errorCrear}</div>}

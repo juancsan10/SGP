@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usuariosService } from '../services/api.js';
-import { LoadingCenter, portalDestino } from './helpers.jsx';
+import { LoadingCenter, portalDestino, ModalHeader, useModalAccesible } from './helpers.jsx';
 
 const TIPOS = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
 const MAX_ARCHIVOS = 5;
@@ -38,6 +38,7 @@ export default function EliminarUsuarioModal({ usuario, onClose, onEliminado }) 
   const [confirmado, setConfirmado] = useState(false);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const ref = useModalAccesible(true, enviando ? undefined : onClose);
 
   useEffect(() => {
     usuariosService.impactoEliminacion(usuario.id_usuario)
@@ -81,11 +82,10 @@ export default function EliminarUsuarioModal({ usuario, onClose, onEliminado }) 
 
   return createPortal(
     <div className="modal-overlay" onClick={enviando ? undefined : onClose}>
-      <div className="modal" style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <span className="modal-title">🛑 Eliminar usuario</span>
-          <button className="modal-close" onClick={onClose} disabled={enviando}>×</button>
-        </div>
+      <div className="modal" ref={ref} role="dialog" aria-modal="true" aria-labelledby="eliminar-usuario-titulo" style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
+        <ModalHeader id="eliminar-usuario-titulo" icono="🛑" titulo="Eliminar usuario"
+          descripcion="Es permanente: responde el cuestionario y adjunta los soportes de la decisión."
+          onClose={enviando ? undefined : onClose} />
         <form onSubmit={eliminar}>
           <div className="modal-body" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
             {errorCarga && <div className="alert alert-error" role="alert">{errorCarga}</div>}
