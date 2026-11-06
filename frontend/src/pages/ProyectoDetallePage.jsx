@@ -22,6 +22,9 @@ const LIMITE_ENTREGABLES = 8; // NUEVO: tamaño de página para la pestaña Entr
 // (RF5.3 — antes esta tabla ni siquiera tenía controlador en el backend).
 const TABS = ['Resumen','Fases','Entregables','Tareas','Equipo','Mensajes','Repositorios','Reuniones'];
 
+// El motivo de una solicitud de baja es obligatorio (mismo mínimo que valida el backend).
+const MOTIVO_BAJA_MIN = 10;
+
 export default function ProyectoDetallePage() {
   const { id }   = useParams();
   const navigate = useNavigate();
@@ -213,9 +216,15 @@ export default function ProyectoDetallePage() {
   // NUEVO: Instructor solicita eliminar a un aprendiz del equipo (no lo
   // borra directo — el backend crea una solicitud que un Admin resuelve).
   async function solicitarBaja(e) {
-    e.preventDefault(); setEnviandoBaja(true); setSaveError('');
+    e.preventDefault(); setSaveError('');
+    const motivo = motivoBaja.trim();
+    if (motivo.length < MOTIVO_BAJA_MIN) {
+      setSaveError(`Escribe el motivo de la baja (mínimo ${MOTIVO_BAJA_MIN} caracteres).`);
+      return;
+    }
+    setEnviandoBaja(true);
     try {
-      await equiposService.remove(modalSolicitarBaja.id_equipo, motivoBaja);
+      await equiposService.remove(modalSolicitarBaja.id_equipo, motivo);
       setModalSolicitarBaja(null);
       setMotivoBaja('');
     } catch (err) { setSaveError(err.response?.data?.message || 'No se pudo enviar la solicitud'); }
@@ -1071,9 +1080,13 @@ export default function ProyectoDetallePage() {
           Esto no elimina al aprendiz de inmediato — se envía como solicitud para que un administrador la apruebe o la rechace.
         </p>
         <div className="form-group">
-          <label className="form-label">Motivo (opcional)</label>
-          <textarea className="form-textarea" placeholder="Ej: bajo desempeño, falta de comunicación con el equipo…"
-            value={motivoBaja} onChange={e=>setMotivoBaja(e.target.value)} />
+          <label className="form-label" htmlFor="motivo-baja">Motivo *</label>
+          <textarea id="motivo-baja" className="form-textarea" placeholder="Ej: bajo desempeño, falta de comunicación con el equipo…"
+            value={motivoBaja} onChange={e=>setMotivoBaja(e.target.value)}
+            required minLength={MOTIVO_BAJA_MIN} maxLength={500} aria-describedby="motivo-baja-ayuda" />
+          <small id="motivo-baja-ayuda" style={{ fontSize:12, color: motivoBaja.trim().length >= MOTIVO_BAJA_MIN ? 'var(--slate-500)' : 'var(--red-600, #dc2626)' }}>
+            Obligatorio. Mínimo {MOTIVO_BAJA_MIN} caracteres ({motivoBaja.trim().length}/{MOTIVO_BAJA_MIN}).
+          </small>
         </div>
       </FormModal>
 
