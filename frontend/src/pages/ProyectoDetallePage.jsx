@@ -12,7 +12,7 @@ import {
   entregablesService, usuariosService,
   comentariosService, archivosService, evaluacionesService, reunionesService, // NUEVOS
 } from '../services/api.js';
-import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha, Pagination, ConfirmModal } from '../components/helpers.jsx';
+import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha, Pagination, ConfirmModal, ModalHeader, NotaObligatorios, useModalAccesible } from '../components/helpers.jsx';
 import RevisionProyecto from '../components/RevisionProyecto.jsx'; // NUEVO: supervisión del Administrador
 
 const LIMITE_ENTREGABLES = 8; // NUEVO: tamaño de página para la pestaña Entregables
@@ -973,29 +973,33 @@ export default function ProyectoDetallePage() {
 
       {/* ─── Modal Fase ────────────────────────────── */}
       <FormModal
-        open={modalFase} title="Nueva fase"
+        open={modalFase} title="Nueva fase" icono="🧭" textoGuardar="Crear fase"
+        descripcion="Las fases ordenan el proyecto por etapas; luego podrás agregarles entregables."
         onClose={() => setModalFase(false)}
         onSubmit={crearFase} saving={saving} error={saveError}
       >
         <div className="form-group">
-          <label className="form-label">Nombre de la fase *</label>
-          <input className="form-input" value={formFase.nombre_fase}
+          <label className="form-label" htmlFor="fase-nombre">Nombre de la fase *</label>
+          <input id="fase-nombre" className="form-input" placeholder="Ej: Análisis de requisitos" maxLength={150}
+            value={formFase.nombre_fase}
             onChange={e=>setFormFase({...formFase,nombre_fase:e.target.value})} required />
         </div>
         <div className="form-group">
-          <label className="form-label">Descripción</label>
-          <textarea className="form-textarea" value={formFase.descripcion}
+          <label className="form-label" htmlFor="fase-descripcion">Descripción</label>
+          <textarea id="fase-descripcion" className="form-textarea" placeholder="¿Qué se busca lograr en esta fase?"
+            value={formFase.descripcion}
             onChange={e=>setFormFase({...formFase,descripcion:e.target.value})} />
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        <div className="form-grid-2">
           <div className="form-group">
-            <label className="form-label">Fecha inicio</label>
-            <input className="form-input" type="date" value={formFase.fecha_inicio}
+            <label className="form-label" htmlFor="fase-inicio">Fecha inicio</label>
+            <input id="fase-inicio" className="form-input" type="date" value={formFase.fecha_inicio}
               onChange={e=>setFormFase({...formFase,fecha_inicio:e.target.value})} />
           </div>
           <div className="form-group">
-            <label className="form-label">Fecha fin</label>
-            <input className="form-input" type="date" value={formFase.fecha_fin}
+            <label className="form-label" htmlFor="fase-fin">Fecha fin</label>
+            <input id="fase-fin" className="form-input" type="date" value={formFase.fecha_fin}
+              min={formFase.fecha_inicio || undefined}
               onChange={e=>setFormFase({...formFase,fecha_fin:e.target.value})} />
           </div>
         </div>
@@ -1003,38 +1007,41 @@ export default function ProyectoDetallePage() {
 
       {/* ─── Modal Tarea ───────────────────────────── */}
       <FormModal
-        open={modalTarea} title="Nueva tarea"
+        open={modalTarea} title="Nueva tarea" icono="✅" textoGuardar="Crear tarea"
+        descripcion="Asigna una actividad concreta a un aprendiz del proyecto, con su prioridad y fecha límite."
         onClose={() => setModalTarea(false)}
         onSubmit={crearTarea} saving={saving} error={saveError}
       >
         <div className="form-group">
-          <label className="form-label">Título *</label>
-          <input className="form-input" value={formTarea.titulo}
+          <label className="form-label" htmlFor="tarea-titulo">Título *</label>
+          <input id="tarea-titulo" className="form-input" placeholder="Ej: Diseñar el modelo de datos" maxLength={200}
+            value={formTarea.titulo}
             onChange={e=>setFormTarea({...formTarea,titulo:e.target.value})} required />
         </div>
         <div className="form-group">
-          <label className="form-label">Descripción</label>
-          <textarea className="form-textarea" value={formTarea.descripcion}
+          <label className="form-label" htmlFor="tarea-descripcion">Descripción</label>
+          <textarea id="tarea-descripcion" className="form-textarea" placeholder="Detalla qué se espera como resultado"
+            value={formTarea.descripcion}
             onChange={e=>setFormTarea({...formTarea,descripcion:e.target.value})} />
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        <div className="form-grid-2">
           <div className="form-group">
-            <label className="form-label">Prioridad</label>
-            <select className="form-select" value={formTarea.prioridad}
+            <label className="form-label" htmlFor="tarea-prioridad">Prioridad</label>
+            <select id="tarea-prioridad" className="form-select" value={formTarea.prioridad}
               onChange={e=>setFormTarea({...formTarea,prioridad:e.target.value})}>
               {['Alta','Media','Baja'].map(p=><option key={p}>{p}</option>)}
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Fecha vencimiento</label>
-            <input className="form-input" type="date" value={formTarea.fecha_vencimiento}
+            <label className="form-label" htmlFor="tarea-vencimiento">Fecha vencimiento</label>
+            <input id="tarea-vencimiento" className="form-input" type="date" value={formTarea.fecha_vencimiento}
               onChange={e=>setFormTarea({...formTarea,fecha_vencimiento:e.target.value})} />
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">Asignar a *</label>
-          <select className="form-select" value={formTarea.id_asignado}
-            onChange={e=>setFormTarea({...formTarea,id_asignado:e.target.value})} required>
+          <label className="form-label" htmlFor="tarea-asignado">Asignar a *</label>
+          <select id="tarea-asignado" className="form-select" value={formTarea.id_asignado}
+            onChange={e=>setFormTarea({...formTarea,id_asignado:e.target.value})} required aria-describedby="tarea-asignado-ayuda">
             <option value="">Seleccionar aprendiz</option>
             {usuarios.filter(u=>u.rol === 'Aprendiz').map(u=>(
               <option key={u.id_usuario} value={u.id_usuario}>
@@ -1042,19 +1049,25 @@ export default function ProyectoDetallePage() {
               </option>
             ))}
           </select>
+          <span className="form-hint" id="tarea-asignado-ayuda">
+            {usuarios.some(u=>u.rol === 'Aprendiz')
+              ? 'El aprendiz recibirá una notificación con la tarea.'
+              : 'No hay aprendices disponibles: primero agrégalos al equipo.'}
+          </span>
         </div>
       </FormModal>
 
       {/* ─── Modal Equipo ──────────────────────────── */}
       <FormModal
-        open={modalEquip} title="Agregar miembro al equipo"
+        open={modalEquip} title="Agregar miembro al equipo" icono="👥" textoGuardar="Agregar miembro"
+        descripcion="Suma un aprendiz al proyecto y define qué papel cumple dentro del equipo."
         onClose={() => setModalEquip(false)}
         onSubmit={crearEquipo} saving={saving} error={saveError}
       >
         <div className="form-group">
-          <label className="form-label">Usuario *</label>
-          <select className="form-select" value={formEquip.id_usuario}
-            onChange={e=>setFormEquip({...formEquip,id_usuario:e.target.value})} required>
+          <label className="form-label" htmlFor="equipo-usuario">Aprendiz *</label>
+          <select id="equipo-usuario" className="form-select" value={formEquip.id_usuario}
+            onChange={e=>setFormEquip({...formEquip,id_usuario:e.target.value})} required aria-describedby="equipo-usuario-ayuda">
             <option value="">Seleccionar aprendiz</option>
             {usuarios.filter(u=>u.rol === 'Aprendiz' && !equipo.find(e=>e.id_usuario===u.id_usuario)).map(u=>(
               <option key={u.id_usuario} value={u.id_usuario}>
@@ -1062,10 +1075,15 @@ export default function ProyectoDetallePage() {
               </option>
             ))}
           </select>
+          <span className="form-hint" id="equipo-usuario-ayuda">
+            {usuarios.some(u=>u.rol === 'Aprendiz' && !equipo.find(e=>e.id_usuario===u.id_usuario))
+              ? 'Solo aparecen los aprendices que aún no están en este equipo.'
+              : 'Todos los aprendices disponibles ya hacen parte del equipo.'}
+          </span>
         </div>
         <div className="form-group">
-          <label className="form-label">Rol en el proyecto</label>
-          <input className="form-input" placeholder="Ej: Líder técnico" value={formEquip.rol_en_equipo}
+          <label className="form-label" htmlFor="equipo-rol">Rol en el proyecto</label>
+          <input id="equipo-rol" className="form-input" placeholder="Ej: Líder técnico" maxLength={100} value={formEquip.rol_en_equipo}
             onChange={e=>setFormEquip({...formEquip,rol_en_equipo:e.target.value})} />
         </div>
       </FormModal>
@@ -1073,12 +1091,11 @@ export default function ProyectoDetallePage() {
       {/* ─── Modal Solicitar baja de equipo (NUEVO) ──── */}
       <FormModal
         open={!!modalSolicitarBaja} title={`Solicitar baja de ${modalSolicitarBaja?.nombre_usuario || ''}`}
+        icono="📨" textoGuardar="Enviar solicitud"
+        descripcion="No elimina al aprendiz de inmediato: un administrador aprobará o rechazará la solicitud."
         onClose={() => setModalSolicitarBaja(null)}
         onSubmit={solicitarBaja} saving={enviandoBaja} error={saveError}
       >
-        <p style={{ fontSize:13, color:'var(--slate-600)', marginBottom:8 }}>
-          Esto no elimina al aprendiz de inmediato — se envía como solicitud para que un administrador la apruebe o la rechace.
-        </p>
         <div className="form-group">
           <label className="form-label" htmlFor="motivo-baja">Motivo *</label>
           <textarea id="motivo-baja" className="form-textarea" placeholder="Ej: bajo desempeño, falta de comunicación con el equipo…"
@@ -1092,32 +1109,34 @@ export default function ProyectoDetallePage() {
 
       {/* ─── Modal Repositorio ─────────────────────── */}
       <FormModal
-        open={modalRepo} title="Vincular repositorio"
+        open={modalRepo} title="Vincular repositorio" icono="🔗" textoGuardar="Vincular"
+        descripcion="Conecta el repositorio de GitHub del proyecto para seguir su actividad."
         onClose={() => setModalRepo(false)}
         onSubmit={crearRepo} saving={saving} error={saveError}
       >
         <div className="form-group">
-          <label className="form-label">URL de GitHub *</label>
-          <input className="form-input" placeholder="https://github.com/usuario/repo"
+          <label className="form-label" htmlFor="repo-url">URL de GitHub *</label>
+          <input id="repo-url" className="form-input" placeholder="https://github.com/usuario/repo"
             value={formRepo.url_github}
             onChange={e=>setFormRepo({...formRepo,url_github:e.target.value})} required />
         </div>
         <div className="form-group">
-          <label className="form-label">Rama principal</label>
-          <input className="form-input" value={formRepo.rama_principal}
+          <label className="form-label" htmlFor="repo-rama">Rama principal</label>
+          <input id="repo-rama" className="form-input" placeholder="main" value={formRepo.rama_principal}
             onChange={e=>setFormRepo({...formRepo,rama_principal:e.target.value})} />
         </div>
       </FormModal>
 
       {/* ─── Modal Entregable (NUEVO) ──────────────── */}
       <FormModal
-        open={modalEntregable} title="Nuevo entregable"
+        open={modalEntregable} title="Nuevo entregable" icono="📦" textoGuardar="Crear entregable"
+        descripcion="Define un producto que el equipo debe entregar dentro de una fase, con su fecha."
         onClose={() => setModalEntregable(false)}
         onSubmit={crearEntregable} saving={saving} error={saveError}
       >
         <div className="form-group">
-          <label className="form-label">Fase *</label>
-          <select className="form-select" value={formEntregable.id_fase}
+          <label className="form-label" htmlFor="entregable-fase">Fase *</label>
+          <select id="entregable-fase" className="form-select" value={formEntregable.id_fase}
             onChange={e=>setFormEntregable({...formEntregable,id_fase:e.target.value})} required>
             {fases.map(f => (
               <option key={f.id_fase} value={f.id_fase}>{f.nombre_fase}</option>
@@ -1125,59 +1144,60 @@ export default function ProyectoDetallePage() {
           </select>
         </div>
         <div className="form-group">
-          <label className="form-label">Nombre *</label>
-          <input className="form-input" value={formEntregable.nombre}
+          <label className="form-label" htmlFor="entregable-nombre">Nombre *</label>
+          <input id="entregable-nombre" className="form-input" placeholder="Ej: Documento de requisitos" value={formEntregable.nombre}
             onChange={e=>setFormEntregable({...formEntregable,nombre:e.target.value})} required />
         </div>
         <div className="form-group">
-          <label className="form-label">Descripción</label>
-          <textarea className="form-textarea" value={formEntregable.descripcion}
+          <label className="form-label" htmlFor="entregable-descripcion">Descripción</label>
+          <textarea id="entregable-descripcion" className="form-textarea" value={formEntregable.descripcion}
             onChange={e=>setFormEntregable({...formEntregable,descripcion:e.target.value})} />
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        <div className="form-grid-2">
           <div className="form-group">
-            <label className="form-label">Fecha de entrega *</label>
-            <input className="form-input" type="date" value={formEntregable.fecha_entrega}
+            <label className="form-label" htmlFor="entregable-fecha">Fecha de entrega *</label>
+            <input id="entregable-fecha" className="form-input" type="date" value={formEntregable.fecha_entrega}
               onChange={e=>setFormEntregable({...formEntregable,fecha_entrega:e.target.value})} required />
           </div>
           <div className="form-group">
-            <label className="form-label">Versión</label>
-            <input className="form-input" value={formEntregable.version}
+            <label className="form-label" htmlFor="entregable-version">Versión</label>
+            <input id="entregable-version" className="form-input" placeholder="1.0" value={formEntregable.version}
               onChange={e=>setFormEntregable({...formEntregable,version:e.target.value})} />
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">URL de Drive (opcional)</label>
-          <input className="form-input" placeholder="https://drive.google.com/..." value={formEntregable.url_drive}
+          <label className="form-label" htmlFor="entregable-drive">URL de Drive (opcional)</label>
+          <input id="entregable-drive" className="form-input" placeholder="https://drive.google.com/..." value={formEntregable.url_drive}
             onChange={e=>setFormEntregable({...formEntregable,url_drive:e.target.value})} />
         </div>
       </FormModal>
 
       {/* ─── Modal Reunión (NUEVO) ─────────────────── */}
       <FormModal
-        open={modalReunion} title="Programar reunión"
+        open={modalReunion} title="Programar reunión" icono="📅" textoGuardar="Programar reunión"
+        descripcion="Agenda un encuentro con el equipo; aparecerá también en el calendario del proyecto."
         onClose={() => setModalReunion(false)}
         onSubmit={crearReunion} saving={saving} error={saveError}
       >
         <div className="form-group">
-          <label className="form-label">Título *</label>
-          <input className="form-input" value={formReunion.titulo}
+          <label className="form-label" htmlFor="reunion-titulo">Título *</label>
+          <input id="reunion-titulo" className="form-input" placeholder="Ej: Revisión de avance semanal" value={formReunion.titulo}
             onChange={e=>setFormReunion({...formReunion,titulo:e.target.value})} required />
         </div>
         <div className="form-group">
-          <label className="form-label">Descripción</label>
-          <textarea className="form-textarea" value={formReunion.descripcion}
+          <label className="form-label" htmlFor="reunion-descripcion">Descripción</label>
+          <textarea id="reunion-descripcion" className="form-textarea" value={formReunion.descripcion}
             onChange={e=>setFormReunion({...formReunion,descripcion:e.target.value})} />
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        <div className="form-grid-2">
           <div className="form-group">
-            <label className="form-label">Fecha y hora *</label>
-            <input className="form-input" type="datetime-local" value={formReunion.fecha_reunion}
+            <label className="form-label" htmlFor="reunion-fecha">Fecha y hora *</label>
+            <input id="reunion-fecha" className="form-input" type="datetime-local" value={formReunion.fecha_reunion}
               onChange={e=>setFormReunion({...formReunion,fecha_reunion:e.target.value})} required />
           </div>
           <div className="form-group">
-            <label className="form-label">Lugar</label>
-            <input className="form-input" placeholder="Sala virtual, bloque, etc." value={formReunion.lugar}
+            <label className="form-label" htmlFor="reunion-lugar">Lugar</label>
+            <input id="reunion-lugar" className="form-input" placeholder="Sala virtual, bloque, etc." value={formReunion.lugar}
               onChange={e=>setFormReunion({...formReunion,lugar:e.target.value})} />
           </div>
         </div>
@@ -1330,24 +1350,27 @@ function MiniStat({ icon, label, valor }) {
   );
 }
 
-function FormModal({ open, title, onClose, onSubmit, saving, error, children }) {
+// Aviso de formulario (MEJORADO): encabezado con ícono y descripción, foco en el
+// primer campo, Escape para cerrar, botón con el verbo de la acción y nota de
+// campos obligatorios.
+function FormModal({ open, title, icono, descripcion, textoGuardar = 'Guardar', onClose, onSubmit, saving, error, children }) {
+  const ref = useModalAccesible(open, saving ? undefined : onClose);
   if (!open) return null;
+  const idTitulo = 'form-modal-titulo';
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e=>e.stopPropagation()}>
-        <div className="modal-header">
-          <span className="modal-title">{title}</span>
-          <button className="modal-close" onClick={onClose}>×</button>
-        </div>
+      <div className="modal" ref={ref} role="dialog" aria-modal="true" aria-labelledby={idTitulo} onClick={e=>e.stopPropagation()}>
+        <ModalHeader id={idTitulo} icono={icono} titulo={title} descripcion={descripcion} onClose={onClose} />
         <form onSubmit={onSubmit}>
           <div className="modal-body">
-            {error && <div className="alert alert-error">{error}</div>}
+            {error && <div className="alert alert-error" role="alert">{error}</div>}
             {children}
           </div>
           <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+            <NotaObligatorios />
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Guardando…' : 'Guardar'}
+              {saving ? 'Guardando…' : textoGuardar}
             </button>
           </div>
         </form>
