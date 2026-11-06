@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { usuariosService, authService, passwordService } from '../services/api.js';
-import { LoadingCenter, EmptyState, formatFecha, Pagination, ConfirmModal } from '../components/helpers.jsx';
+import { LoadingCenter, EmptyState, formatFecha, Pagination, ConfirmModal, ModalHeader, NotaObligatorios, useModalAccesible } from '../components/helpers.jsx';
 import EliminarUsuarioModal from '../components/EliminarUsuarioModal.jsx'; // NUEVO: cuestionario de eliminación
 import { validarNombre, validarCorreo, validarCc, validarPassword } from '../utils/validaciones.js';
 
@@ -42,6 +42,8 @@ export default function UsuariosPage() {
 
   // ── Modal crear (solo Instructor: el Administrador es único) ──
   const [modalCrear, setModalCrear] = useState(false);
+  const refModal = useModalAccesible(modal, () => setModal(false));
+  const refModalCrear = useModalAccesible(modalCrear, () => setModalCrear(false));
   const [formCrear, setFormCrear] = useState({ nombres: '', apellidos: '', correo: '', identificacion: '', contrasena: '', id_rol: '2', ficha: '', programa_formacion: '' });
   const [erroresCrear, setErroresCrear] = useState({});
   const [creando, setCreando] = useState(false);
@@ -360,11 +362,10 @@ export default function UsuariosPage() {
       {/* Modal editar usuario */}
       {modal && (
         <div className="modal-overlay" onClick={() => setModal(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">Editar usuario</span>
-              <button className="modal-close" onClick={() => setModal(false)}>×</button>
-            </div>
+          <div className="modal" ref={refModal} role="dialog" aria-modal="true" aria-labelledby="editar-usuario-titulo" onClick={e => e.stopPropagation()}>
+            <ModalHeader id="editar-usuario-titulo" icono="✏️" titulo="Editar usuario"
+              descripcion="Actualiza los datos de la cuenta. Los cambios se registran en el historial."
+              onClose={() => setModal(false)} />
             <form onSubmit={guardarEdicion}>
               <div className="modal-body">
                 {error && <div className="alert alert-error">{error}</div>}
@@ -432,11 +433,10 @@ export default function UsuariosPage() {
       {/* Modal crear usuario */}
       {modalCrear && (
         <div className="modal-overlay" onClick={() => setModalCrear(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">Nuevo instructor</span>
-              <button className="modal-close" onClick={() => setModalCrear(false)}>×</button>
-            </div>
+          <div className="modal" ref={refModalCrear} role="dialog" aria-modal="true" aria-labelledby="nuevo-usuario-titulo" onClick={e => e.stopPropagation()}>
+            <ModalHeader id="nuevo-usuario-titulo" icono="🧑‍🏫" titulo="Nuevo instructor"
+              descripcion="Crea la cuenta con la que el instructor entrará a la plataforma."
+              onClose={() => setModalCrear(false)} />
             <form onSubmit={crearUsuario}>
               <div className="modal-body">
                 {errorCrear && <div className="alert alert-error">{errorCrear}</div>}

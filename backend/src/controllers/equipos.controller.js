@@ -87,7 +87,11 @@ const remove = async (req, res) => {
     if (!equipo.length) return res.status(404).json({ success: false, message: 'Registro no encontrado' });
 
     if (req.user?.rol === 'Instructor') {
-      const { motivo } = req.body;
+      // El motivo es obligatorio cuando el Instructor solicita la baja.
+      const motivo = typeof req.body?.motivo === 'string' ? req.body.motivo.trim() : '';
+      if (motivo.length < 10) {
+        return res.status(400).json({ success: false, message: 'El motivo de la baja es obligatorio (mínimo 10 caracteres)' });
+      }
       const [existente] = await db.query(
         `SELECT id_solicitud FROM solicitudes_equipo WHERE id_equipo = ? AND estado = 'Pendiente'`,
         [req.params.id]
@@ -98,7 +102,7 @@ const remove = async (req, res) => {
       const [result] = await db.query(
         `INSERT INTO solicitudes_equipo (id_equipo, id_proyecto, id_usuario_afectado, motivo, id_instructor_solicita)
          VALUES (?, ?, ?, ?, ?)`,
-        [req.params.id, equipo[0].id_proyecto, equipo[0].id_usuario, motivo || null, req.user.id]
+        [req.params.id, equipo[0].id_proyecto, equipo[0].id_usuario, motivo, req.user.id]
       );
       await registrarCambio('solicitudes_equipo', result.insertId, 'INSERT', req.user.id);
       return res.status(202).json({
