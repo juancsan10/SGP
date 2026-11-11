@@ -1,13 +1,33 @@
 // =====================================================
 // pages/HistorialPage.jsx
-// Historial de cambios / auditoría (solo Admin).
+// Historial de cambios / auditoría.
+// · Administrador: estadísticas, eliminaciones y todo el registro.
+// · Instructor: lo que ha hecho él y lo que han hecho los aprendices de
+//   sus proyectos (el backend filtra), con filtro «Quién».
 // NUEVO: dashboard de estadísticas consolidadas arriba +
 // búsqueda con filtros de servidor y paginación numerada.
 // =====================================================
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { historialService } from '../services/api.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import { LoadingCenter, EmptyState, Pagination, portalDestino, NumeroAnimado, ModalHeader, useModalAccesible } from '../components/helpers.jsx';
+
+// Nombres legibles de las tablas que registran cambios.
+const TABLAS = {
+  proyectos: 'Proyectos', fases_proyecto: 'Fases', entregables: 'Entregables', tareas: 'Tareas',
+  entregas_tareas: 'Entregas', equipos_proyecto: 'Equipos', reuniones: 'Reuniones', repositorios: 'Repositorios',
+  github_integration: 'GitHub', mensajes: 'Mensajes', comentarios: 'Comentarios', archivos: 'Archivos',
+  evaluaciones: 'Evaluaciones', solicitudes: 'Solicitudes', solicitudes_equipo: 'Solicitudes de equipo',
+  notificaciones: 'Notificaciones', usuarios: 'Usuarios',
+};
+const nombreTabla = (t) => TABLAS[t] || t;
+const ROL_BADGE = { Administrador: 'badge-red', Instructor: 'badge-blue', Aprendiz: 'badge-green' };
+const QUIEN = [
+  { valor: '', etiqueta: 'Yo y mis aprendices' },
+  { valor: 'yo', etiqueta: 'Solo mis acciones' },
+  { valor: 'aprendices', etiqueta: 'Solo mis aprendices' },
+];
 
 const ACCIONES = {
   INSERT: { label: 'Creación',  cls: 'badge-green' },
@@ -177,9 +197,10 @@ function BarraLista({ items, campoLabel, campoValor }) {
 }
 
 export default function HistorialPage() {
-  // ── Dashboard (NUEVO) ────────────────────────────
+  const { esAdmin } = useAuth();
+  // ── Dashboard (NUEVO, solo Administrador) ─────────
   const [stats, setStats] = useState(null);
-  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(esAdmin);
   const [errorStats, setErrorStats] = useState(''); // NUEVO: aviso visible si falla el dashboard
 
   // ── Listado detallado con filtros de servidor (NUEVO) ─
@@ -190,14 +211,16 @@ export default function HistorialPage() {
   const [q, setQ] = useState('');
   const [accion, setAccion] = useState('');
   const [tabla, setTabla] = useState('');
+  const [autor, setAutor] = useState(''); // solo Instructor: '', 'yo' o 'aprendices'
   const [offset, setOffset] = useState(0);
 
   useEffect(() => {
+    if (!esAdmin) return;
     historialService.getEstadisticas()
       .then(r => setStats(r.data.data))
       .catch(err => setErrorStats(err.response?.data?.message || 'No se pudieron cargar las estadísticas'))
       .finally(() => setLoadingStats(false));
-  }, []);
+  }, [esAdmin]);
 
   async function cargar() {
     setLoading(true); setError('');
@@ -206,6 +229,7 @@ export default function HistorialPage() {
       if (q) params.q = q;
       if (accion) params.accion = accion;
       if (tabla) params.tabla = tabla;
+      if (!esAdmin && autor) params.autor = autor;
       const r = await historialService.getAll(params);
       setHistorial(r.data.data || []);
       setMeta(r.data.meta || { total: 0, limit: LIMITE, offset: 0 });
@@ -215,27 +239,32 @@ export default function HistorialPage() {
     finally { setLoading(false); }
   }
 
-  useEffect(() => { cargar(); }, [offset, accion, tabla]); // eslint-disable-line
-  useEffect(() => { setOffset(0); }, [q, accion, tabla]);
+  useEffect(() => { cargar(); }, [offset, accion, tabla, autor]); // eslint-disable-line
+  useEffect(() => { setOffset(0); }, [q, accion, tabla, autor]);
   useEffect(() => {
     const t = setTimeout(() => { if (offset === 0) cargar(); }, 350);
     return () => clearTimeout(t);
   }, [q]); // eslint-disable-line
 
-  const tablasConocidas = stats?.porTabla?.map(t => t.tabla_afectada) || [];
+  // Administrador: tablas con actividad real; Instructor: la lista conocida.
+  const tablasConocidas = esAdmin ? (stats?.porTabla?.map(t => t.tabla_afectada) || []) : Object.keys(TABLAS);
 
   return (
     <div>
       <div className="page-header">
         <div className="page-header-left">
           <h1 className="page-title">Historial</h1>
-          <p className="page-subtitle">Auditoría y estadísticas consolidadas del sistema</p>
+          <p className="page-subtitle">
+            {esAdmin
+              ? 'Auditoría y estadísticas consolidadas del sistema'
+              : 'Lo que has hecho tú y lo que han hecho los aprendices de tus proyectos'}
+          </p>
         </div>
       </div>
 
       <div className="page-body">
         {/* ── Dashboard consolidado (NUEVO) ──────────── */}
-        {loadingStats ? <LoadingCenter texto="Cargando estadísticas…" /> : errorStats ? (
+        {!esAdmin ? null : loadingStats ? <LoadingCenter texto="Cargando estadísticas…" /> : errorStats ? (
           <div className="alert alert-error" style={{ marginBottom: 20 }}>{errorStats}</div>
         ) : stats && (
           <>
@@ -311,25 +340,32 @@ export default function HistorialPage() {
 
         {/* ── Búsqueda detallada con filtros de servidor (NUEVO) ── */}
         {/* NUEVO: registro de eliminaciones con su cuestionario */}
-        <UsuariosEliminados />
+        {esAdmin && <UsuariosEliminados />}
 
-        <h3 style={{ fontFamily:'var(--font-display)', fontSize:16, marginBottom:12 }}>🔍 Búsqueda detallada</h3>
+        <h3 style={{ fontFamily:'var(--font-display)', fontSize:16, marginBottom:12 }}>
+          {esAdmin ? '🔍 Búsqueda detallada' : '🔍 Actividad registrada'}
+        </h3>
         <div style={{ display:'flex', gap:12, marginBottom:20, flexWrap:'wrap' }}>
           <input
             className="form-input" style={{ maxWidth:260 }}
-            placeholder="🔍  Buscar tabla o usuario…"
+            placeholder="🔍  Buscar tabla o usuario…" aria-label="Buscar en el historial"
             value={q} onChange={e=>setQ(e.target.value)}
           />
-          <select className="form-select" style={{ maxWidth:180 }} value={accion} onChange={e=>setAccion(e.target.value)}>
+          {!esAdmin && (
+            <select className="form-select" style={{ maxWidth:210 }} value={autor} onChange={e=>setAutor(e.target.value)} aria-label="Quién">
+              {QUIEN.map(o => <option key={o.valor} value={o.valor}>{o.etiqueta}</option>)}
+            </select>
+          )}
+          <select className="form-select" style={{ maxWidth:180 }} value={accion} onChange={e=>setAccion(e.target.value)} aria-label="Acción">
             <option value="">Todas las acciones</option>
             {Object.keys(ACCIONES).map(a=><option key={a} value={a}>{ACCIONES[a].label}</option>)}
           </select>
-          <select className="form-select" style={{ maxWidth:200 }} value={tabla} onChange={e=>setTabla(e.target.value)}>
+          <select className="form-select" style={{ maxWidth:200 }} value={tabla} onChange={e=>setTabla(e.target.value)} aria-label="Tabla">
             <option value="">Todas las tablas</option>
-            {tablasConocidas.map(t=><option key={t} value={t}>{t}</option>)}
+            {tablasConocidas.map(t=><option key={t} value={t}>{nombreTabla(t)}</option>)}
           </select>
-          {(q||accion||tabla) && (
-            <button className="btn btn-ghost" onClick={()=>{setQ('');setAccion('');setTabla('');}}>
+          {(q||accion||tabla||autor) && (
+            <button className="btn btn-ghost" onClick={()=>{setQ('');setAccion('');setTabla('');setAutor('');}}>
               Limpiar ×
             </button>
           )}
@@ -339,7 +375,8 @@ export default function HistorialPage() {
         {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
         {loading && historial.length === 0 ? <LoadingCenter /> : historial.length === 0 ? (
-          <EmptyState icon="📋" titulo="Sin registros" desc="No hay cambios que coincidan." />
+          <EmptyState icon="📋" titulo="Sin registros"
+            desc={esAdmin ? 'No hay cambios que coincidan.' : 'Aún no hay actividad tuya ni de tus aprendices que coincida con los filtros.'} />
         ) : (
           <>
             <div className="card">
@@ -348,7 +385,7 @@ export default function HistorialPage() {
                   <thead>
                     <tr>
                       <th>#</th><th>Tabla</th><th>Registro</th>
-                      <th>Acción</th><th>Usuario</th><th>Fecha</th>
+                      <th>Acción</th><th>Usuario</th><th>Rol</th><th>Fecha</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -359,12 +396,15 @@ export default function HistorialPage() {
                           <td style={{ color:'var(--slate-400)', fontSize:11 }}>#{h.id_historial}</td>
                           <td>
                             <span className="badge badge-slate" style={{ fontFamily:'monospace', fontSize:10 }}>
-                              {h.tabla_afectada}
+                              {nombreTabla(h.tabla_afectada)}
                             </span>
                           </td>
                           <td style={{ fontSize:12 }}>ID: {h.id_registro ?? '—'}</td>
                           <td><span className={`badge ${acc.cls}`}>{acc.label}</span></td>
                           <td style={{ fontSize:13 }}>{h.usuario_nombre || '—'}</td>
+                          <td>{h.usuario_rol
+                            ? <span className={`badge ${ROL_BADGE[h.usuario_rol] || 'badge-slate'}`}>{h.usuario_rol}</span>
+                            : '—'}</td>
                           <td style={{ fontSize:11, color:'var(--slate-500)' }}>
                             {new Date(h.fecha_cambio).toLocaleString('es-CO')}
                           </td>
