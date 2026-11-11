@@ -140,6 +140,8 @@ describe('UsuariosPage como Instructor', () => {
     expect(screen.getByText('1 aprendiz(ces) asignados a tus proyectos')).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Proyecto(s)' })).toBeInTheDocument();
     expect(screen.getByText('Inventario, SGP')).toBeInTheDocument();
+    // Para sumar aprendices envía una solicitud al Administrador
+    expect(screen.getByRole('button', { name: '+ Nuevo aprendiz' })).toBeInTheDocument();
     for (const nombre of [/Nuevo instructor/i, /Desactivar/i, /Activar/i, /Eliminar/i, /Editar/i]) {
       expect(screen.queryByRole('button', { name: nombre })).not.toBeInTheDocument();
     }

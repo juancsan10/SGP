@@ -5,6 +5,7 @@
 //   desactiva y elimina.
 // · Instructor: solo consulta los aprendices asignados a sus proyectos
 //   (el backend filtra); no ve acciones de activar, desactivar ni eliminar.
+//   Para sumar un aprendiz nuevo envía una solicitud que aprueba el Administrador.
 // =====================================================
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -12,12 +13,15 @@ import { usuariosService, authService, passwordService } from '../services/api.j
 import { useAuth } from '../context/AuthContext.jsx';
 import { LoadingCenter, EmptyState, formatFecha, Pagination, ConfirmModal, ModalHeader, NotaObligatorios, useModalAccesible } from '../components/helpers.jsx';
 import EliminarUsuarioModal from '../components/EliminarUsuarioModal.jsx'; // NUEVO: cuestionario de eliminación
+import { NuevoAprendizModal, MisSolicitudesAprendiz } from '../components/SolicitudesAprendiz.jsx';
 import { validarNombre, validarCorreo, validarCc, validarPassword } from '../utils/validaciones.js';
 
 const LIMITE = 10;
 
 export default function UsuariosPage() {
   const { esAdmin } = useAuth();
+  const [modalAprendiz, setModalAprendiz] = useState(false);   // solo Instructor
+  const [recargarSolicitudes, setRecargarSolicitudes] = useState(0);
   const [usuarios, setUsuarios] = useState([]);
   const [meta, setMeta] = useState({ total: 0, limit: LIMITE, offset: 0 });
   const [loading, setLoading] = useState(true);
@@ -237,16 +241,23 @@ export default function UsuariosPage() {
               : `${meta.total} aprendiz(ces) asignados a tus proyectos`}
           </p>
         </div>
-        {esAdmin && (
-          <div className="page-header-right">
+        <div className="page-header-right">
+          {esAdmin ? (
             <button className="btn btn-primary" onClick={() => { setErrorCrear(''); setErroresCrear({}); setModalCrear(true); }}>
               + Nuevo instructor
             </button>
-          </div>
-        )}
+          ) : (
+            <button className="btn btn-primary" onClick={() => { setAvisoOk(''); setModalAprendiz(true); }}>
+              + Nuevo aprendiz
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="page-body">
+        {!esAdmin && avisoOk && <div className="alert alert-success" role="status" style={{ marginBottom: 16 }}>{avisoOk}</div>}
+        {!esAdmin && <MisSolicitudesAprendiz recargar={recargarSolicitudes} />}
+
         {/* Buscador por cédula — ahora cualquier rol */}
         <div className="card" style={{ marginBottom: 20, borderLeft: '4px solid var(--role-primary, var(--green-600))' }}>
           <div className="card-body">
@@ -310,7 +321,7 @@ export default function UsuariosPage() {
 
         {/* NUEVO: aviso visible si falla la carga */}
         {errorCarga && <div className="alert alert-error" style={{ marginBottom: 16 }}>{errorCarga}</div>}
-        {avisoOk && <div className="alert alert-success" style={{ marginBottom: 16 }}><span>{avisoOk} <Link to="/historial">Ver en el historial →</Link></span></div>}
+        {esAdmin && avisoOk && <div className="alert alert-success" style={{ marginBottom: 16 }}><span>{avisoOk} <Link to="/historial">Ver en el historial →</Link></span></div>}
 
         {usuarios.length === 0 ? (
           esAdmin || q || estadoFiltro !== ''
@@ -544,6 +555,9 @@ export default function UsuariosPage() {
 
       {/* Aviso de activar/desactivar/eliminar (NUEVO, con ícono y botones diferenciados) */}
       {/* NUEVO: eliminar exige el cuestionario con motivo y soportes */}
+      <NuevoAprendizModal abierto={modalAprendiz} onClose={() => setModalAprendiz(false)}
+        onEnviada={(mensaje) => { setModalAprendiz(false); setAvisoOk(mensaje); setRecargarSolicitudes(n => n + 1); }} />
+
       {usuarioEliminar && (
         <EliminarUsuarioModal
           usuario={usuarioEliminar}

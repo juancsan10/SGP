@@ -250,3 +250,12 @@ export const solicitudesService = {
   create:   (data)        => api.post('/solicitudes', data),
   resolver: (id, estado, respuesta) => api.put(`/solicitudes/${id}/resolver`, { estado, respuesta }),
 };
+
+// NUEVO (punto 10, #19): el Instructor solicita crear un aprendiz y el
+// Administrador aprueba (se crea la cuenta y entra al equipo) o rechaza.
+export const solicitudesAprendizService = {
+  crear:    (data)        => api.post('/solicitudes/aprendices', data),
+  mias:     ()            => api.get('/solicitudes/aprendices/mias'),
+  getAll:   (params = {}) => api.get('/solicitudes/aprendices', { params }),
+  resolver: (id, estado, respuesta) => api.put(`/solicitudes/aprendices/${id}/resolver`, { estado, respuesta }),
+};

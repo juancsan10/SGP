@@ -1,13 +1,14 @@
 import { screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import SolicitudesPage from '../src/pages/SolicitudesPage.jsx';
-import { equiposService, proyectosService, solicitudesService } from '../src/services/api.js';
+import { equiposService, proyectosService, solicitudesAprendizService, solicitudesService } from '../src/services/api.js';
 import { renderConSesion } from './render-con-sesion.jsx';
 
 vi.mock('../src/services/api.js', () => ({
   solicitudesService: { mias: vi.fn(), tipos: vi.fn(), create: vi.fn(), getAll: vi.fn(), resolver: vi.fn() },
   equiposService: { listSolicitudes: vi.fn(), resolverSolicitud: vi.fn() },
   proyectosService: { getAll: vi.fn() },
+  solicitudesAprendizService: { mias: vi.fn(), getAll: vi.fn(), crear: vi.fn(), resolver: vi.fn() },
   // El contexto global carga la bandeja de notificaciones al montar
   notificacionesService: { getByUsuario: vi.fn().mockResolvedValue({ data: { data: [] } }) },
 }));
@@ -19,6 +20,8 @@ beforeEach(() => {
   proyectosService.getAll.mockResolvedValue({ data: { data: [] } });
   solicitudesService.getAll.mockResolvedValue({ data: { data: [], meta: { total: 0, limit: 5, offset: 0, resumen: { Pendiente: 0, Atendida: 0, Rechazada: 0 } } } });
   equiposService.listSolicitudes.mockResolvedValue({ data: { data: [] } });
+  solicitudesAprendizService.mias.mockResolvedValue({ data: { data: [] } });
+  solicitudesAprendizService.getAll.mockResolvedValue({ data: { data: [], meta: { total: 0, limit: 5, offset: 0, resumen: {} } } });
 });
 
 describe('SolicitudesPage (sección propia del menú)', () => {
