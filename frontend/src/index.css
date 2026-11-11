@@ -928,3 +928,35 @@ tbody tr:hover td { background: var(--slate-50); }
   .cal-evento:hover { transform: translateY(-1px); }
   .cal-mes, .cal-semana { animation: fade-up .3s cubic-bezier(.16,1,.3,1) backwards; }
 }
+
+/* ── Roles de equipo con etiqueta de color (NUEVO, punto 4) ───── */
+.etiqueta-rol {
+  display: inline-flex; align-items: center;
+  background: var(--rol-color, var(--slate-600)); color: var(--white);
+  font-size: 11.5px; font-weight: 700; line-height: 1.3;
+  padding: 3px 10px; border-radius: 99px; white-space: nowrap;
+}
+.roles-opciones { display: flex; flex-wrap: wrap; gap: 6px; }
+.rol-opcion {
+  border: 2px solid var(--rol-color, var(--slate-300)); background: var(--white);
+  color: var(--rol-color, var(--slate-600)); font: inherit; font-size: 12.5px; font-weight: 700;
+  padding: 5px 12px; border-radius: 99px; cursor: pointer; transition: background .12s, color .12s, transform .12s;
+}
+.rol-opcion:hover { background: var(--slate-50); }
+.rol-opcion.activa { background: var(--rol-color, var(--slate-600)); color: var(--white); }
+.rol-opcion.sin-rol { --rol-color: var(--slate-500); border-style: dashed; }
+.rol-opcion:focus-visible, .paleta-muestra:focus-visible { outline: 2px solid var(--slate-900); outline-offset: 2px; }
+.paleta-roles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.paleta-muestra {
+  width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+  background: var(--rol-color); border: 3px solid var(--white); box-shadow: 0 0 0 1px var(--slate-300);
+}
+.paleta-muestra.activa { box-shadow: 0 0 0 2px var(--slate-900); }
+.form-rol { margin-top: 10px; padding: 12px; border-radius: 10px; background: var(--slate-50); border: 1px solid var(--slate-200); }
+.roles-propios { margin-top: 10px; font-size: 13px; }
+.roles-propios summary { cursor: pointer; font-weight: 600; color: var(--slate-700); }
+.roles-propios ul { list-style: none; padding: 0; margin: 8px 0; display: flex; flex-direction: column; gap: 6px; }
+.roles-propios li { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+@media (prefers-reduced-motion: no-preference) {
+  .rol-opcion.activa { animation: icon-bounce .35s cubic-bezier(.34,1.56,.64,1); }
+}

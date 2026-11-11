@@ -13,6 +13,7 @@ import {
   comentariosService, archivosService, evaluacionesService, reunionesService, // NUEVOS
 } from '../services/api.js';
 import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha, Pagination, ConfirmModal, ModalHeader, NotaObligatorios, useModalAccesible } from '../components/helpers.jsx';
+import { EtiquetaRol, SelectorRolEquipo, CambiarRolModal } from '../components/RolesEquipo.jsx'; // NUEVO (punto 4)
 import RevisionProyecto from '../components/RevisionProyecto.jsx'; // NUEVO: supervisión del Administrador
 
 const LIMITE_ENTREGABLES = 8; // NUEVO: tamaño de página para la pestaña Entregables
@@ -93,7 +94,8 @@ export default function ProyectoDetallePage() {
 
   const [formFase,  setFormFase]  = useState({ nombre_fase:'', descripcion:'', fecha_inicio:'', fecha_fin:'' });
   const [formTarea, setFormTarea] = useState({ titulo:'', descripcion:'', prioridad:'Media', fecha_vencimiento:'', id_asignado:'' });
-  const [formEquip, setFormEquip] = useState({ id_usuario:'', rol_en_equipo:'' });
+  const [formEquip, setFormEquip] = useState({ id_usuario:'', rol_en_equipo:'', color_rol:null });
+  const [miembroRol, setMiembroRol] = useState(null); // NUEVO (punto 4): cambiar rol de un miembro
   const [formRepo,  setFormRepo]  = useState({ url_github:'', rama_principal:'main' });
   const [formEntregable, setFormEntregable] = useState({ nombre:'', descripcion:'', fecha_entrega:'', url_drive:'', version:'1.0', id_fase:'' }); // NUEVO
   const [formReunion,    setFormReunion]    = useState({ titulo:'', descripcion:'', fecha_reunion:'', lugar:'' }); // NUEVO
@@ -208,7 +210,7 @@ export default function ProyectoDetallePage() {
   async function crearEquipo(e) {
     e.preventDefault(); setSaving(true); setSaveError('');
     try {
-      await equiposService.create({ ...formEquip, id_proyecto: id });
+      await equiposService.create({ ...formEquip, color_rol: formEquip.rol_en_equipo ? formEquip.color_rol : null, id_proyecto: id });
       setModalEquip(false);
       const r = await equiposService.getByProyecto(id);
       setEquipo(r.data.data || []);
@@ -729,7 +731,7 @@ export default function ProyectoDetallePage() {
           <div>
             {canCreate && (
               <div style={{ marginBottom:16 }}>
-                <button className="btn btn-primary" onClick={() => { setFormEquip({id_usuario:'',rol_en_equipo:''}); setSaveError(''); setModalEquip(true); }}>
+                <button className="btn btn-primary" onClick={() => { setFormEquip({id_usuario:'',rol_en_equipo:'',color_rol:null}); setSaveError(''); setModalEquip(true); }}>
                   + Agregar miembro
                 </button>
               </div>
@@ -773,14 +775,17 @@ export default function ProyectoDetallePage() {
                           <td><strong>{m.nombre_usuario}</strong></td>
                           <td>{m.correo}</td>
                           <td><span className="badge badge-blue">{m.rol}</span></td>
-                          <td>{m.rol_en_equipo || '—'}</td>
+                          <td><EtiquetaRol nombre={m.rol_en_equipo} color={m.color_rol} /></td>
                           {/* NUEVO: el instructor ya no borra directo — solicita la
                               eliminación y un administrador la aprueba o rechaza. */}
                           {esInstructor && (
                             <td>
-                              <button className="btn btn-secondary btn-sm" onClick={() => { setModalSolicitarBaja(m); setMotivoBaja(''); setSaveError(''); }}>
-                                Solicitar baja
-                              </button>
+                              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                                <button className="btn btn-secondary btn-sm" onClick={() => setMiembroRol(m)}>🏷️ Cambiar rol</button>
+                                <button className="btn btn-secondary btn-sm" onClick={() => { setModalSolicitarBaja(m); setMotivoBaja(''); setSaveError(''); }}>
+                                  Solicitar baja
+                                </button>
+                              </div>
                             </td>
                           )}
                         </tr>
@@ -1063,7 +1068,7 @@ export default function ProyectoDetallePage() {
       {/* ─── Modal Equipo ──────────────────────────── */}
       <FormModal
         open={modalEquip} title="Agregar miembro al equipo" icono="👥" textoGuardar="Agregar miembro"
-        descripcion="Suma un aprendiz al proyecto y define qué papel cumple dentro del equipo."
+        descripcion="Suma un aprendiz al proyecto y elige su rol: cada rol tiene una etiqueta de color."
         onClose={() => setModalEquip(false)}
         onSubmit={crearEquipo} saving={saving} error={saveError}
       >
@@ -1085,11 +1090,22 @@ export default function ProyectoDetallePage() {
           </span>
         </div>
         <div className="form-group">
-          <label className="form-label" htmlFor="equipo-rol">Rol en el proyecto</label>
-          <input id="equipo-rol" className="form-input" placeholder="Ej: Líder técnico" maxLength={100} value={formEquip.rol_en_equipo}
-            onChange={e=>setFormEquip({...formEquip,rol_en_equipo:e.target.value})} />
+          <span className="form-label" id="equipo-rol-etiqueta">Rol en el proyecto</span>
+          <SelectorRolEquipo idEtiqueta="equipo-rol-etiqueta"
+            valor={{ nombre: formEquip.rol_en_equipo, color: formEquip.color_rol }}
+            onChange={r => setFormEquip(f => ({ ...f, rol_en_equipo: r.nombre, color_rol: r.color }))} />
         </div>
       </FormModal>
+
+      {/* ─── Modal Cambiar rol de un miembro (NUEVO, punto 4) ─── */}
+      {miembroRol && (
+        <CambiarRolModal miembro={miembroRol} onClose={() => setMiembroRol(null)}
+          onGuardado={async () => {
+            setMiembroRol(null);
+            const r = await equiposService.getByProyecto(id);
+            setEquipo(r.data.data || []);
+          }} />
+      )}
 
       {/* ─── Modal Solicitar baja de equipo (NUEVO) ──── */}
       <FormModal
