@@ -26,6 +26,7 @@ CREATE TABLE usuarios (
     contrasena VARCHAR(255) NOT NULL,
     ficha VARCHAR(50),
     programa_formacion VARCHAR(150),
+    firma VARCHAR(150) NULL,               -- firma para los mensajes (punto 6, #19)
     id_rol INT NOT NULL,
     estado BOOLEAN DEFAULT TRUE,
     fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -138,8 +139,14 @@ CREATE TABLE mensajes (
     fecha_edicion DATETIME NULL,
     id_remitente INT NULL,                 -- NULL = el autor fue eliminado
     id_proyecto INT NOT NULL,
+    -- Punto 6 (#19): mensajes enriquecidos
+    tipo VARCHAR(20) NOT NULL DEFAULT 'texto',  -- texto | encuesta | aviso
+    id_respuesta_a INT NULL,                    -- mensaje al que responde
+    firma VARCHAR(150) NULL,                    -- copia de la firma al enviarlo
+    fijado BOOLEAN NOT NULL DEFAULT FALSE,      -- avisos fijados arriba del chat
     FOREIGN KEY (id_remitente) REFERENCES usuarios(id_usuario) ON DELETE SET NULL,
-    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto)
+    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto),
+    FOREIGN KEY (id_respuesta_a) REFERENCES mensajes(id_mensaje) ON DELETE SET NULL
 );
 
 -- ============================================
@@ -381,4 +388,28 @@ CREATE TABLE roles_equipo (
     fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_rol_equipo_instructor (id_instructor, nombre),
     FOREIGN KEY (id_instructor) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
+);
+
+-- ============================================
+-- TABLAS ENCUESTA_OPCIONES / ENCUESTA_VOTOS
+-- Encuestas dentro del chat del proyecto (mensajes.tipo = 'encuesta').
+-- ============================================
+CREATE TABLE encuesta_opciones (
+    id_opcion INT AUTO_INCREMENT PRIMARY KEY,
+    id_mensaje INT NOT NULL,
+    texto VARCHAR(150) NOT NULL,
+    orden TINYINT UNSIGNED NOT NULL,
+    FOREIGN KEY (id_mensaje) REFERENCES mensajes(id_mensaje) ON DELETE CASCADE
+);
+
+CREATE TABLE encuesta_votos (
+    id_voto INT AUTO_INCREMENT PRIMARY KEY,
+    id_mensaje INT NOT NULL,
+    id_opcion INT NOT NULL,
+    id_usuario INT NOT NULL,
+    fecha_voto DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_voto_usuario (id_mensaje, id_usuario),   -- un voto por persona (puede cambiarlo)
+    FOREIGN KEY (id_mensaje) REFERENCES mensajes(id_mensaje) ON DELETE CASCADE,
+    FOREIGN KEY (id_opcion) REFERENCES encuesta_opciones(id_opcion) ON DELETE CASCADE,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );

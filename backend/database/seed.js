@@ -87,7 +87,7 @@ async function seed() {
 
     // Limpiar tablas en orden inverso de dependencias
     const tablas = [
-      'password_reset_tokens', 'entregas_tareas', 'historial_cambios', 'notificaciones', 'mensajes', 'repositorios',
+      'password_reset_tokens', 'entregas_tareas', 'historial_cambios', 'notificaciones', 'encuesta_votos', 'encuesta_opciones', 'mensajes', 'repositorios',
       'comentarios', 'archivos', 'evaluaciones', 'reuniones', 'github_integration', 'solicitudes_equipo',
       'solicitudes', 'solicitudes_aprendiz', 'roles_equipo', 'eliminaciones_archivos', 'eliminaciones_usuario',
       'entregables', 'tareas', 'fases_proyecto', 'equipos_proyecto',
