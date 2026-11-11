@@ -335,3 +335,33 @@ CREATE TABLE solicitudes (
     FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto) ON DELETE SET NULL,
     FOREIGN KEY (id_admin_resuelve) REFERENCES usuarios(id_usuario) ON DELETE SET NULL
 );
+
+-- ============================================
+-- TABLA SOLICITUDES_APRENDIZ
+-- El Instructor no crea aprendices directamente: envía una solicitud con
+-- todos los datos y el Administrador la aprueba (se crea la cuenta y entra
+-- al equipo del proyecto) o la rechaza con una respuesta.
+-- ============================================
+CREATE TABLE solicitudes_aprendiz (
+    id_solicitud_aprendiz INT AUTO_INCREMENT PRIMARY KEY,
+    id_instructor INT NOT NULL,
+    id_proyecto INT NULL,                              -- equipo al que entra al aprobarse
+    nombres VARCHAR(100) NOT NULL,
+    apellidos VARCHAR(100) NOT NULL,
+    correo VARCHAR(150) NOT NULL,
+    identificacion VARCHAR(30) NOT NULL,
+    ficha VARCHAR(50) NOT NULL,
+    programa_formacion VARCHAR(150) NOT NULL,
+    contrasena_hash VARCHAR(255) NOT NULL,             -- contraseña temporal ya cifrada (bcrypt)
+    estado VARCHAR(20) NOT NULL DEFAULT 'Pendiente',   -- Pendiente | Aprobada | Rechazada
+    respuesta_admin TEXT,
+    id_admin_resuelve INT NULL,
+    id_usuario_creado INT NULL,
+    fecha_solicitud DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fecha_resolucion DATETIME NULL,
+    INDEX idx_sa_estado (estado),
+    FOREIGN KEY (id_instructor) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto) ON DELETE SET NULL,
+    FOREIGN KEY (id_admin_resuelve) REFERENCES usuarios(id_usuario) ON DELETE SET NULL,
+    FOREIGN KEY (id_usuario_creado) REFERENCES usuarios(id_usuario) ON DELETE SET NULL
+);

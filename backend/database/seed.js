@@ -89,12 +89,18 @@ async function seed() {
     const tablas = [
       'password_reset_tokens', 'entregas_tareas', 'historial_cambios', 'notificaciones', 'mensajes', 'repositorios',
       'comentarios', 'archivos', 'evaluaciones', 'reuniones', 'github_integration', 'solicitudes_equipo',
-      'solicitudes', 'eliminaciones_archivos', 'eliminaciones_usuario',
+      'solicitudes', 'solicitudes_aprendiz', 'eliminaciones_archivos', 'eliminaciones_usuario',
       'entregables', 'tareas', 'fases_proyecto', 'equipos_proyecto',
       'proyectos', 'usuarios', 'roles',
     ];
     for (const tabla of tablas) {
-      await conn.execute(`TRUNCATE TABLE ${tabla}`);
+      try {
+        await conn.execute(`TRUNCATE TABLE ${tabla}`);
+      } catch (err) {
+        // Base creada antes de una tabla nueva: avisar en vez de abortar el seed.
+        if (err.code !== 'ER_NO_SUCH_TABLE') throw err;
+        console.warn(`⚠️   La tabla ${tabla} no existe: aplica la migración de database/ o recrea con "docker compose down -v".`);
+      }
     }
     await conn.execute('SET FOREIGN_KEY_CHECKS = 1');
     console.log('🗑️   Tablas limpiadas\n');
