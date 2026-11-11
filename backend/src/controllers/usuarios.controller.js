@@ -11,15 +11,37 @@ const CC_RE = /^[0-9]{5,15}$/;
 // GET /api/v1/usuarios
 // NUEVO: filtros por rol, estado y búsqueda de texto (nombre, apellido,
 // identificación o correo) — antes solo soportaba paginación simple.
+// Instructor: solo Aprendices. Por defecto los de sus proyectos (con la
+// columna «proyectos»); con ?alcance=disponibles, los activos para armar equipos.
 const getAll = async (req, res) => {
   try {
     const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
     const offset = Math.max(Number(req.query.offset) || 0, 0);
     const { rol, estado, q } = req.query;
+    const esInstructor = req.user?.rol === 'Instructor';
 
     const condiciones = [];
     const params = [];
-    if (rol) { condiciones.push('r.nombre_rol = ?'); params.push(rol); }
+    // Columnas extra solo para el Instructor (proyectos suyos de cada aprendiz).
+    let columnasExtra = '';
+    const paramsColumnas = [];
+    if (esInstructor) {
+      // El Instructor solo ve Aprendices (nunca administradores ni otros instructores).
+      condiciones.push("r.nombre_rol = 'Aprendiz'");
+      if (req.query.alcance === 'disponibles') {
+        // Para armar equipos: aprendices activos, aún sin proyecto con él.
+        condiciones.push('u.estado = 1');
+      } else {
+        // Por defecto: solo los aprendices asignados a alguno de sus proyectos.
+        condiciones.push(`EXISTS (SELECT 1 FROM equipos_proyecto e JOIN proyectos p ON p.id_proyecto = e.id_proyecto
+                                  WHERE e.id_usuario = u.id_usuario AND p.id_instructor = ?)`);
+        params.push(req.user.id);
+        columnasExtra = `, (SELECT GROUP_CONCAT(DISTINCT p.nombre ORDER BY p.nombre SEPARATOR ', ')
+                            FROM equipos_proyecto e JOIN proyectos p ON p.id_proyecto = e.id_proyecto
+                            WHERE e.id_usuario = u.id_usuario AND p.id_instructor = ?) AS proyectos`;
+        paramsColumnas.push(req.user.id);
+      }
+    } else if (rol) { condiciones.push('r.nombre_rol = ?'); params.push(rol); }
     if (estado !== undefined && estado !== '') { condiciones.push('u.estado = ?'); params.push(estado === 'true' || estado === '1' ? 1 : 0); }
     if (q) {
       condiciones.push('(u.nombres LIKE ? OR u.apellidos LIKE ? OR u.identificacion LIKE ? OR u.correo LIKE ?)');
@@ -29,10 +51,10 @@ const getAll = async (req, res) => {
     const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
 
     const [rows] = await db.query(
-      `SELECT u.id_usuario, u.nombres, u.apellidos, u.identificacion, u.correo, u.ficha, u.programa_formacion, u.estado, u.fecha_registro, r.nombre_rol AS rol
+      `SELECT u.id_usuario, u.nombres, u.apellidos, u.identificacion, u.correo, u.ficha, u.programa_formacion, u.estado, u.fecha_registro, r.nombre_rol AS rol${columnasExtra}
        FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol ${where}
        ORDER BY u.fecha_registro DESC LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
+      [...paramsColumnas, ...params, limit, offset]
     );
     const [[{ total }]] = await db.query(
       `SELECT COUNT(*) AS total FROM usuarios u JOIN roles r ON u.id_rol = r.id_rol ${where}`,
@@ -72,7 +94,9 @@ const buscarPorIdentificacion = async (req, res) => {
     }
     const condiciones = ['u.identificacion = ?'];
     const params = [identificacion];
-    if (rol) { condiciones.push('r.nombre_rol = ?'); params.push(rol); }
+    // El Instructor solo puede encontrar Aprendices.
+    const rolBuscado = req.user?.rol === 'Instructor' ? 'Aprendiz' : rol;
+    if (rolBuscado) { condiciones.push('r.nombre_rol = ?'); params.push(rolBuscado); }
 
     const [rows] = await db.query(
       `SELECT u.id_usuario, u.nombres, u.apellidos, u.identificacion, u.correo, u.ficha, u.programa_formacion, u.estado, r.nombre_rol AS rol

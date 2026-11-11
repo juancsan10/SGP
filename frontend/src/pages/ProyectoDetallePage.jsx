@@ -127,7 +127,9 @@ export default function ProyectoDetallePage() {
         equiposService.getByProyecto(id),
         mensajesService.getByProyecto(id),
         repositoriosService.getByProyecto(id),
-        usuariosService.getAll(),
+        // Aprendices activos para armar el equipo y asignar tareas (el Instructor
+        // recibe también los que aún no están en sus proyectos).
+        usuariosService.getAll({ rol: 'Aprendiz', alcance: 'disponibles', limit: 100 }),
         reunionesService.getByProyecto(id),
       ]);
       const [pRes, fRes, tRes, eRes, mRes, rRes, uRes, reunRes] = resultados;
