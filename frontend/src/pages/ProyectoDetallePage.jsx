@@ -24,6 +24,15 @@ const LIMITE_ENTREGABLES = 8; // NUEVO: tamaño de página para la pestaña Entr
 // (RF5.3 — antes esta tabla ni siquiera tenía controlador en el backend).
 const TABS = ['Resumen','Fases','Entregables','Tareas','Equipo','Mensajes','Repositorios','Reuniones'];
 
+// RN-001: un aprendiz puede estar como máximo en 2 proyectos activos y debe
+// tener su programa de formación asignado (el backend valida lo mismo).
+const MAX_PROYECTOS_APRENDIZ = 2;
+export function motivoNoDisponible(u) {
+  if (!String(u.programa_formacion || '').trim()) return 'sin programa asignado';
+  if (Number(u.proyectos_activos) >= MAX_PROYECTOS_APRENDIZ) return 'ya tiene el máximo de proyectos';
+  return null;
+}
+
 // El motivo de una solicitud de baja es obligatorio (mismo mínimo que valida el backend).
 const MOTIVO_BAJA_MIN = 10;
 
@@ -948,15 +957,20 @@ export default function ProyectoDetallePage() {
           <select id="equipo-usuario" className="form-select" value={formEquip.id_usuario}
             onChange={e=>setFormEquip({...formEquip,id_usuario:e.target.value})} required aria-describedby="equipo-usuario-ayuda">
             <option value="">Seleccionar aprendiz</option>
-            {usuarios.filter(u=>u.rol === 'Aprendiz' && !equipo.find(e=>e.id_usuario===u.id_usuario)).map(u=>(
-              <option key={u.id_usuario} value={u.id_usuario}>
-                {u.nombres} {u.apellidos} ({u.rol})
-              </option>
-            ))}
+            {usuarios.filter(u=>u.rol === 'Aprendiz' && !equipo.find(e=>e.id_usuario===u.id_usuario)).map(u=>{
+              const motivo = motivoNoDisponible(u);
+              return (
+                <option key={u.id_usuario} value={u.id_usuario} disabled={!!motivo}>
+                  {u.nombres} {u.apellidos} · {u.programa_formacion || 'sin programa'}
+                  {u.proyectos_activos !== undefined ? ` · ${u.proyectos_activos}/${MAX_PROYECTOS_APRENDIZ} proyectos` : ''}
+                  {motivo ? ` — ${motivo}` : ''}
+                </option>
+              );
+            })}
           </select>
           <span className="form-hint" id="equipo-usuario-ayuda">
             {usuarios.some(u=>u.rol === 'Aprendiz' && !equipo.find(e=>e.id_usuario===u.id_usuario))
-              ? 'Solo aparecen los aprendices que aún no están en este equipo.'
+              ? `Cada aprendiz tiene un programa de formación y puede estar como máximo en ${MAX_PROYECTOS_APRENDIZ} proyectos activos.`
               : 'Todos los aprendices disponibles ya hacen parte del equipo.'}
           </span>
         </div>
