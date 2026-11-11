@@ -45,15 +45,21 @@ const create = async (req, res) => {
       [titulo, descripcion || null, fecha_inicio || null, fecha_vencimiento || null, prioridad || 'Media', id_proyecto, id_asignado]
     );
 
-    // Notificación automática en tiempo real al asignado (RN-021 / RF4.4)
-    await notificacionesService.crearYNotificar({
-      titulo: `Nueva tarea asignada: ${titulo}`,
-      mensaje: `Se te ha asignado la tarea "${titulo}" en el proyecto.`,
-      tipo: 'tarea',
-      prioridad: prioridad || 'Media',
-      id_usuario: id_asignado,
-      id_creador: req.user?.id
-    });
+    // Notificación automática en tiempo real al asignado (RN-021 / RF4.4).
+    // La tarea ya quedó guardada: si el aviso falla se registra en el log, pero no se
+    // responde 500 (la persona creería que no se creó y la crearía otra vez).
+    try {
+      await notificacionesService.crearYNotificar({
+        titulo: `Nueva tarea asignada: ${titulo}`,
+        mensaje: `Se te ha asignado la tarea "${titulo}" en el proyecto.`,
+        tipo: 'tarea',
+        prioridad: prioridad || 'Media',
+        id_usuario: id_asignado,
+        id_creador: req.user?.id
+      });
+    } catch (avisoErr) {
+      console.error('[notificaciones] No se pudo avisar la nueva tarea:', avisoErr.message);
+    }
 
     await registrarCambio('tareas', result.insertId, 'INSERT', req.user?.id);
     return res.status(201).json({ success: true, message: 'Tarea creada', data: { id_tarea: result.insertId } });
