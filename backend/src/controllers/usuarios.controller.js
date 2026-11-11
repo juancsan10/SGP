@@ -8,6 +8,10 @@ const { UPLOAD_DIR } = require('../middlewares/upload.middleware');
 const CORREO_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const CC_RE = /^[0-9]{5,15}$/;
 
+// Proyectos activos (no finalizados ni cancelados) de cada usuario — RN-001.
+const SQL_PROYECTOS_ACTIVOS = `, (SELECT COUNT(*) FROM equipos_proyecto e JOIN proyectos p ON p.id_proyecto = e.id_proyecto
+                                 WHERE e.id_usuario = u.id_usuario AND p.estado NOT IN ('Finalizado','Cancelado')) AS proyectos_activos`;
+
 // GET /api/v1/usuarios
 // NUEVO: filtros por rol, estado y búsqueda de texto (nombre, apellido,
 // identificación o correo) — antes solo soportaba paginación simple.
@@ -29,8 +33,10 @@ const getAll = async (req, res) => {
       // El Instructor solo ve Aprendices (nunca administradores ni otros instructores).
       condiciones.push("r.nombre_rol = 'Aprendiz'");
       if (req.query.alcance === 'disponibles') {
-        // Para armar equipos: aprendices activos, aún sin proyecto con él.
+        // Para armar equipos: aprendices activos, con cuántos proyectos activos
+        // tienen ya (RN-001: máximo 2) para que la interfaz lo muestre.
         condiciones.push('u.estado = 1');
+        columnasExtra = SQL_PROYECTOS_ACTIVOS;
       } else {
         // Por defecto: solo los aprendices asignados a alguno de sus proyectos.
         condiciones.push(`EXISTS (SELECT 1 FROM equipos_proyecto e JOIN proyectos p ON p.id_proyecto = e.id_proyecto
@@ -41,7 +47,10 @@ const getAll = async (req, res) => {
                             WHERE e.id_usuario = u.id_usuario AND p.id_instructor = ?) AS proyectos`;
         paramsColumnas.push(req.user.id);
       }
-    } else if (rol) { condiciones.push('r.nombre_rol = ?'); params.push(rol); }
+    } else {
+      if (rol) { condiciones.push('r.nombre_rol = ?'); params.push(rol); }
+      if (req.query.alcance === 'disponibles') columnasExtra = SQL_PROYECTOS_ACTIVOS;
+    }
     if (estado !== undefined && estado !== '') { condiciones.push('u.estado = ?'); params.push(estado === 'true' || estado === '1' ? 1 : 0); }
     if (q) {
       condiciones.push('(u.nombres LIKE ? OR u.apellidos LIKE ? OR u.identificacion LIKE ? OR u.correo LIKE ?)');

@@ -3,6 +3,9 @@ const { registrarCambio } = require('../services/historial.service');
 const notificacionesService = require('../services/notificaciones.service');
 const { esColorValido } = require('../utils/roles-equipo');
 
+// RN-001: un aprendiz puede estar como máximo en 2 proyectos activos.
+const MAX_PROYECTOS_APRENDIZ = 2;
+
 // Color de la etiqueta del rol: debe ser de la paleta (o vacío).
 function colorRol(valor) {
   if (valor === undefined || valor === null || valor === '') return { color: null };
@@ -26,12 +29,16 @@ const create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No se pueden modificar equipos de un proyecto finalizado o cancelado' });
     }
 
-    const [usuario] = await db.query('SELECT id_usuario, id_rol, estado FROM usuarios WHERE id_usuario = ?', [id_usuario]);
+    const [usuario] = await db.query('SELECT id_usuario, id_rol, estado, programa_formacion FROM usuarios WHERE id_usuario = ?', [id_usuario]);
     if (!usuario.length || !usuario[0].estado) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado o inactivo' });
     }
     if (Number(usuario[0].id_rol) !== 3) {
       return res.status(400).json({ success: false, message: 'Solo se pueden asignar aprendices a un proyecto' });
+    }
+    // NUEVO (#19): el aprendiz debe tener asignado su programa de formación.
+    if (!String(usuario[0].programa_formacion || '').trim()) {
+      return res.status(400).json({ success: false, message: 'El aprendiz no tiene programa de formación asignado; el Administrador debe registrarlo antes de agregarlo a un proyecto' });
     }
 
     const [duplicado] = await db.query(
@@ -50,8 +57,8 @@ const create = async (req, res) => {
          WHERE ep.id_usuario = ? AND p.estado NOT IN ('Finalizado','Cancelado')`,
         [id_usuario]
       );
-      if (activos[0].total >= 2) {
-        return res.status(400).json({ success: false, message: 'RN-001: El aprendiz ya tiene 2 proyectos activos' });
+      if (Number(activos[0].total) >= MAX_PROYECTOS_APRENDIZ) {
+        return res.status(400).json({ success: false, message: `El aprendiz ya está en ${MAX_PROYECTOS_APRENDIZ} proyectos activos, que es el máximo permitido (RN-001)` });
       }
     }
 
