@@ -1,14 +1,34 @@
 const db = require('../config/db');
 
+// Alcance del Instructor en el historial: sus propias acciones y las de los
+// aprendices asignados a alguno de sus proyectos.
+//   autor = 'yo'         -> solo las suyas
+//   autor = 'aprendices' -> solo las de sus aprendices
+//   (otro valor)         -> ambas
+const SUB_APRENDICES = `SELECT e.id_usuario FROM equipos_proyecto e
+                        JOIN proyectos p ON p.id_proyecto = e.id_proyecto
+                        WHERE p.id_instructor = ?`;
+function alcanceInstructor(user, autor) {
+  if (autor === 'yo') return { sql: 'h.id_usuario = ?', params: [user.id] };
+  if (autor === 'aprendices') return { sql: `h.id_usuario IN (${SUB_APRENDICES})`, params: [user.id] };
+  return { sql: `(h.id_usuario = ? OR h.id_usuario IN (${SUB_APRENDICES}))`, params: [user.id, user.id] };
+}
+
 // GET /api/v1/historial/:tabla
 const getByTabla = async (req, res) => {
   try {
+    const condiciones = ['h.tabla_afectada = ?'];
+    const params = [req.params.tabla];
+    if (req.user?.rol === 'Instructor') {
+      const alcance = alcanceInstructor(req.user);
+      condiciones.push(alcance.sql); params.push(...alcance.params);
+    }
     const [rows] = await db.query(
       `SELECT h.*, COALESCE(CONCAT(u.nombres, ' ', u.apellidos), h.usuario_eliminado) AS usuario_nombre
        FROM historial_cambios h
        LEFT JOIN usuarios u ON h.id_usuario = u.id_usuario
-       WHERE h.tabla_afectada = ? ORDER BY h.fecha_cambio DESC LIMIT 100`,
-      [req.params.tabla]
+       WHERE ${condiciones.join(' AND ')} ORDER BY h.fecha_cambio DESC LIMIT 100`,
+      params
     );
     return res.json({ success: true, data: rows });
   } catch (err) {
@@ -16,7 +36,7 @@ const getByTabla = async (req, res) => {
   }
 };
 
-// GET /api/v1/historial
+// GET /api/v1/historial  (Administrador: todo · Instructor: lo suyo y lo de sus aprendices)
 // NUEVO: filtros completos (tabla, acción, usuario, rango de fechas,
 // búsqueda de texto) + paginación real — antes solo traía los últimos 200
 // registros sin forma de acotar la búsqueda.
@@ -28,6 +48,10 @@ const getAll = async (req, res) => {
 
     const condiciones = [];
     const params = [];
+    if (req.user?.rol === 'Instructor') {
+      const alcance = alcanceInstructor(req.user, req.query.autor);
+      condiciones.push(alcance.sql); params.push(...alcance.params);
+    }
     if (tabla) { condiciones.push('h.tabla_afectada = ?'); params.push(tabla); }
     if (accion) { condiciones.push('h.accion LIKE ?'); params.push(`%${accion}%`); }
     if (id_usuario) { condiciones.push('h.id_usuario = ?'); params.push(id_usuario); }
@@ -41,9 +65,11 @@ const getAll = async (req, res) => {
     const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
 
     const [rows] = await db.query(
-      `SELECT h.*, COALESCE(CONCAT(u.nombres, ' ', u.apellidos), h.usuario_eliminado) AS usuario_nombre
+      `SELECT h.*, COALESCE(CONCAT(u.nombres, ' ', u.apellidos), h.usuario_eliminado) AS usuario_nombre,
+              ro.nombre_rol AS usuario_rol
        FROM historial_cambios h
        LEFT JOIN usuarios u ON h.id_usuario = u.id_usuario
+       LEFT JOIN roles ro ON ro.id_rol = u.id_rol
        ${where}
        ORDER BY h.fecha_cambio DESC LIMIT ? OFFSET ?`,
       [...params, limit, offset]
