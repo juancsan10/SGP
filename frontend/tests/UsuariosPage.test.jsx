@@ -17,6 +17,8 @@ vi.mock('../src/services/api.js', async (importOriginal) => {
 });
 
 const INSTRUCTOR_LOGUEADO = { id: 2, nombres: 'Laura', apellidos: 'Gómez', rol: 'Instructor' };
+// Solo el Administrador crea instructores (POST /auth/users es solo Administrador).
+const ADMIN_LOGUEADO = { id: 1, nombres: 'Diana', apellidos: 'Ríos', rol: 'Administrador' };
 
 const USUARIOS_MOCK = [
   {
@@ -53,7 +55,7 @@ describe('UsuariosPage', () => {
       },
     });
 
-    renderConSesion(<UsuariosPage />, { usuario: INSTRUCTOR_LOGUEADO, ruta: '/usuarios' });
+    renderConSesion(<UsuariosPage />, { usuario: ADMIN_LOGUEADO, ruta: '/usuarios' });
 
     expect(await screen.findByRole('heading', { name: 'Usuarios' })).toBeInTheDocument();
     expect(screen.getByText('Carlos Andrés Herrera Gómez')).toBeInTheDocument();
@@ -66,7 +68,7 @@ describe('UsuariosPage', () => {
       data: { data: USUARIOS_MOCK, meta: { total: 2, limit: 10, offset: 0 } },
     });
 
-    renderConSesion(<UsuariosPage />, { usuario: INSTRUCTOR_LOGUEADO, ruta: '/usuarios' });
+    renderConSesion(<UsuariosPage />, { usuario: ADMIN_LOGUEADO, ruta: '/usuarios' });
 
     const btnNuevo = await screen.findByRole('button', { name: /Nuevo instructor/i });
     await user.click(btnNuevo);
@@ -96,7 +98,7 @@ describe('UsuariosPage', () => {
       data: { success: true, message: 'Usuario creado' },
     });
 
-    renderConSesion(<UsuariosPage />, { usuario: INSTRUCTOR_LOGUEADO, ruta: '/usuarios' });
+    renderConSesion(<UsuariosPage />, { usuario: ADMIN_LOGUEADO, ruta: '/usuarios' });
 
     const btnNuevo = await screen.findByRole('button', { name: /Nuevo instructor/i });
     await user.click(btnNuevo);
@@ -117,5 +119,56 @@ describe('UsuariosPage', () => {
         identificacion: '12345678',
       }));
     });
+  });
+});
+
+describe('UsuariosPage como Instructor', () => {
+  const APRENDICES = [
+    { id_usuario: 4, nombres: 'Carlos', apellidos: 'Herrera', correo: 'carlos.herrera@sgpsena.local',
+      identificacion: '1098765432', rol: 'Aprendiz', estado: 1, proyectos: 'Inventario, SGP' },
+  ];
+
+  it('should show only the apprentices of the instructor projects, without admin actions', async () => {
+    // Arrange
+    vi.mocked(usuariosService.getAll).mockResolvedValue({ data: { data: APRENDICES, meta: { total: 1, limit: 10, offset: 0 } } });
+
+    // Act
+    renderConSesion(<UsuariosPage />, { usuario: INSTRUCTOR_LOGUEADO, ruta: '/usuarios' });
+
+    // Assert
+    expect(await screen.findByText('Carlos Herrera')).toBeInTheDocument();
+    expect(screen.getByText('1 aprendiz(ces) asignados a tus proyectos')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Proyecto(s)' })).toBeInTheDocument();
+    expect(screen.getByText('Inventario, SGP')).toBeInTheDocument();
+    for (const nombre of [/Nuevo instructor/i, /Desactivar/i, /Activar/i, /Eliminar/i, /Editar/i]) {
+      expect(screen.queryByRole('button', { name: nombre })).not.toBeInTheDocument();
+    }
+    expect(screen.queryByRole('combobox', { name: 'Filtrar por rol' })).not.toBeInTheDocument();
+    expect(usuariosService.getAll).toHaveBeenCalledWith(expect.not.objectContaining({ rol: expect.anything() }));
+  });
+
+  it('should explain how apprentices appear when the instructor has none yet', async () => {
+    // Arrange
+    vi.mocked(usuariosService.getAll).mockResolvedValue({ data: { data: [], meta: { total: 0, limit: 10, offset: 0 } } });
+
+    // Act
+    renderConSesion(<UsuariosPage />, { usuario: INSTRUCTOR_LOGUEADO, ruta: '/usuarios' });
+
+    // Assert
+    expect(await screen.findByText('Aún no tienes aprendices asignados')).toBeInTheDocument();
+  });
+
+  it('should keep every admin action for the Administrador', async () => {
+    // Arrange
+    vi.mocked(usuariosService.getAll).mockResolvedValue({ data: { data: APRENDICES, meta: { total: 1, limit: 10, offset: 0 } } });
+
+    // Act
+    renderConSesion(<UsuariosPage />, { usuario: ADMIN_LOGUEADO, ruta: '/usuarios' });
+
+    // Assert
+    expect(await screen.findByRole('button', { name: /Desactivar/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Eliminar/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Nuevo instructor/i })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Proyecto(s)' })).not.toBeInTheDocument();
   });
 });

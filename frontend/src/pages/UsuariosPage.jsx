@@ -1,10 +1,15 @@
 // =====================================================
 // pages/UsuariosPage.jsx
-// Gestión de usuarios (Admin/Instructor)
+// Gestión de usuarios.
+// · Administrador: todos los usuarios; crea instructores, activa,
+//   desactiva y elimina.
+// · Instructor: solo consulta los aprendices asignados a sus proyectos
+//   (el backend filtra); no ve acciones de activar, desactivar ni eliminar.
 // =====================================================
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { usuariosService, authService, passwordService } from '../services/api.js';
+import { useAuth } from '../context/AuthContext.jsx';
 import { LoadingCenter, EmptyState, formatFecha, Pagination, ConfirmModal, ModalHeader, NotaObligatorios, useModalAccesible } from '../components/helpers.jsx';
 import EliminarUsuarioModal from '../components/EliminarUsuarioModal.jsx'; // NUEVO: cuestionario de eliminación
 import { validarNombre, validarCorreo, validarCc, validarPassword } from '../utils/validaciones.js';
@@ -12,6 +17,7 @@ import { validarNombre, validarCorreo, validarCc, validarPassword } from '../uti
 const LIMITE = 10;
 
 export default function UsuariosPage() {
+  const { esAdmin } = useAuth();
   const [usuarios, setUsuarios] = useState([]);
   const [meta, setMeta] = useState({ total: 0, limit: LIMITE, offset: 0 });
   const [loading, setLoading] = useState(true);
@@ -40,7 +46,7 @@ export default function UsuariosPage() {
   const [enviandoReset, setEnviandoReset] = useState(false);
   const [resetMsg, setResetMsg] = useState('');
 
-  // ── Modal crear (solo Instructor: el Administrador es único) ──
+  // ── Modal crear instructor (solo Administrador) ──
   const [modalCrear, setModalCrear] = useState(false);
   const refModal = useModalAccesible(modal, () => setModal(false));
   const refModalCrear = useModalAccesible(modalCrear, () => setModalCrear(false));
@@ -62,7 +68,7 @@ export default function UsuariosPage() {
     try {
       const params = { limit: LIMITE, offset };
       if (q) params.q = q;
-      if (rolFiltro) params.rol = rolFiltro;
+      if (rolFiltro && esAdmin) params.rol = rolFiltro;
       if (estadoFiltro !== '') params.estado = estadoFiltro;
       const r = await usuariosService.getAll(params);
       setUsuarios(r.data.data || []);
@@ -161,7 +167,7 @@ export default function UsuariosPage() {
     }
   }
 
-  // ── Crear usuario (solo Instructor) ─────────────────
+  // ── Crear instructor (solo Administrador) ──────────
   function validarFormCrear() {
     const errs = {};
     if (!validarNombre(formCrear.nombres)) errs.nombres = 'Debe tener entre 2 y 100 caracteres';
@@ -225,13 +231,19 @@ export default function UsuariosPage() {
       <div className="page-header">
         <div className="page-header-left">
           <h1 className="page-title">Usuarios</h1>
-          <p className="page-subtitle">{meta.total} usuario(s) registrados</p>
+          <p className="page-subtitle">
+            {esAdmin
+              ? `${meta.total} usuario(s) registrados`
+              : `${meta.total} aprendiz(ces) asignados a tus proyectos`}
+          </p>
         </div>
-        <div className="page-header-right">
-          <button className="btn btn-primary" onClick={() => { setErrorCrear(''); setErroresCrear({}); setModalCrear(true); }}>
-            + Nuevo instructor
-          </button>
-        </div>
+        {esAdmin && (
+          <div className="page-header-right">
+            <button className="btn btn-primary" onClick={() => { setErrorCrear(''); setErroresCrear({}); setModalCrear(true); }}>
+              + Nuevo instructor
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="page-body">
@@ -240,17 +252,22 @@ export default function UsuariosPage() {
           <div className="card-body">
             <div style={{ fontWeight: 700, marginBottom: 4 }}>🔎 Buscar por identificación (cc)</div>
             <div style={{ fontSize: 12, color: 'var(--slate-500)', marginBottom: 12 }}>
-              Busca aprendices, instructores o administradores por su número de identificación.
+              {esAdmin
+                ? 'Busca aprendices, instructores o administradores por su número de identificación.'
+                : 'Busca un aprendiz por su número de identificación.'}
             </div>
             <form onSubmit={buscar} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <input className="form-input" style={{ maxWidth: 260 }} placeholder="Ej. 1098765001"
                 value={identificacion} onChange={e => setIdentificacion(e.target.value.replace(/[^A-Za-z0-9.-]/g, ''))} />
-              <select className="form-select" style={{ maxWidth: 180 }} value={rolBusqueda} onChange={e => setRolBusqueda(e.target.value)}>
-                <option value="">Cualquier rol</option>
-                <option value="Aprendiz">Aprendiz</option>
-                <option value="Instructor">Instructor</option>
-                <option value="Administrador">Administrador</option>
-              </select>
+              {esAdmin && (
+                <select className="form-select" style={{ maxWidth: 180 }} value={rolBusqueda} onChange={e => setRolBusqueda(e.target.value)}
+                  aria-label="Rol a buscar">
+                  <option value="">Cualquier rol</option>
+                  <option value="Aprendiz">Aprendiz</option>
+                  <option value="Instructor">Instructor</option>
+                  <option value="Administrador">Administrador</option>
+                </select>
+              )}
               <button className="btn btn-primary" disabled={buscando || identificacion.length < 4}>
                 {buscando ? 'Buscando…' : 'Buscar'}
               </button>
@@ -275,12 +292,15 @@ export default function UsuariosPage() {
             placeholder="🔍  Buscar por nombre, cc o correo…"
             value={q} onChange={e => setQ(e.target.value)}
           />
-          <select className="form-select" style={{ maxWidth: 180 }} value={rolFiltro} onChange={e => setRolFiltro(e.target.value)}>
-            <option value="">Todos los roles</option>
-            {['Administrador', 'Instructor', 'Aprendiz'].map(r => (
-              <option key={r} value={r}>{r}</option>
-            ))}
-          </select>
+          {esAdmin && (
+            <select className="form-select" style={{ maxWidth: 180 }} value={rolFiltro} onChange={e => setRolFiltro(e.target.value)}
+              aria-label="Filtrar por rol">
+              <option value="">Todos los roles</option>
+              {['Administrador', 'Instructor', 'Aprendiz'].map(r => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
+          )}
           <select className="form-select" style={{ maxWidth: 160 }} value={estadoFiltro} onChange={e => setEstadoFiltro(e.target.value)}>
             <option value="">Cualquier estado</option>
             <option value="true">Activos</option>
@@ -293,7 +313,10 @@ export default function UsuariosPage() {
         {avisoOk && <div className="alert alert-success" style={{ marginBottom: 16 }}><span>{avisoOk} <Link to="/historial">Ver en el historial →</Link></span></div>}
 
         {usuarios.length === 0 ? (
-          <EmptyState icon="👥" titulo="Sin usuarios" desc="No hay usuarios que coincidan con los filtros." />
+          esAdmin || q || estadoFiltro !== ''
+            ? <EmptyState icon="👥" titulo="Sin usuarios" desc="No hay usuarios que coincidan con los filtros." />
+            : <EmptyState icon="👥" titulo="Aún no tienes aprendices asignados"
+                desc="Cuando agregues aprendices al equipo de tus proyectos, aparecerán aquí." />
         ) : (
           <>
             <div className="card">
@@ -302,8 +325,10 @@ export default function UsuariosPage() {
                   <thead>
                     <tr>
                       <th>Usuario</th><th>Identificación</th><th>Correo</th><th>Rol</th>
-                      <th>Ficha</th><th>Programa</th><th>Estado</th>
-                      <th>Registro</th><th></th>
+                      <th>Ficha</th><th>Programa</th>
+                      {!esAdmin && <th>Proyecto(s)</th>}
+                      <th>Estado</th><th>Registro</th>
+                      {esAdmin && <th><span className="sr-only">Acciones</span></th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -322,13 +347,14 @@ export default function UsuariosPage() {
                         <td>{rolBadge(u.rol)}</td>
                         <td>{u.ficha || '—'}</td>
                         <td>{u.programa_formacion || '—'}</td>
+                        {!esAdmin && <td style={{ fontSize: 12 }}>{u.proyectos || '—'}</td>}
                         <td>
                           <span className={`badge ${u.estado ? 'badge-green' : 'badge-red'}`}>
                             {u.estado ? 'Activo' : 'Inactivo'}
                           </span>
                         </td>
                         <td style={{ fontSize: 11, color: 'var(--slate-500)' }}>{formatFecha(u.fecha_registro)}</td>
-                        <td>
+                        {esAdmin && <td>
                           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                             <button className="btn btn-secondary btn-sm" onClick={() => abrirEditar(u)}>✏️ Editar</button>
                             {u.rol === 'Administrador' ? (
@@ -345,7 +371,7 @@ export default function UsuariosPage() {
                               </>
                             )}
                           </div>
-                        </td>
+                        </td>}
                       </tr>
                     ))}
                   </tbody>
