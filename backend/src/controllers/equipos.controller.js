@@ -1,6 +1,13 @@
 const db = require('../config/db');
 const { registrarCambio } = require('../services/historial.service');
 const notificacionesService = require('../services/notificaciones.service');
+const { esColorValido } = require('../utils/roles-equipo');
+
+// Color de la etiqueta del rol: debe ser de la paleta (o vacío).
+function colorRol(valor) {
+  if (valor === undefined || valor === null || valor === '') return { color: null };
+  return esColorValido(valor) ? { color: String(valor).toLowerCase() } : { error: 'El color del rol debe ser de la paleta' };
+}
 
 // POST /api/v1/equipos
 const create = async (req, res) => {
@@ -10,6 +17,8 @@ const create = async (req, res) => {
     if (!id_proyecto || !id_usuario) {
       return res.status(400).json({ success: false, message: 'id_proyecto e id_usuario son requeridos' });
     }
+    const color = colorRol(req.body.color_rol);
+    if (color.error) return res.status(400).json({ success: false, message: color.error });
 
     const [proyecto] = await db.query('SELECT id_proyecto, estado FROM proyectos WHERE id_proyecto = ?', [id_proyecto]);
     if (!proyecto.length) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
@@ -47,12 +56,31 @@ const create = async (req, res) => {
     }
 
     const [result] = await db.query(
-      `INSERT INTO equipos_proyecto (id_proyecto, id_usuario, rol_en_equipo) VALUES (?, ?, ?)`,
-      [id_proyecto, id_usuario, rol_en_equipo || null]
+      `INSERT INTO equipos_proyecto (id_proyecto, id_usuario, rol_en_equipo, color_rol) VALUES (?, ?, ?, ?)`,
+      [id_proyecto, id_usuario, rol_en_equipo || null, rol_en_equipo ? color.color : null]
     );
 
     await registrarCambio('equipos_proyecto', result.insertId, 'INSERT', req.user?.id);
     return res.status(201).json({ success: true, message: 'Miembro añadido al equipo', data: { id_equipo: result.insertId } });
+  } catch (err) {
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+};
+
+// PUT /api/v1/equipos/:id/rol  (NUEVO, punto 4 — Instructor responsable)
+// Cambia el rol del miembro dentro del proyecto y su color de etiqueta.
+const updateRol = async (req, res) => {
+  try {
+    const rol = typeof req.body.rol_en_equipo === 'string' ? req.body.rol_en_equipo.trim() : '';
+    if (rol.length > 100) return res.status(400).json({ success: false, message: 'El rol no puede superar los 100 caracteres' });
+    const color = colorRol(req.body.color_rol);
+    if (color.error) return res.status(400).json({ success: false, message: color.error });
+
+    const [r] = await db.query('UPDATE equipos_proyecto SET rol_en_equipo = ?, color_rol = ? WHERE id_equipo = ?',
+      [rol || null, rol ? color.color : null, req.params.id]);
+    if (!r.affectedRows) return res.status(404).json({ success: false, message: 'Miembro no encontrado' });
+    await registrarCambio('equipos_proyecto', Number(req.params.id), 'UPDATE', req.user.id);
+    return res.json({ success: true, message: 'Rol del miembro actualizado' });
   } catch (err) {
     console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
@@ -183,4 +211,4 @@ const resolverSolicitud = async (req, res) => {
   }
 };
 
-module.exports = { create, getByProyecto, remove, listSolicitudes, resolverSolicitud };
+module.exports = { create, getByProyecto, updateRol, remove, listSolicitudes, resolverSolicitud };

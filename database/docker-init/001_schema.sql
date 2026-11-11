@@ -56,6 +56,7 @@ CREATE TABLE equipos_proyecto (
     id_proyecto INT NOT NULL,
     id_usuario INT NOT NULL,
     rol_en_equipo VARCHAR(100),
+    color_rol CHAR(7) NULL,               -- color de la etiqueta del rol (punto 4, #19)
     FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
 );
@@ -364,4 +365,20 @@ CREATE TABLE solicitudes_aprendiz (
     FOREIGN KEY (id_proyecto) REFERENCES proyectos(id_proyecto) ON DELETE SET NULL,
     FOREIGN KEY (id_admin_resuelve) REFERENCES usuarios(id_usuario) ON DELETE SET NULL,
     FOREIGN KEY (id_usuario_creado) REFERENCES usuarios(id_usuario) ON DELETE SET NULL
+);
+
+-- ============================================
+-- TABLA ROLES_EQUIPO
+-- Roles de equipo personalizados de cada Instructor (nombre + color).
+-- Los roles predeterminados (Desarrollador, Tester / QA, …) viven en el
+-- código del backend; aquí solo se guardan los que crea el Instructor.
+-- ============================================
+CREATE TABLE roles_equipo (
+    id_rol_equipo INT AUTO_INCREMENT PRIMARY KEY,
+    id_instructor INT NOT NULL,                  -- dueño del rol personalizado
+    nombre VARCHAR(60) NOT NULL,
+    color CHAR(7) NOT NULL,                      -- color sólido de la paleta (#rrggbb)
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_rol_equipo_instructor (id_instructor, nombre),
+    FOREIGN KEY (id_instructor) REFERENCES usuarios(id_usuario) ON DELETE CASCADE
 );

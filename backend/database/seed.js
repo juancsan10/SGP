@@ -89,7 +89,7 @@ async function seed() {
     const tablas = [
       'password_reset_tokens', 'entregas_tareas', 'historial_cambios', 'notificaciones', 'mensajes', 'repositorios',
       'comentarios', 'archivos', 'evaluaciones', 'reuniones', 'github_integration', 'solicitudes_equipo',
-      'solicitudes', 'solicitudes_aprendiz', 'eliminaciones_archivos', 'eliminaciones_usuario',
+      'solicitudes', 'solicitudes_aprendiz', 'roles_equipo', 'eliminaciones_archivos', 'eliminaciones_usuario',
       'entregables', 'tareas', 'fases_proyecto', 'equipos_proyecto',
       'proyectos', 'usuarios', 'roles',
     ];
