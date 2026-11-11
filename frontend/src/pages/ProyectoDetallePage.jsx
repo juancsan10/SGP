@@ -3,7 +3,7 @@
 // Vista detallada de un proyecto con pestañas:
 // Fases · Tareas · Equipo · Mensajes · Repositorios
 // =====================================================
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import {
@@ -14,6 +14,7 @@ import {
 } from '../services/api.js';
 import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha, Pagination, ConfirmModal, ModalHeader, NotaObligatorios, useModalAccesible } from '../components/helpers.jsx';
 import { EtiquetaRol, SelectorRolEquipo, CambiarRolModal } from '../components/RolesEquipo.jsx'; // NUEVO (punto 4)
+import ChatProyecto from '../components/ChatProyecto.jsx'; // NUEVO (punto 6)
 import RevisionProyecto from '../components/RevisionProyecto.jsx'; // NUEVO: supervisión del Administrador
 
 const LIMITE_ENTREGABLES = 8; // NUEVO: tamaño de página para la pestaña Entregables
@@ -54,14 +55,7 @@ export default function ProyectoDetallePage() {
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState('');
 
-  // ── Mensajes ──────────────────────────────────────
-  const [msgTexto,  setMsgTexto]  = useState('');
-  const [msgError,  setMsgError]  = useState(''); // NUEVO: muestra el rechazo del glosario de palabras prohibidas
-  const [mensajeEditando, setMensajeEditando] = useState(null); // NUEVO: id del mensaje en edición
-  const [textoEditando,   setTextoEditando]   = useState('');
-  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
-  const [errorEdicion, setErrorEdicion] = useState('');
-  const mensajesEndRef = useRef(null);
+  // ── Mensajes: el chat completo vive en components/ChatProyecto.jsx ──
 
   // ── Modales rápidos ───────────────────────────────
   const [modalFase,  setModalFase]  = useState(false);
@@ -176,11 +170,6 @@ export default function ProyectoDetallePage() {
   }
 
   useEffect(() => { cargar(); }, [id]);
-  useEffect(() => {
-    if (tab === 'Mensajes') {
-      setTimeout(() => mensajesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-    }
-  }, [tab, mensajes]);
 
   // ── Crear Fase ────────────────────────────────────
   async function crearFase(e) {
@@ -292,51 +281,6 @@ export default function ProyectoDetallePage() {
       setRepos(r.data.data || []);
     } catch (err) { setSaveError(err.response?.data?.message || 'Error'); }
     finally { setRepoActualizando(null); }
-  }
-
-  // ── Enviar mensaje ────────────────────────────────
-  async function enviarMensaje(e) {
-    e.preventDefault();
-    if (!msgTexto.trim()) return;
-    setMsgError('');
-    try {
-      await mensajesService.create({ contenido: msgTexto, id_proyecto: id });
-      setMsgTexto('');
-      const r = await mensajesService.getByProyecto(id);
-      setMensajes(r.data.data || []);
-    } catch (err) {
-      // NUEVO: antes este error se tragaba en silencio — si el mensaje
-      // tenía una palabra del glosario prohibido, el usuario nunca se
-      // enteraba de por qué no se envió.
-      setMsgError(err.response?.data?.message || 'No se pudo enviar el mensaje');
-    }
-  }
-
-  // NUEVO: editar un mensaje propio (el backend valida que sea el autor
-  // real y vuelve a pasar el glosario de palabras prohibidas).
-  function iniciarEdicionMensaje(m) {
-    setMensajeEditando(m.id_mensaje);
-    setTextoEditando(m.contenido);
-    setErrorEdicion('');
-  }
-  function cancelarEdicionMensaje() {
-    setMensajeEditando(null);
-    setTextoEditando('');
-    setErrorEdicion('');
-  }
-  async function guardarEdicionMensaje(idMensaje) {
-    if (!textoEditando.trim()) return;
-    setGuardandoEdicion(true); setErrorEdicion('');
-    try {
-      await mensajesService.update(idMensaje, textoEditando);
-      setMensajeEditando(null);
-      const r = await mensajesService.getByProyecto(id);
-      setMensajes(r.data.data || []);
-    } catch (err) {
-      setErrorEdicion(err.response?.data?.message || 'No se pudo guardar la edición');
-    } finally {
-      setGuardandoEdicion(false);
-    }
   }
 
   // ── Actualizar estado de tarea ────────────────────
@@ -802,83 +746,10 @@ export default function ProyectoDetallePage() {
           </div>
         )}
 
-        {/* ─────── MENSAJES ────────────────────────── */}
+        {/* ─────── MENSAJES (MEJORADO, punto 6) ───────── */}
         {tab === 'Mensajes' && (
-          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-            <div className="card" style={{ maxHeight:460, overflowY:'auto' }}>
-              <div style={{ padding:'16px 20px', display:'flex', flexDirection:'column', gap:12 }}>
-                {mensajes.length === 0 && (
-                  <div className="empty-state"><div className="empty-state-icon">💬</div><h3>Sin mensajes aún</h3><p>Sé el primero en escribir.</p></div>
-                )}
-                {mensajes.map(m => {
-                  const esPropio = m.id_remitente === usuario.id;
-                  const editando = mensajeEditando === m.id_mensaje;
-                  return (
-                    <div key={m.id_mensaje} style={{ display:'flex', gap:10, flexDirection: esPropio ? 'row-reverse' : 'row' }}>
-                      <div style={{ width:32, height:32, borderRadius:'50%', background: esPropio ? 'var(--green-600)' : 'var(--slate-300)', color: esPropio ? 'white' : 'var(--slate-700)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:12, flexShrink:0 }}>
-                        {(m.remitente_nombre || '?')[0].toUpperCase()}
-                      </div>
-                      <div style={{ maxWidth:'70%' }}>
-                        <div style={{ fontSize:10, color:'var(--slate-500)', marginBottom:3, textAlign: esPropio ? 'right' : 'left' }}>
-                          {m.remitente_nombre} · {new Date(m.fecha_envio).toLocaleString('es-CO')}
-                          {m.fecha_edicion && <span title={`Editado: ${new Date(m.fecha_edicion).toLocaleString('es-CO')}`}> · (editado)</span>}
-                        </div>
-                        {editando ? (
-                          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                            {errorEdicion && <div className="alert alert-error" style={{ fontSize:11, padding:'6px 10px' }}>{errorEdicion}</div>}
-                            <textarea
-                              className="form-textarea"
-                              style={{ minHeight:50, fontSize:13 }}
-                              value={textoEditando}
-                              onChange={e => setTextoEditando(e.target.value)}
-                              autoFocus
-                            />
-                            <div style={{ display:'flex', gap:6, justifyContent: esPropio ? 'flex-end' : 'flex-start' }}>
-                              <button className="btn btn-secondary btn-sm" onClick={cancelarEdicionMensaje} disabled={guardandoEdicion}>Cancelar</button>
-                              <button className="btn btn-primary btn-sm" onClick={() => guardarEdicionMensaje(m.id_mensaje)} disabled={guardandoEdicion || !textoEditando.trim()}>
-                                {guardandoEdicion ? 'Guardando…' : 'Guardar'}
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ display:'flex', flexDirection:'column', gap:3, alignItems: esPropio ? 'flex-end' : 'flex-start' }}>
-                            <div style={{ background: esPropio ? 'var(--green-50)' : 'var(--slate-100)', borderRadius: esPropio ? '12px 12px 2px 12px' : '12px 12px 12px 2px', padding:'8px 12px', fontSize:13, color:'var(--slate-800)', border:'1px solid', borderColor: esPropio ? 'var(--green-100)' : 'var(--slate-200)' }}>
-                              {m.contenido}
-                            </div>
-                            {/* NUEVO: solo el autor puede editar su propio mensaje */}
-                            {esPropio && (
-                              <button
-                                onClick={() => iniciarEdicionMensaje(m)}
-                                style={{ background:'none', border:'none', color:'var(--slate-400)', fontSize:11, cursor:'pointer', padding:0 }}
-                              >
-                                ✏️ Editar
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={mensajesEndRef} />
-              </div>
-            </div>
-            <form onSubmit={enviarMensaje} style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {msgError && <div className="alert alert-error">{msgError}</div>}
-              <div style={{ display:'flex', gap:10 }}>
-              <input
-                className="form-input"
-                value={msgTexto}
-                onChange={e => setMsgTexto(e.target.value)}
-                placeholder="Escribe un mensaje…"
-                style={{ flex:1 }}
-              />
-              <button type="submit" className="btn btn-primary" disabled={!msgTexto.trim()}>
-                Enviar ✉️
-              </button>
-              </div>
-            </form>
-          </div>
+          <ChatProyecto idProyecto={id} mensajes={mensajes} setMensajes={setMensajes}
+            usuario={usuario} puedePublicarAvisos={esInstructor} />
         )}
 
         {/* ─────── REPOSITORIOS ────────────────────── */}

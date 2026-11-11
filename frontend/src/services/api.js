@@ -134,6 +134,11 @@ export const mensajesService = {
   // NUEVO: mensajes recientes para el Dashboard, resueltos por el backend
   // (no depende de qué proyectos trajo primero /proyectos).
   getRecientes:  (limit = 8) => api.get('/mensajes/recientes/dashboard', { params: { limit } }),
+  // NUEVO (punto 6): encuestas, avisos fijados y firma personal.
+  votar:         (id, id_opcion) => api.post(`/mensajes/${id}/votar`, { id_opcion }),
+  fijar:         (id, fijado)    => api.put(`/mensajes/${id}/fijar`, { fijado }),
+  getFirma:      ()              => api.get('/mensajes/firma/mia'),
+  setFirma:      (firma)         => api.put('/mensajes/firma/mia', { firma }),
 };
 
 // ── Notificaciones ────────────────────────────────────
