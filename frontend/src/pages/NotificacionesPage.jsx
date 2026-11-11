@@ -2,11 +2,14 @@
 // pages/NotificacionesPage.jsx
 // Gestión de notificaciones en tiempo real (RF4.4 / HU-28)
 // Actualización automática sin recargar vía WebSocket nativo
+// NUEVO (punto 7, #19): el Instructor también envía avisos — a todos sus
+// aprendices, al equipo de un proyecto suyo o a un aprendiz — y en la
+// bandeja se ve quién envió cada aviso (destacando al Administrador).
 // =====================================================
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNotificaciones } from '../context/NotificacionesContext.jsx';
-import { notificacionesService } from '../services/api.js';
+import { notificacionesService, proyectosService, usuariosService } from '../services/api.js';
 import { LoadingCenter, EmptyState, Pagination, ModalHeader, useModalAccesible } from '../components/helpers.jsx';
 
 const LIMITE = 10; // Tamaño de página
@@ -21,6 +24,32 @@ const tipoIcon = {
   vencimiento: '⏰',
 };
 
+// Opciones de destinatarios según el rol (el backend valida lo mismo).
+const DESTINOS_ADMIN = [
+  { valor: 'Aprendiz', etiqueta: 'Todos los aprendices activos' },
+  { valor: 'Instructor', etiqueta: 'Todos los instructores activos' },
+  { valor: 'Todos', etiqueta: 'Todos los aprendices e instructores' },
+  { valor: 'proyecto', etiqueta: 'El equipo de un proyecto' },
+  { valor: 'aprendiz', etiqueta: 'Un aprendiz' },
+];
+const DESTINOS_INSTRUCTOR = [
+  { valor: 'MisAprendices', etiqueta: 'Todos mis aprendices' },
+  { valor: 'proyecto', etiqueta: 'El equipo de uno de mis proyectos' },
+  { valor: 'aprendiz', etiqueta: 'Un aprendiz de mis proyectos' },
+];
+const formVacio = (esAdmin) => ({
+  titulo: '', mensaje: '', tipo: 'informativo', prioridad: 'Media',
+  rol_destino: esAdmin ? 'Aprendiz' : 'MisAprendices', id_proyecto: '', id_usuario: '',
+});
+
+// Cuerpo de POST /notificaciones/broadcast según el destino elegido.
+export function cuerpoBroadcast(form) {
+  const base = { titulo: form.titulo, mensaje: form.mensaje, tipo: form.tipo, prioridad: form.prioridad };
+  if (form.rol_destino === 'proyecto') return { ...base, id_proyecto: Number(form.id_proyecto) };
+  if (form.rol_destino === 'aprendiz') return { ...base, id_usuario: Number(form.id_usuario) };
+  return { ...base, rol_destino: form.rol_destino };
+}
+
 const prioridadColor = {
   Alta: 'var(--red-600)',
   Media: 'var(--amber-500)',
@@ -28,7 +57,8 @@ const prioridadColor = {
 };
 
 export default function NotificacionesPage() {
-  const { usuario, esAdmin } = useAuth();
+  const { usuario, esAdmin, esInstructor } = useAuth();
+  const puedeEnviar = esAdmin || esInstructor; // NUEVO: el Instructor también envía avisos
   const {
     notificaciones: notifs,
     noLeidas,
@@ -53,7 +83,9 @@ export default function NotificacionesPage() {
   // Solo Administrador: modal para crear notificación
   const [modalCrear, setModalCrear] = useState(false);
   const refModalCrear = useModalAccesible(modalCrear, () => setModalCrear(false));
-  const [form, setForm] = useState({ titulo: '', mensaje: '', tipo: 'informativo', prioridad: 'Media', rol_destino: 'Aprendiz' });
+  const [form, setForm] = useState(() => formVacio(esAdmin));
+  const [opcionesProyectos, setOpcionesProyectos] = useState([]);
+  const [opcionesAprendices, setOpcionesAprendices] = useState([]);
   const [enviando, setEnviando] = useState(false);
   const [errorCrear, setErrorCrear] = useState('');
   const [okCrear, setOkCrear] = useState('');
@@ -74,8 +106,20 @@ export default function NotificacionesPage() {
   }
 
   useEffect(() => {
-    if (esAdmin && tab === 'enviadas') cargarEnviadas();
+    if (puedeEnviar && tab === 'enviadas') cargarEnviadas();
   }, [tab, offsetEnviadas]); // eslint-disable-line
+
+  // Proyectos y aprendices para elegir destinatario (el backend ya filtra:
+  // al Instructor solo le llegan los suyos).
+  useEffect(() => {
+    if (!modalCrear) return;
+    proyectosService.getAll()
+      .then(r => setOpcionesProyectos(r.data.data || []))
+      .catch(() => setOpcionesProyectos([]));
+    usuariosService.getAll({ rol: 'Aprendiz', limit: 100 })
+      .then(r => setOpcionesAprendices(r.data.data || []))
+      .catch(() => setOpcionesAprendices([]));
+  }, [modalCrear]);
 
   async function handleMarcarLeida(id) {
     setErrorLista('');
@@ -101,9 +145,9 @@ export default function NotificacionesPage() {
     setErrorCrear('');
     setOkCrear('');
     try {
-      const r = await notificacionesService.broadcast(form);
+      const r = await notificacionesService.broadcast(cuerpoBroadcast(form));
       setOkCrear(r.data.message || 'Notificación enviada en tiempo real');
-      setForm({ titulo: '', mensaje: '', tipo: 'informativo', prioridad: 'Media', rol_destino: 'Aprendiz' });
+      setForm(formVacio(esAdmin));
       setTimeout(() => {
         setModalCrear(false);
         setOkCrear('');
@@ -162,7 +206,7 @@ export default function NotificacionesPage() {
           </p>
         </div>
         <div className="page-header-right" style={{ display: 'flex', gap: 10 }}>
-          {esAdmin && (
+          {puedeEnviar && (
             <button
               className="btn btn-primary"
               id="btn-nueva-notificacion"
@@ -183,8 +227,8 @@ export default function NotificacionesPage() {
         </div>
       </div>
 
-      {/* Solo Administrador: pestañas Recibidas / Enviadas */}
-      {esAdmin && (
+      {/* Administrador e Instructor: pestañas Recibidas / Enviadas */}
+      {puedeEnviar && (
         <div style={{ display: 'flex', gap: 4, padding: '0 28px', borderBottom: '1px solid var(--slate-200)', background: 'var(--white)' }}>
           <button
             onClick={() => setTab('recibidas')}
@@ -268,6 +312,15 @@ export default function NotificacionesPage() {
                             {n.mensaje}
                           </p>
                           <span style={{ fontSize: 11, color: 'var(--slate-500)' }}>
+                            {n.creador_nombre && (
+                              <>
+                                De: <strong style={{ color: 'var(--slate-700)' }}>{n.creador_nombre}</strong>
+                                {n.creador_rol === 'Administrador'
+                                  ? <span className="badge badge-red" style={{ fontSize: 10, marginLeft: 6 }}>📢 Administración</span>
+                                  : n.creador_rol && <span className="badge badge-slate" style={{ fontSize: 10, marginLeft: 6 }}>{n.creador_rol}</span>}
+                                {' · '}
+                              </>
+                            )}
                             {new Date(n.fecha_envio).toLocaleString('es-CO')}
                           </span>
                         </div>
@@ -304,7 +357,7 @@ export default function NotificacionesPage() {
       )}
 
       {/* ── PESTAÑA: ENVIADAS (solo Admin) ── */}
-      {esAdmin && tab === 'enviadas' && (
+      {puedeEnviar && tab === 'enviadas' && (
         <div className="content-area">
           {errorEnviadas && <div className="alert alert-error">{errorEnviadas}</div>}
           {loadingEnviadas ? (
@@ -354,7 +407,7 @@ export default function NotificacionesPage() {
         </div>
       )}
 
-      {/* Modal solo Administrador: crear notificación */}
+      {/* Modal Administrador / Instructor: crear notificación */}
       {modalCrear && (
         <div className="modal-overlay" onClick={() => setModalCrear(false)}>
           <div className="modal" ref={refModalCrear} role="dialog" aria-modal="true" aria-labelledby="nueva-notificacion-titulo" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
@@ -374,11 +427,35 @@ export default function NotificacionesPage() {
                     value={form.rol_destino}
                     onChange={e => setForm({ ...form, rol_destino: e.target.value })}
                   >
-                    <option value="Aprendiz">Todos los aprendices activos</option>
-                    <option value="Instructor">Todos los instructores activos</option>
-                    <option value="Todos">Todos los aprendices e instructores</option>
+                    {(esAdmin ? DESTINOS_ADMIN : DESTINOS_INSTRUCTOR).map(d => (
+                      <option key={d.valor} value={d.valor}>{d.etiqueta}</option>
+                    ))}
                   </select>
                 </div>
+
+                {form.rol_destino === 'proyecto' && (
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="form-proyecto-destino">Proyecto *</label>
+                    <select className="form-select" id="form-proyecto-destino" required
+                      value={form.id_proyecto} onChange={e => setForm({ ...form, id_proyecto: e.target.value })}>
+                      <option value="">Selecciona un proyecto</option>
+                      {opcionesProyectos.map(p => <option key={p.id_proyecto} value={p.id_proyecto}>{p.nombre}</option>)}
+                    </select>
+                  </div>
+                )}
+                {form.rol_destino === 'aprendiz' && (
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="form-aprendiz-destino">Aprendiz *</label>
+                    <select className="form-select" id="form-aprendiz-destino" required
+                      value={form.id_usuario} onChange={e => setForm({ ...form, id_usuario: e.target.value })}>
+                      <option value="">Selecciona un aprendiz</option>
+                      {opcionesAprendices.map(u => <option key={u.id_usuario} value={u.id_usuario}>{u.nombres} {u.apellidos}</option>)}
+                    </select>
+                    {!esAdmin && opcionesAprendices.length === 0 && (
+                      <span className="form-hint">Aún no tienes aprendices en tus proyectos.</span>
+                    )}
+                  </div>
+                )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   <div className="form-group">
