@@ -12,11 +12,12 @@ router.get('/stream', verifyToken, ctrl.stream);
 router.get('/realtime/stats', verifyToken, requireRole('Administrador'), ctrl.stats);
 
 // NUEVO — solo Administrador: crear notificaciones dirigidas a un usuario o a un rol completo.
-router.post('/broadcast', verifyToken, requireRole('Administrador'), ctrl.broadcast);
+// Instructor (punto 7): solo a sus aprendices, a un proyecto suyo o a un aprendiz suyo (lo valida el controlador).
+router.post('/broadcast', verifyToken, requireRole('Administrador', 'Instructor'), ctrl.broadcast);
 // NUEVO — solo Administrador: ver las notificaciones que él mismo ha
 // creado. Registrada ANTES de '/:id_usuario' para que 'enviadas' no se
 // interprete como un id de usuario (mismo forma de un solo segmento).
-router.get('/enviadas', verifyToken, requireRole('Administrador'), ctrl.getEnviadas);
+router.get('/enviadas', verifyToken, requireRole('Administrador', 'Instructor'), ctrl.getEnviadas);
 
 router.get('/:id_usuario', verifyToken, requireSelfOrAdmin('id_usuario'), [idParam('id_usuario')], validate, ctrl.getByUsuario);
 router.put('/leer-todas/:id_usuario', verifyToken, requireSelfOrAdmin('id_usuario'), [idParam('id_usuario')], validate, ctrl.marcarTodasLeidas);

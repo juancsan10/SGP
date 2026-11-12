@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HistorialPage from '../src/pages/HistorialPage.jsx';
@@ -37,7 +37,7 @@ describe('HistorialPage', () => {
     // Arrange
     const user = userEvent.setup();
     renderConSesion(<HistorialPage />, { usuario: ADMIN });
-    await screen.findByRole('option', { name: 'tareas' });
+    await screen.findByRole('option', { name: 'Tareas' });
 
     // Act
     await user.selectOptions(screen.getByDisplayValue('Todas las tablas'), 'tareas');
@@ -60,5 +60,45 @@ describe('HistorialPage', () => {
     renderConSesion(<HistorialPage />, { usuario: ADMIN });
 
     expect(await screen.findByRole('heading', { name: 'Sin registros' })).toBeInTheDocument();
+  });
+});
+
+describe('HistorialPage como Instructor', () => {
+  const INSTRUCTOR = { id: 2, nombres: 'Laura', rol: 'Instructor' };
+  const ACTIVIDAD = [
+    { id_historial: 5, tabla_afectada: 'entregas_tareas', id_registro: 3, accion: 'INSERT', usuario_nombre: 'Carlos Herrera', usuario_rol: 'Aprendiz', fecha_cambio: '2026-11-10T15:00:00Z' },
+    { id_historial: 4, tabla_afectada: 'tareas', id_registro: 8, accion: 'INSERT', usuario_nombre: 'Laura Gómez', usuario_rol: 'Instructor', fecha_cambio: '2026-11-09T15:00:00Z' },
+  ];
+
+  it('should show his and his apprentices activity without the admin-only panels', async () => {
+    // Arrange
+    historialService.getAll.mockResolvedValue({ data: { data: ACTIVIDAD, meta: { total: 2, limit: 10, offset: 0 } } });
+
+    // Act
+    renderConSesion(<HistorialPage />, { usuario: INSTRUCTOR });
+
+    // Assert
+    expect(await screen.findByText('Carlos Herrera')).toBeInTheDocument();
+    expect(screen.getByText('Lo que has hecho tú y lo que han hecho los aprendices de tus proyectos')).toBeInTheDocument();
+    const fila = screen.getByText('Carlos Herrera').closest('tr');
+    expect(within(fila).getByText('Entregas')).toBeInTheDocument();
+    expect(within(fila).getByText('Aprendiz')).toBeInTheDocument();
+    expect(historialService.getEstadisticas).not.toHaveBeenCalled();
+    expect(historialService.getEliminaciones).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('should ask the backend only for the apprentices activity when filtering by Quién', async () => {
+    // Arrange
+    const user = userEvent.setup();
+    historialService.getAll.mockResolvedValue({ data: { data: ACTIVIDAD, meta: { total: 2, limit: 10, offset: 0 } } });
+    renderConSesion(<HistorialPage />, { usuario: INSTRUCTOR });
+    await screen.findByText('Carlos Herrera');
+
+    // Act
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Quién' }), 'aprendices');
+
+    // Assert
+    expect(historialService.getAll).toHaveBeenLastCalledWith(expect.objectContaining({ autor: 'aprendices', offset: 0 }));
   });
 });

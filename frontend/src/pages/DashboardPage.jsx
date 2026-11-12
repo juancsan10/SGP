@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { proyectosService, tareasService, mensajesService } from '../services/api.js';
 import { estadoBadge, prioridadBadge, formatFecha, NumeroAnimado } from '../components/helpers.jsx';
-import SolicitudesPanel from '../components/SolicitudesPanel.jsx'; // NUEVO
 
 export default function DashboardPage() {
   const { usuario, esAdmin } = useAuth();
@@ -119,9 +118,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-
-        {/* NUEVO: bandeja de solicitudes de Instructores y Aprendices */}
-        {esAdmin && <SolicitudesPanel esAdmin />}
 
         {/* Proyectos recientes */}
         <div className="card" style={{ marginBottom: 20 }}>
@@ -263,9 +259,6 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-
-        {/* NUEVO: Instructor / Aprendiz — enviar y seguir solicitudes */}
-        {!esAdmin && <SolicitudesPanel esAdmin={false} />}
       </div>
     </div>
   );

@@ -1,6 +1,16 @@
 const db = require('../config/db');
 const { registrarCambio } = require('../services/historial.service');
 const notificacionesService = require('../services/notificaciones.service');
+const { esColorValido } = require('../utils/roles-equipo');
+
+// RN-001: un aprendiz puede estar como máximo en 2 proyectos activos.
+const MAX_PROYECTOS_APRENDIZ = 2;
+
+// Color de la etiqueta del rol: debe ser de la paleta (o vacío).
+function colorRol(valor) {
+  if (valor === undefined || valor === null || valor === '') return { color: null };
+  return esColorValido(valor) ? { color: String(valor).toLowerCase() } : { error: 'El color del rol debe ser de la paleta' };
+}
 
 // POST /api/v1/equipos
 const create = async (req, res) => {
@@ -10,6 +20,8 @@ const create = async (req, res) => {
     if (!id_proyecto || !id_usuario) {
       return res.status(400).json({ success: false, message: 'id_proyecto e id_usuario son requeridos' });
     }
+    const color = colorRol(req.body.color_rol);
+    if (color.error) return res.status(400).json({ success: false, message: color.error });
 
     const [proyecto] = await db.query('SELECT id_proyecto, estado FROM proyectos WHERE id_proyecto = ?', [id_proyecto]);
     if (!proyecto.length) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
@@ -17,12 +29,16 @@ const create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No se pueden modificar equipos de un proyecto finalizado o cancelado' });
     }
 
-    const [usuario] = await db.query('SELECT id_usuario, id_rol, estado FROM usuarios WHERE id_usuario = ?', [id_usuario]);
+    const [usuario] = await db.query('SELECT id_usuario, id_rol, estado, programa_formacion FROM usuarios WHERE id_usuario = ?', [id_usuario]);
     if (!usuario.length || !usuario[0].estado) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado o inactivo' });
     }
     if (Number(usuario[0].id_rol) !== 3) {
       return res.status(400).json({ success: false, message: 'Solo se pueden asignar aprendices a un proyecto' });
+    }
+    // NUEVO (#19): el aprendiz debe tener asignado su programa de formación.
+    if (!String(usuario[0].programa_formacion || '').trim()) {
+      return res.status(400).json({ success: false, message: 'El aprendiz no tiene programa de formación asignado; el Administrador debe registrarlo antes de agregarlo a un proyecto' });
     }
 
     const [duplicado] = await db.query(
@@ -41,18 +57,37 @@ const create = async (req, res) => {
          WHERE ep.id_usuario = ? AND p.estado NOT IN ('Finalizado','Cancelado')`,
         [id_usuario]
       );
-      if (activos[0].total >= 2) {
-        return res.status(400).json({ success: false, message: 'RN-001: El aprendiz ya tiene 2 proyectos activos' });
+      if (Number(activos[0].total) >= MAX_PROYECTOS_APRENDIZ) {
+        return res.status(400).json({ success: false, message: `El aprendiz ya está en ${MAX_PROYECTOS_APRENDIZ} proyectos activos, que es el máximo permitido (RN-001)` });
       }
     }
 
     const [result] = await db.query(
-      `INSERT INTO equipos_proyecto (id_proyecto, id_usuario, rol_en_equipo) VALUES (?, ?, ?)`,
-      [id_proyecto, id_usuario, rol_en_equipo || null]
+      `INSERT INTO equipos_proyecto (id_proyecto, id_usuario, rol_en_equipo, color_rol) VALUES (?, ?, ?, ?)`,
+      [id_proyecto, id_usuario, rol_en_equipo || null, rol_en_equipo ? color.color : null]
     );
 
     await registrarCambio('equipos_proyecto', result.insertId, 'INSERT', req.user?.id);
     return res.status(201).json({ success: true, message: 'Miembro añadido al equipo', data: { id_equipo: result.insertId } });
+  } catch (err) {
+    console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+};
+
+// PUT /api/v1/equipos/:id/rol  (NUEVO, punto 4 — Instructor responsable)
+// Cambia el rol del miembro dentro del proyecto y su color de etiqueta.
+const updateRol = async (req, res) => {
+  try {
+    const rol = typeof req.body.rol_en_equipo === 'string' ? req.body.rol_en_equipo.trim() : '';
+    if (rol.length > 100) return res.status(400).json({ success: false, message: 'El rol no puede superar los 100 caracteres' });
+    const color = colorRol(req.body.color_rol);
+    if (color.error) return res.status(400).json({ success: false, message: color.error });
+
+    const [r] = await db.query('UPDATE equipos_proyecto SET rol_en_equipo = ?, color_rol = ? WHERE id_equipo = ?',
+      [rol || null, rol ? color.color : null, req.params.id]);
+    if (!r.affectedRows) return res.status(404).json({ success: false, message: 'Miembro no encontrado' });
+    await registrarCambio('equipos_proyecto', Number(req.params.id), 'UPDATE', req.user.id);
+    return res.json({ success: true, message: 'Rol del miembro actualizado' });
   } catch (err) {
     console.error(err); return res.status(500).json({ success: false, message: 'Error interno del servidor' });
   }
@@ -87,7 +122,11 @@ const remove = async (req, res) => {
     if (!equipo.length) return res.status(404).json({ success: false, message: 'Registro no encontrado' });
 
     if (req.user?.rol === 'Instructor') {
-      const { motivo } = req.body;
+      // El motivo es obligatorio cuando el Instructor solicita la baja.
+      const motivo = typeof req.body?.motivo === 'string' ? req.body.motivo.trim() : '';
+      if (motivo.length < 10) {
+        return res.status(400).json({ success: false, message: 'El motivo de la baja es obligatorio (mínimo 10 caracteres)' });
+      }
       const [existente] = await db.query(
         `SELECT id_solicitud FROM solicitudes_equipo WHERE id_equipo = ? AND estado = 'Pendiente'`,
         [req.params.id]
@@ -98,7 +137,7 @@ const remove = async (req, res) => {
       const [result] = await db.query(
         `INSERT INTO solicitudes_equipo (id_equipo, id_proyecto, id_usuario_afectado, motivo, id_instructor_solicita)
          VALUES (?, ?, ?, ?, ?)`,
-        [req.params.id, equipo[0].id_proyecto, equipo[0].id_usuario, motivo || null, req.user.id]
+        [req.params.id, equipo[0].id_proyecto, equipo[0].id_usuario, motivo, req.user.id]
       );
       await registrarCambio('solicitudes_equipo', result.insertId, 'INSERT', req.user.id);
       return res.status(202).json({
@@ -179,4 +218,4 @@ const resolverSolicitud = async (req, res) => {
   }
 };
 
-module.exports = { create, getByProyecto, remove, listSolicitudes, resolverSolicitud };
+module.exports = { create, getByProyecto, updateRol, remove, listSolicitudes, resolverSolicitud };

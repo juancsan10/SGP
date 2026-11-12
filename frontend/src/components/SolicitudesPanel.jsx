@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { solicitudesService, equiposService, proyectosService } from '../services/api.js';
-import { estadoBadge, Pagination, portalDestino } from './helpers.jsx';
+import { estadoBadge, Pagination, portalDestino, ModalHeader, NotaObligatorios, useModalAccesible } from './helpers.jsx';
 
 const LIMITE = 5;
 
@@ -27,6 +27,7 @@ function ModalResolver({ accion, onClose, onHecho }) {
   const [enviando, setEnviando] = useState(false);
   const atender = accion.estado === 'Atendida' || accion.estado === 'Aprobar';
   const esEquipo = accion.tipoRegistro === 'equipo';
+  const ref = useModalAccesible(true, onClose);
 
   async function enviar(e) {
     e.preventDefault(); setEnviando(true); setError('');
@@ -43,13 +44,13 @@ function ModalResolver({ accion, onClose, onHecho }) {
   // Portal: el modal se monta en <body> para quedar por encima del encabezado fijo.
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <span className="modal-title">
-            {esEquipo ? (atender ? 'Aprobar baja de equipo' : 'Rechazar baja de equipo') : (atender ? 'Atender solicitud' : 'Rechazar solicitud')}
-          </span>
-          <button className="modal-close" onClick={onClose}>×</button>
-        </div>
+      <div className="modal" ref={ref} role="dialog" aria-modal="true" aria-labelledby="resolver-titulo" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+        <ModalHeader id="resolver-titulo" icono={atender ? '✅' : '⛔'}
+          titulo={esEquipo ? (atender ? 'Aprobar baja de equipo' : 'Rechazar baja de equipo') : (atender ? 'Atender solicitud' : 'Rechazar solicitud')}
+          descripcion={esEquipo
+            ? (atender ? 'El aprendiz saldrá del equipo del proyecto.' : 'El aprendiz seguirá en el equipo y el instructor será notificado.')
+            : 'Tu respuesta le llegará al solicitante como notificación.'}
+          onClose={onClose} />
         <form onSubmit={enviar}>
           <div className="modal-body">
             <div style={{ background: 'var(--slate-50)', borderRadius: 8, padding: '10px 12px', marginBottom: 14, fontSize: 13 }}>
@@ -207,6 +208,7 @@ function MisSolicitudes() {
   const [tipos, setTipos] = useState([]);
   const [proyectos, setProyectos] = useState([]);
   const [modal, setModal] = useState(false);
+  const refModal = useModalAccesible(modal, () => setModal(false));
   const [form, setForm] = useState({ tipo: '', asunto: '', descripcion: '', id_proyecto: '' });
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
@@ -236,7 +238,7 @@ function MisSolicitudes() {
   const valido = form.tipo && form.asunto.trim().length >= 5 && form.descripcion.trim().length >= 10;
 
   return (
-    <div className="card" style={{ marginTop: 20 }}>
+    <div className="card">
       <div className="card-header" style={{ justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><span>📨</span><strong>Mis solicitudes al Administrador</strong></div>
         <button className="btn btn-primary btn-sm" onClick={() => { setError(''); setModal(true); }}>+ Nueva solicitud</button>
@@ -271,11 +273,10 @@ function MisSolicitudes() {
 
       {modal && createPortal(
         <div className="modal-overlay" onClick={() => setModal(false)}>
-          <div className="modal" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <span className="modal-title">Nueva solicitud al Administrador</span>
-              <button className="modal-close" onClick={() => setModal(false)}>×</button>
-            </div>
+          <div className="modal" ref={refModal} role="dialog" aria-modal="true" aria-labelledby="nueva-solicitud-titulo" style={{ maxWidth: 520 }} onClick={e => e.stopPropagation()}>
+            <ModalHeader id="nueva-solicitud-titulo" icono="📨" titulo="Nueva solicitud al Administrador"
+              descripcion="Pide un cambio o reporta un problema; verás aquí el estado y la respuesta."
+              onClose={() => setModal(false)} />
             <form onSubmit={enviar}>
               <div className="modal-body">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -307,6 +308,7 @@ function MisSolicitudes() {
                 {error && <div className="alert alert-error" role="alert">{error}</div>}
               </div>
               <div className="modal-footer">
+                <NotaObligatorios />
                 <button type="button" className="btn btn-secondary" onClick={() => setModal(false)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary" disabled={!valido || enviando}>{enviando ? 'Enviando…' : 'Enviar solicitud'}</button>
               </div>

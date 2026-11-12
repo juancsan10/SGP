@@ -129,7 +129,47 @@ arquitectura o de proceso. Se documenta cómo se verificó cada uno, no solo si 
 
 ---
 
-## 3. Resumen ejecutivo
+## 3. Mejoras de experiencia de usuario — PR #20 (issue #19)
+
+Rama `feature/Mejoras_en_experiencia_de_usuario` → PR #20 a `test`.
+Cada fila apunta al commit real en esa rama; todos llevan `(#19)` y se
+pueden listar con `git log --grep "(#19)"`. ⚠️ marca los cambios que tocan
+backend o base de datos.
+
+**Estado 🟡 en todas las filas:** pasan las pruebas automáticas (backend
+221, frontend 179, `pnpm build` y `pnpm audit` sin vulnerabilidades altas) y
+se revisaron con capturas reales del frontend con datos de prueba. Falta la
+prueba manual en Docker con la base de datos real en los 3 roles; al
+completarla, cada fila pasa a ✅.
+
+| Mejora UX | HU / RF relacionado | Archivos o endpoint | Commit / PR | Estado |
+|---|---|---|---|---|
+| Menú «Tareas» para Instructor y Administrador («Mis Tareas» solo Aprendiz) | RF5.2 · HU-30 | `frontend/src/utils/navegacion.js` | `01702b0` / PR #20 | 🟡 |
+| Motivo obligatorio (mín. 10) al solicitar la baja de un aprendiz ⚠️ | RF2.2 · HU-18 | `ProyectoDetallePage.jsx`, `DELETE /equipos/:id` | `daedd29` / PR #20 | 🟡 |
+| Sección propia de Solicitudes en el menú (sale de Inicio) | RF1.3 · HU-15 | `pages/SolicitudesPage.jsx`, `App.jsx`, `navegacion.js` | `03bc53b` / PR #20 | 🟡 |
+| Avisos (modales) accesibles y consistentes en los 3 roles: ícono, descripción, Escape, foco | RNF5.1 · RNF3.3 | `components/helpers.jsx` (`ModalHeader`, `useModalAccesible`) en todas las vistas con avisos | `313a193`, `d709818`, `00c8cec` / PR #20 | 🟡 |
+| Calendario con vistas Mes (cuadrícula tipo almanaque), Semana y Lista | RF5.3 · HU-32 | `pages/CalendarioPage.jsx`, `utils/calendario.js` | `4af3d8d` / PR #20 | 🟡 |
+| Contadores sin parpadeo con «reducir movimiento» (arregla prueba intermitente del CI) | RNF4.3 | `components/helpers.jsx` (`NumeroAnimado`) | `a25cda5`, `950ffeb` / PR #20 | 🟡 |
+| Usuarios: el Instructor solo ve sus aprendices, sin activar, desactivar ni eliminar ⚠️ | RF1.3 · RN-005 · HU-15 | `GET /usuarios`, `GET /usuarios/buscar`, `UsuariosPage.jsx` | `625c9c0`, `9a87917` / PR #20 | 🟡 |
+| Historial del Instructor: sus acciones y las de sus aprendices ⚠️ | RF3.2 · RN-026 · HU-20 | `GET /historial`, `GET /historial/:tabla`, `HistorialPage.jsx` | `c578188`, `a5d40da` / PR #20 | 🟡 |
+| Crear aprendiz con todos los campos → solicitud que aprueba el Administrador ⚠️ BD | RF1.1 · RF1.3 · HU-13 | tabla `solicitudes_aprendiz`, `POST/GET /solicitudes/aprendices`, `PUT /solicitudes/aprendices/:id/resolver`, `SolicitudesAprendiz.jsx` | `84243f2`, `659dfb1` / PR #20 | 🟡 |
+| Notificaciones del Instructor a sus aprendices, a un proyecto o a un aprendiz; avisos del Administrador destacados ⚠️ | RF4.4 · RN-021 · HU-28 | `POST /notificaciones/broadcast`, `GET /notificaciones/enviadas`, `NotificacionesPage.jsx` | `ae91d2f`, `b9eac88` / PR #20 | 🟡 |
+| Roles de equipo con etiquetas de color: elegir, crear, editar y cambiar ⚠️ BD | RF2.2 · HU-18 | tabla `roles_equipo`, `equipos_proyecto.color_rol`, `/roles-equipo`, `PUT /equipos/:id/rol`, `RolesEquipo.jsx` | `b43f13f`, `9407874` / PR #20 | 🟡 |
+| Chat enriquecido: formato, emojis, respuestas, firma, encuestas animadas y avisos fijados ⚠️ BD | RF4.1 · RF4.3 · HU-26 | tablas `encuesta_opciones`, `encuesta_votos`; `POST /mensajes/:id/votar`, `PUT /mensajes/:id/fijar`, `/mensajes/firma/mia`, `ChatProyecto.jsx` | `7836ab9`, `eb0097f` / PR #20 | 🟡 |
+| Aprendiz con programa obligatorio y máximo 2 proyectos activos visibles al agregarlo ⚠️ | RF2.2 · RN-001 · HU-18 | `POST /equipos`, `GET /usuarios?alcance=disponibles`, `ProyectoDetallePage.jsx` | `5f77602`, `361f4b9` / PR #20 | 🟡 |
+
+**Migraciones para bases ya creadas** (ejecutar una vez, en este orden):
+`database/migracion_solicitudes_aprendiz.sql` →
+`database/migracion_roles_equipo.sql` →
+`database/migracion_mensajes_enriquecidos.sql`.
+Con `docker compose down -v` no hacen falta: `001_schema.sql` ya trae todo.
+
+**Pendiente conocido (fuera de este PR):** en pantallas de celular el
+sidebar no se contrae y comprime el contenido (RNF5.2).
+
+---
+
+## 4. Resumen ejecutivo
 
 | Categoría | Hecho ✅ | Parcial 🟡 | Pendiente ⬜ | Total |
 |---|---|---|---|---|
