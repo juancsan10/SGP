@@ -307,3 +307,96 @@ describe('usuarios.controller', () => {
     });
   });
 });
+
+describe('usuarios.controller — alcance del Instructor', () => {
+  it('should list only the apprentices of the instructor projects by default', async () => {
+    // Arrange
+    const spy = vi.spyOn(db, 'query')
+      .mockResolvedValueOnce([[{ id_usuario: 4, nombres: 'Carlos', rol: 'Aprendiz', proyectos: 'SGP' }]])
+      .mockResolvedValueOnce([[{ total: 1 }]]);
+    const req = crearReq({ user: INSTRUCTOR, query: { rol: 'Administrador' } });
+    const res = crearRes();
+
+    // Act
+    await getAll(req, res);
+
+    // Assert: ignora ?rol, fuerza Aprendiz y filtra por sus proyectos
+    const [sql, params] = spy.mock.calls[0];
+    expect(sql).toContain("r.nombre_rol = 'Aprendiz'");
+    expect(sql).toContain('p.id_instructor = ?');
+    expect(sql).toContain('AS proyectos');
+    expect(params).toEqual([2, 2, 50, 0]);
+    expect(params).not.toContain('Administrador');
+    expect(res.json.mock.calls[0][0].data[0].proyectos).toBe('SGP');
+  });
+
+  it('should list active apprentices without project filter when alcance=disponibles', async () => {
+    // Arrange
+    const spy = vi.spyOn(db, 'query')
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[{ total: 0 }]]);
+    const req = crearReq({ user: INSTRUCTOR, query: { alcance: 'disponibles' } });
+
+    // Act
+    await getAll(req, crearRes());
+
+    // Assert
+    const [sql, params] = spy.mock.calls[0];
+    expect(sql).toContain("r.nombre_rol = 'Aprendiz'");
+    expect(sql).toContain('u.estado = 1');
+    expect(sql).not.toContain('p.id_instructor = ?');
+    expect(params).toEqual([50, 0]);
+  });
+
+  it('should keep the full list for the Administrador', async () => {
+    // Arrange
+    const spy = vi.spyOn(db, 'query')
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[{ total: 0 }]]);
+
+    // Act
+    await getAll(crearReq({ user: ADMIN, query: { rol: 'Instructor' } }), crearRes());
+
+    // Assert
+    const [sql, params] = spy.mock.calls[0];
+    expect(sql).not.toContain("r.nombre_rol = 'Aprendiz'");
+    expect(params).toEqual(['Instructor', 50, 0]);
+  });
+
+  it('should only find apprentices when an Instructor searches by identification', async () => {
+    // Arrange
+    const spy = vi.spyOn(db, 'query').mockResolvedValueOnce([[]]);
+    const req = crearReq({ user: INSTRUCTOR, query: { identificacion: '1098765001', rol: 'Administrador' } });
+    const res = crearRes();
+
+    // Act
+    await buscarPorIdentificacion(req, res);
+
+    // Assert
+    expect(spy.mock.calls[0][1]).toEqual(['1098765001', 'Aprendiz']);
+    expect(res.status).toHaveBeenCalledWith(404);
+  });
+});
+
+describe('rutas de usuarios — acciones solo del Administrador', () => {
+  it('should reject activating, deactivating or deleting users with an Instructor token', async () => {
+    // Arrange
+    const jwt = require('jsonwebtoken');
+    const request = require('supertest');
+    const app = require('../src/app');
+    process.env.JWT_SECRET = 'secreto_solo_para_tests_de_api_32chars';
+    const token = `Bearer ${jwt.sign(INSTRUCTOR, process.env.JWT_SECRET, { expiresIn: '1h' })}`;
+    const spy = vi.spyOn(db, 'query');
+
+    // Act
+    const respuestas = await Promise.all([
+      request(app).put('/api/v1/usuarios/4/activar').set('Authorization', token),
+      request(app).delete('/api/v1/usuarios/4').set('Authorization', token),
+      request(app).post('/api/v1/usuarios/4/eliminacion').set('Authorization', token),
+    ]);
+
+    // Assert
+    expect(respuestas.map(r => r.status)).toEqual([403, 403, 403]);
+    expect(spy).not.toHaveBeenCalled();
+  });
+});

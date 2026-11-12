@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { entregasService } from '../services/api.js';
-import { estadoBadge, formatFecha, LoadingCenter, portalDestino } from './helpers.jsx';
+import { estadoBadge, formatFecha, LoadingCenter, portalDestino, ModalHeader, useModalAccesible } from './helpers.jsx';
 
 export function CalificacionChip({ valor }) {
   if (valor === null || valor === undefined || valor === '') {
@@ -34,6 +34,7 @@ function Campo({ etiqueta, children }) {
 
 export function DetalleEntregaModal({ idEntrega, onClose }) {
   const [entrega, setEntrega] = useState(null);
+  const ref = useModalAccesible(true, onClose);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -47,11 +48,9 @@ export function DetalleEntregaModal({ idEntrega, onClose }) {
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <span className="modal-title">Revisión de entrega</span>
-          <button className="modal-close" onClick={onClose}>×</button>
-        </div>
+      <div className="modal" ref={ref} role="dialog" aria-modal="true" aria-labelledby="detalle-entrega-titulo" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
+        <ModalHeader id="detalle-entrega-titulo" icono="📝" titulo="Revisión de entrega"
+          descripcion="Calificación, observaciones y archivos de esta entrega." onClose={onClose} />
         <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
           {error && <div className="alert alert-error">{error}</div>}
           {!entrega && !error && <LoadingCenter />}

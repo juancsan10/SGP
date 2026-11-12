@@ -10,8 +10,13 @@ const notificacionesService = require('../services/notificaciones.service');
 // GET /api/v1/notificaciones/:id_usuario
 const getByUsuario = async (req, res) => {
   try {
+    // NUEVO: quién la envió (nombre y rol), para distinguir los avisos del Administrador.
     const [rows] = await db.query(
-      `SELECT * FROM notificaciones WHERE id_usuario = ? ORDER BY fecha_envio DESC`,
+      `SELECT n.*, CONCAT(c.nombres,' ',c.apellidos) AS creador_nombre, rc.nombre_rol AS creador_rol
+       FROM notificaciones n
+       LEFT JOIN usuarios c ON c.id_usuario = n.id_creador
+       LEFT JOIN roles rc ON rc.id_rol = c.id_rol
+       WHERE n.id_usuario = ? ORDER BY n.fecha_envio DESC`,
       [req.params.id_usuario]
     );
     return res.json({ success: true, data: rows });
@@ -65,28 +70,46 @@ const marcarTodasLeidas = async (req, res) => {
   }
 };
 
-// POST /api/v1/notificaciones/broadcast  (NUEVO — solo Administrador)
-// Envía una notificación a un usuario puntual o a todos los usuarios
-// activos de un rol (Aprendiz, Instructor, o ambos con "Todos").
+// POST /api/v1/notificaciones/broadcast
+// Administrador: a un usuario puntual, a todos los usuarios activos de un rol
+//   (Aprendiz, Instructor o "Todos") o al equipo de un proyecto (id_proyecto).
+// Instructor (NUEVO, punto 7): solo a sus aprendices —
+//   rol_destino 'MisAprendices', el equipo de uno de sus proyectos
+//   (id_proyecto) o un aprendiz de sus proyectos (id_usuario).
 const TIPOS_VALIDOS = ['mantenimiento', 'advertencia', 'informativo', 'sistema'];
 const PRIORIDADES_VALIDAS = ['Baja', 'Media', 'Alta'];
 
 const broadcast = async (req, res) => {
   try {
-    const { titulo, mensaje, tipo, prioridad, id_usuario, rol_destino } = req.body;
+    const { titulo, mensaje, tipo, prioridad, id_usuario, rol_destino, id_proyecto } = req.body;
+    const esInstructor = req.user.rol === 'Instructor';
 
     if (!titulo || !mensaje) {
       return res.status(400).json({ success: false, message: 'titulo y mensaje son requeridos' });
     }
-    if (!id_usuario && !rol_destino) {
-      return res.status(400).json({ success: false, message: 'Debes indicar id_usuario o rol_destino' });
+    if (!id_usuario && !rol_destino && !id_proyecto) {
+      return res.status(400).json({ success: false, message: 'Debes indicar id_usuario, id_proyecto o rol_destino' });
     }
     const tipoFinal = TIPOS_VALIDOS.includes(tipo) ? tipo : 'informativo';
     const prioridadFinal = PRIORIDADES_VALIDAS.includes(prioridad) ? prioridad : 'Media';
     const fechaEnvio = new Date();
 
     let destinatarios = [];
-    if (id_usuario) {
+    if (esInstructor) {
+      const resultado = await destinatariosDelInstructor(req.user.id, { id_usuario, rol_destino, id_proyecto });
+      if (resultado.error) return res.status(resultado.status).json({ success: false, message: resultado.error });
+      destinatarios = resultado.ids;
+    } else if (id_proyecto) {
+      // Administrador: equipo del proyecto y su instructor responsable.
+      const [rows] = await db.query(
+        `SELECT DISTINCT x.id_usuario FROM (
+           SELECT e.id_usuario FROM equipos_proyecto e WHERE e.id_proyecto = ?
+           UNION SELECT p.id_instructor FROM proyectos p WHERE p.id_proyecto = ?
+         ) x JOIN usuarios u ON u.id_usuario = x.id_usuario WHERE u.estado = 1`,
+        [id_proyecto, id_proyecto]
+      );
+      destinatarios = rows.map(r => r.id_usuario);
+    } else if (id_usuario) {
       destinatarios = [id_usuario];
     } else {
       const roles = rol_destino === 'Todos' ? ['Aprendiz', 'Instructor'] : [rol_destino];
@@ -126,7 +149,34 @@ const broadcast = async (req, res) => {
   }
 };
 
-// GET /api/v1/notificaciones/enviadas  (NUEVO — solo Administrador)
+// Destinatarios permitidos al Instructor: solo aprendices activos de sus proyectos.
+const SQL_APRENDICES_INSTRUCTOR = `
+  SELECT DISTINCT e.id_usuario FROM equipos_proyecto e
+  JOIN proyectos p ON p.id_proyecto = e.id_proyecto
+  JOIN usuarios u ON u.id_usuario = e.id_usuario
+  JOIN roles r ON r.id_rol = u.id_rol
+  WHERE p.id_instructor = ? AND u.estado = 1 AND r.nombre_rol = 'Aprendiz'`;
+
+async function destinatariosDelInstructor(idInstructor, { id_usuario, rol_destino, id_proyecto }) {
+  if (id_proyecto) {
+    const [propio] = await db.query('SELECT id_proyecto FROM proyectos WHERE id_proyecto = ? AND id_instructor = ?', [id_proyecto, idInstructor]);
+    if (!propio.length) return { status: 403, error: 'Solo puedes notificar a los equipos de tus proyectos' };
+    const [rows] = await db.query(`${SQL_APRENDICES_INSTRUCTOR} AND p.id_proyecto = ?`, [idInstructor, id_proyecto]);
+    return { ids: rows.map(r => r.id_usuario) };
+  }
+  if (id_usuario) {
+    const [rows] = await db.query(`${SQL_APRENDICES_INSTRUCTOR} AND e.id_usuario = ?`, [idInstructor, id_usuario]);
+    if (!rows.length) return { status: 403, error: 'Solo puedes notificar a aprendices de tus proyectos' };
+    return { ids: [rows[0].id_usuario] };
+  }
+  if (rol_destino === 'MisAprendices') {
+    const [rows] = await db.query(SQL_APRENDICES_INSTRUCTOR, [idInstructor]);
+    return { ids: rows.map(r => r.id_usuario) };
+  }
+  return { status: 403, error: 'Como instructor solo puedes notificar a tus aprendices, a un proyecto tuyo o a un aprendiz' };
+}
+
+// GET /api/v1/notificaciones/enviadas  (Administrador e Instructor: lo que él creó)
 const getEnviadas = async (req, res) => {
   try {
     const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);

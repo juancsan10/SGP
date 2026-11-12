@@ -132,3 +132,12 @@ describe('ProyectoDetallePage', () => {
     expect(within(alerta.closest('form')).getByPlaceholderText('Escribe un mensaje…')).toHaveValue('eres un idiota');
   });
 });
+
+describe('motivoNoDisponible (agregar miembro)', () => {
+  it('should block apprentices without program or with 2 active projects', async () => {
+    const { motivoNoDisponible } = await import('../src/pages/ProyectoDetallePage.jsx');
+    expect(motivoNoDisponible({ programa_formacion: 'ADSO', proyectos_activos: 1 })).toBeNull();
+    expect(motivoNoDisponible({ programa_formacion: 'ADSO', proyectos_activos: 2 })).toBe('ya tiene el máximo de proyectos');
+    expect(motivoNoDisponible({ programa_formacion: '', proyectos_activos: 0 })).toBe('sin programa asignado');
+  });
+});

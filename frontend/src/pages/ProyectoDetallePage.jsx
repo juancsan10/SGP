@@ -3,7 +3,7 @@
 // Vista detallada de un proyecto con pestañas:
 // Fases · Tareas · Equipo · Mensajes · Repositorios
 // =====================================================
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import {
@@ -12,7 +12,9 @@ import {
   entregablesService, usuariosService,
   comentariosService, archivosService, evaluacionesService, reunionesService, // NUEVOS
 } from '../services/api.js';
-import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha, Pagination, ConfirmModal } from '../components/helpers.jsx';
+import { estadoBadge, prioridadBadge, ProgressBar, LoadingCenter, formatFecha, Pagination, ConfirmModal, ModalHeader, NotaObligatorios, useModalAccesible } from '../components/helpers.jsx';
+import { EtiquetaRol, SelectorRolEquipo, CambiarRolModal } from '../components/RolesEquipo.jsx'; // NUEVO (punto 4)
+import ChatProyecto from '../components/ChatProyecto.jsx'; // NUEVO (punto 6)
 import RevisionProyecto from '../components/RevisionProyecto.jsx'; // NUEVO: supervisión del Administrador
 
 const LIMITE_ENTREGABLES = 8; // NUEVO: tamaño de página para la pestaña Entregables
@@ -21,6 +23,18 @@ const LIMITE_ENTREGABLES = 8; // NUEVO: tamaño de página para la pestaña Entr
 // servicio ya existía pero nunca se usaba en esta página) y "Reuniones"
 // (RF5.3 — antes esta tabla ni siquiera tenía controlador en el backend).
 const TABS = ['Resumen','Fases','Entregables','Tareas','Equipo','Mensajes','Repositorios','Reuniones'];
+
+// RN-001: un aprendiz puede estar como máximo en 2 proyectos activos y debe
+// tener su programa de formación asignado (el backend valida lo mismo).
+const MAX_PROYECTOS_APRENDIZ = 2;
+export function motivoNoDisponible(u) {
+  if (!String(u.programa_formacion || '').trim()) return 'sin programa asignado';
+  if (Number(u.proyectos_activos) >= MAX_PROYECTOS_APRENDIZ) return 'ya tiene el máximo de proyectos';
+  return null;
+}
+
+// El motivo de una solicitud de baja es obligatorio (mismo mínimo que valida el backend).
+const MOTIVO_BAJA_MIN = 10;
 
 export default function ProyectoDetallePage() {
   const { id }   = useParams();
@@ -50,14 +64,7 @@ export default function ProyectoDetallePage() {
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState('');
 
-  // ── Mensajes ──────────────────────────────────────
-  const [msgTexto,  setMsgTexto]  = useState('');
-  const [msgError,  setMsgError]  = useState(''); // NUEVO: muestra el rechazo del glosario de palabras prohibidas
-  const [mensajeEditando, setMensajeEditando] = useState(null); // NUEVO: id del mensaje en edición
-  const [textoEditando,   setTextoEditando]   = useState('');
-  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
-  const [errorEdicion, setErrorEdicion] = useState('');
-  const mensajesEndRef = useRef(null);
+  // ── Mensajes: el chat completo vive en components/ChatProyecto.jsx ──
 
   // ── Modales rápidos ───────────────────────────────
   const [modalFase,  setModalFase]  = useState(false);
@@ -67,6 +74,7 @@ export default function ProyectoDetallePage() {
   const [modalEntregable, setModalEntregable] = useState(false); // NUEVO
   const [modalReunion,    setModalReunion]    = useState(false); // NUEVO
   const [modalDetalle,    setModalDetalle]    = useState(false); // NUEVO: comentarios+archivos+evaluación
+  const refDetalle = useModalAccesible(modalDetalle, () => setModalDetalle(false));
   const [offsetEntregables, setOffsetEntregables] = useState(0); // NUEVO: paginación de la pestaña Entregables
   const [offsetTareasTab, setOffsetTareasTab] = useState(0); // NUEVO: paginación de la pestaña Tareas
   const [offsetEquipo, setOffsetEquipo] = useState(0); // NUEVO: paginación de la pestaña Equipo
@@ -89,7 +97,8 @@ export default function ProyectoDetallePage() {
 
   const [formFase,  setFormFase]  = useState({ nombre_fase:'', descripcion:'', fecha_inicio:'', fecha_fin:'' });
   const [formTarea, setFormTarea] = useState({ titulo:'', descripcion:'', prioridad:'Media', fecha_vencimiento:'', id_asignado:'' });
-  const [formEquip, setFormEquip] = useState({ id_usuario:'', rol_en_equipo:'' });
+  const [formEquip, setFormEquip] = useState({ id_usuario:'', rol_en_equipo:'', color_rol:null });
+  const [miembroRol, setMiembroRol] = useState(null); // NUEVO (punto 4): cambiar rol de un miembro
   const [formRepo,  setFormRepo]  = useState({ url_github:'', rama_principal:'main' });
   const [formEntregable, setFormEntregable] = useState({ nombre:'', descripcion:'', fecha_entrega:'', url_drive:'', version:'1.0', id_fase:'' }); // NUEVO
   const [formReunion,    setFormReunion]    = useState({ titulo:'', descripcion:'', fecha_reunion:'', lugar:'' }); // NUEVO
@@ -123,7 +132,9 @@ export default function ProyectoDetallePage() {
         equiposService.getByProyecto(id),
         mensajesService.getByProyecto(id),
         repositoriosService.getByProyecto(id),
-        usuariosService.getAll(),
+        // Aprendices activos para armar el equipo y asignar tareas (el Instructor
+        // recibe también los que aún no están en sus proyectos).
+        usuariosService.getAll({ rol: 'Aprendiz', alcance: 'disponibles', limit: 100 }),
         reunionesService.getByProyecto(id),
       ]);
       const [pRes, fRes, tRes, eRes, mRes, rRes, uRes, reunRes] = resultados;
@@ -168,11 +179,6 @@ export default function ProyectoDetallePage() {
   }
 
   useEffect(() => { cargar(); }, [id]);
-  useEffect(() => {
-    if (tab === 'Mensajes') {
-      setTimeout(() => mensajesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-    }
-  }, [tab, mensajes]);
 
   // ── Crear Fase ────────────────────────────────────
   async function crearFase(e) {
@@ -202,7 +208,7 @@ export default function ProyectoDetallePage() {
   async function crearEquipo(e) {
     e.preventDefault(); setSaving(true); setSaveError('');
     try {
-      await equiposService.create({ ...formEquip, id_proyecto: id });
+      await equiposService.create({ ...formEquip, color_rol: formEquip.rol_en_equipo ? formEquip.color_rol : null, id_proyecto: id });
       setModalEquip(false);
       const r = await equiposService.getByProyecto(id);
       setEquipo(r.data.data || []);
@@ -213,9 +219,15 @@ export default function ProyectoDetallePage() {
   // NUEVO: Instructor solicita eliminar a un aprendiz del equipo (no lo
   // borra directo — el backend crea una solicitud que un Admin resuelve).
   async function solicitarBaja(e) {
-    e.preventDefault(); setEnviandoBaja(true); setSaveError('');
+    e.preventDefault(); setSaveError('');
+    const motivo = motivoBaja.trim();
+    if (motivo.length < MOTIVO_BAJA_MIN) {
+      setSaveError(`Escribe el motivo de la baja (mínimo ${MOTIVO_BAJA_MIN} caracteres).`);
+      return;
+    }
+    setEnviandoBaja(true);
     try {
-      await equiposService.remove(modalSolicitarBaja.id_equipo, motivoBaja);
+      await equiposService.remove(modalSolicitarBaja.id_equipo, motivo);
       setModalSolicitarBaja(null);
       setMotivoBaja('');
     } catch (err) { setSaveError(err.response?.data?.message || 'No se pudo enviar la solicitud'); }
@@ -278,51 +290,6 @@ export default function ProyectoDetallePage() {
       setRepos(r.data.data || []);
     } catch (err) { setSaveError(err.response?.data?.message || 'Error'); }
     finally { setRepoActualizando(null); }
-  }
-
-  // ── Enviar mensaje ────────────────────────────────
-  async function enviarMensaje(e) {
-    e.preventDefault();
-    if (!msgTexto.trim()) return;
-    setMsgError('');
-    try {
-      await mensajesService.create({ contenido: msgTexto, id_proyecto: id });
-      setMsgTexto('');
-      const r = await mensajesService.getByProyecto(id);
-      setMensajes(r.data.data || []);
-    } catch (err) {
-      // NUEVO: antes este error se tragaba en silencio — si el mensaje
-      // tenía una palabra del glosario prohibido, el usuario nunca se
-      // enteraba de por qué no se envió.
-      setMsgError(err.response?.data?.message || 'No se pudo enviar el mensaje');
-    }
-  }
-
-  // NUEVO: editar un mensaje propio (el backend valida que sea el autor
-  // real y vuelve a pasar el glosario de palabras prohibidas).
-  function iniciarEdicionMensaje(m) {
-    setMensajeEditando(m.id_mensaje);
-    setTextoEditando(m.contenido);
-    setErrorEdicion('');
-  }
-  function cancelarEdicionMensaje() {
-    setMensajeEditando(null);
-    setTextoEditando('');
-    setErrorEdicion('');
-  }
-  async function guardarEdicionMensaje(idMensaje) {
-    if (!textoEditando.trim()) return;
-    setGuardandoEdicion(true); setErrorEdicion('');
-    try {
-      await mensajesService.update(idMensaje, textoEditando);
-      setMensajeEditando(null);
-      const r = await mensajesService.getByProyecto(id);
-      setMensajes(r.data.data || []);
-    } catch (err) {
-      setErrorEdicion(err.response?.data?.message || 'No se pudo guardar la edición');
-    } finally {
-      setGuardandoEdicion(false);
-    }
   }
 
   // ── Actualizar estado de tarea ────────────────────
@@ -717,7 +684,7 @@ export default function ProyectoDetallePage() {
           <div>
             {canCreate && (
               <div style={{ marginBottom:16 }}>
-                <button className="btn btn-primary" onClick={() => { setFormEquip({id_usuario:'',rol_en_equipo:''}); setSaveError(''); setModalEquip(true); }}>
+                <button className="btn btn-primary" onClick={() => { setFormEquip({id_usuario:'',rol_en_equipo:'',color_rol:null}); setSaveError(''); setModalEquip(true); }}>
                   + Agregar miembro
                 </button>
               </div>
@@ -761,14 +728,17 @@ export default function ProyectoDetallePage() {
                           <td><strong>{m.nombre_usuario}</strong></td>
                           <td>{m.correo}</td>
                           <td><span className="badge badge-blue">{m.rol}</span></td>
-                          <td>{m.rol_en_equipo || '—'}</td>
+                          <td><EtiquetaRol nombre={m.rol_en_equipo} color={m.color_rol} /></td>
                           {/* NUEVO: el instructor ya no borra directo — solicita la
                               eliminación y un administrador la aprueba o rechaza. */}
                           {esInstructor && (
                             <td>
-                              <button className="btn btn-secondary btn-sm" onClick={() => { setModalSolicitarBaja(m); setMotivoBaja(''); setSaveError(''); }}>
-                                Solicitar baja
-                              </button>
+                              <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                                <button className="btn btn-secondary btn-sm" onClick={() => setMiembroRol(m)}>🏷️ Cambiar rol</button>
+                                <button className="btn btn-secondary btn-sm" onClick={() => { setModalSolicitarBaja(m); setMotivoBaja(''); setSaveError(''); }}>
+                                  Solicitar baja
+                                </button>
+                              </div>
                             </td>
                           )}
                         </tr>
@@ -785,83 +755,10 @@ export default function ProyectoDetallePage() {
           </div>
         )}
 
-        {/* ─────── MENSAJES ────────────────────────── */}
+        {/* ─────── MENSAJES (MEJORADO, punto 6) ───────── */}
         {tab === 'Mensajes' && (
-          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-            <div className="card" style={{ maxHeight:460, overflowY:'auto' }}>
-              <div style={{ padding:'16px 20px', display:'flex', flexDirection:'column', gap:12 }}>
-                {mensajes.length === 0 && (
-                  <div className="empty-state"><div className="empty-state-icon">💬</div><h3>Sin mensajes aún</h3><p>Sé el primero en escribir.</p></div>
-                )}
-                {mensajes.map(m => {
-                  const esPropio = m.id_remitente === usuario.id;
-                  const editando = mensajeEditando === m.id_mensaje;
-                  return (
-                    <div key={m.id_mensaje} style={{ display:'flex', gap:10, flexDirection: esPropio ? 'row-reverse' : 'row' }}>
-                      <div style={{ width:32, height:32, borderRadius:'50%', background: esPropio ? 'var(--green-600)' : 'var(--slate-300)', color: esPropio ? 'white' : 'var(--slate-700)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:12, flexShrink:0 }}>
-                        {(m.remitente_nombre || '?')[0].toUpperCase()}
-                      </div>
-                      <div style={{ maxWidth:'70%' }}>
-                        <div style={{ fontSize:10, color:'var(--slate-500)', marginBottom:3, textAlign: esPropio ? 'right' : 'left' }}>
-                          {m.remitente_nombre} · {new Date(m.fecha_envio).toLocaleString('es-CO')}
-                          {m.fecha_edicion && <span title={`Editado: ${new Date(m.fecha_edicion).toLocaleString('es-CO')}`}> · (editado)</span>}
-                        </div>
-                        {editando ? (
-                          <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                            {errorEdicion && <div className="alert alert-error" style={{ fontSize:11, padding:'6px 10px' }}>{errorEdicion}</div>}
-                            <textarea
-                              className="form-textarea"
-                              style={{ minHeight:50, fontSize:13 }}
-                              value={textoEditando}
-                              onChange={e => setTextoEditando(e.target.value)}
-                              autoFocus
-                            />
-                            <div style={{ display:'flex', gap:6, justifyContent: esPropio ? 'flex-end' : 'flex-start' }}>
-                              <button className="btn btn-secondary btn-sm" onClick={cancelarEdicionMensaje} disabled={guardandoEdicion}>Cancelar</button>
-                              <button className="btn btn-primary btn-sm" onClick={() => guardarEdicionMensaje(m.id_mensaje)} disabled={guardandoEdicion || !textoEditando.trim()}>
-                                {guardandoEdicion ? 'Guardando…' : 'Guardar'}
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ display:'flex', flexDirection:'column', gap:3, alignItems: esPropio ? 'flex-end' : 'flex-start' }}>
-                            <div style={{ background: esPropio ? 'var(--green-50)' : 'var(--slate-100)', borderRadius: esPropio ? '12px 12px 2px 12px' : '12px 12px 12px 2px', padding:'8px 12px', fontSize:13, color:'var(--slate-800)', border:'1px solid', borderColor: esPropio ? 'var(--green-100)' : 'var(--slate-200)' }}>
-                              {m.contenido}
-                            </div>
-                            {/* NUEVO: solo el autor puede editar su propio mensaje */}
-                            {esPropio && (
-                              <button
-                                onClick={() => iniciarEdicionMensaje(m)}
-                                style={{ background:'none', border:'none', color:'var(--slate-400)', fontSize:11, cursor:'pointer', padding:0 }}
-                              >
-                                ✏️ Editar
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={mensajesEndRef} />
-              </div>
-            </div>
-            <form onSubmit={enviarMensaje} style={{ display:'flex', flexDirection:'column', gap:8 }}>
-              {msgError && <div className="alert alert-error">{msgError}</div>}
-              <div style={{ display:'flex', gap:10 }}>
-              <input
-                className="form-input"
-                value={msgTexto}
-                onChange={e => setMsgTexto(e.target.value)}
-                placeholder="Escribe un mensaje…"
-                style={{ flex:1 }}
-              />
-              <button type="submit" className="btn btn-primary" disabled={!msgTexto.trim()}>
-                Enviar ✉️
-              </button>
-              </div>
-            </form>
-          </div>
+          <ChatProyecto idProyecto={id} mensajes={mensajes} setMensajes={setMensajes}
+            usuario={usuario} puedePublicarAvisos={esInstructor} />
         )}
 
         {/* ─────── REPOSITORIOS ────────────────────── */}
@@ -964,29 +861,33 @@ export default function ProyectoDetallePage() {
 
       {/* ─── Modal Fase ────────────────────────────── */}
       <FormModal
-        open={modalFase} title="Nueva fase"
+        open={modalFase} title="Nueva fase" icono="🧭" textoGuardar="Crear fase"
+        descripcion="Las fases ordenan el proyecto por etapas; luego podrás agregarles entregables."
         onClose={() => setModalFase(false)}
         onSubmit={crearFase} saving={saving} error={saveError}
       >
         <div className="form-group">
-          <label className="form-label">Nombre de la fase *</label>
-          <input className="form-input" value={formFase.nombre_fase}
+          <label className="form-label" htmlFor="fase-nombre">Nombre de la fase *</label>
+          <input id="fase-nombre" className="form-input" placeholder="Ej: Análisis de requisitos" maxLength={150}
+            value={formFase.nombre_fase}
             onChange={e=>setFormFase({...formFase,nombre_fase:e.target.value})} required />
         </div>
         <div className="form-group">
-          <label className="form-label">Descripción</label>
-          <textarea className="form-textarea" value={formFase.descripcion}
+          <label className="form-label" htmlFor="fase-descripcion">Descripción</label>
+          <textarea id="fase-descripcion" className="form-textarea" placeholder="¿Qué se busca lograr en esta fase?"
+            value={formFase.descripcion}
             onChange={e=>setFormFase({...formFase,descripcion:e.target.value})} />
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        <div className="form-grid-2">
           <div className="form-group">
-            <label className="form-label">Fecha inicio</label>
-            <input className="form-input" type="date" value={formFase.fecha_inicio}
+            <label className="form-label" htmlFor="fase-inicio">Fecha inicio</label>
+            <input id="fase-inicio" className="form-input" type="date" value={formFase.fecha_inicio}
               onChange={e=>setFormFase({...formFase,fecha_inicio:e.target.value})} />
           </div>
           <div className="form-group">
-            <label className="form-label">Fecha fin</label>
-            <input className="form-input" type="date" value={formFase.fecha_fin}
+            <label className="form-label" htmlFor="fase-fin">Fecha fin</label>
+            <input id="fase-fin" className="form-input" type="date" value={formFase.fecha_fin}
+              min={formFase.fecha_inicio || undefined}
               onChange={e=>setFormFase({...formFase,fecha_fin:e.target.value})} />
           </div>
         </div>
@@ -994,38 +895,41 @@ export default function ProyectoDetallePage() {
 
       {/* ─── Modal Tarea ───────────────────────────── */}
       <FormModal
-        open={modalTarea} title="Nueva tarea"
+        open={modalTarea} title="Nueva tarea" icono="✅" textoGuardar="Crear tarea"
+        descripcion="Asigna una actividad concreta a un aprendiz del proyecto, con su prioridad y fecha límite."
         onClose={() => setModalTarea(false)}
         onSubmit={crearTarea} saving={saving} error={saveError}
       >
         <div className="form-group">
-          <label className="form-label">Título *</label>
-          <input className="form-input" value={formTarea.titulo}
+          <label className="form-label" htmlFor="tarea-titulo">Título *</label>
+          <input id="tarea-titulo" className="form-input" placeholder="Ej: Diseñar el modelo de datos" maxLength={200}
+            value={formTarea.titulo}
             onChange={e=>setFormTarea({...formTarea,titulo:e.target.value})} required />
         </div>
         <div className="form-group">
-          <label className="form-label">Descripción</label>
-          <textarea className="form-textarea" value={formTarea.descripcion}
+          <label className="form-label" htmlFor="tarea-descripcion">Descripción</label>
+          <textarea id="tarea-descripcion" className="form-textarea" placeholder="Detalla qué se espera como resultado"
+            value={formTarea.descripcion}
             onChange={e=>setFormTarea({...formTarea,descripcion:e.target.value})} />
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        <div className="form-grid-2">
           <div className="form-group">
-            <label className="form-label">Prioridad</label>
-            <select className="form-select" value={formTarea.prioridad}
+            <label className="form-label" htmlFor="tarea-prioridad">Prioridad</label>
+            <select id="tarea-prioridad" className="form-select" value={formTarea.prioridad}
               onChange={e=>setFormTarea({...formTarea,prioridad:e.target.value})}>
               {['Alta','Media','Baja'].map(p=><option key={p}>{p}</option>)}
             </select>
           </div>
           <div className="form-group">
-            <label className="form-label">Fecha vencimiento</label>
-            <input className="form-input" type="date" value={formTarea.fecha_vencimiento}
+            <label className="form-label" htmlFor="tarea-vencimiento">Fecha vencimiento</label>
+            <input id="tarea-vencimiento" className="form-input" type="date" value={formTarea.fecha_vencimiento}
               onChange={e=>setFormTarea({...formTarea,fecha_vencimiento:e.target.value})} />
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">Asignar a *</label>
-          <select className="form-select" value={formTarea.id_asignado}
-            onChange={e=>setFormTarea({...formTarea,id_asignado:e.target.value})} required>
+          <label className="form-label" htmlFor="tarea-asignado">Asignar a *</label>
+          <select id="tarea-asignado" className="form-select" value={formTarea.id_asignado}
+            onChange={e=>setFormTarea({...formTarea,id_asignado:e.target.value})} required aria-describedby="tarea-asignado-ayuda">
             <option value="">Seleccionar aprendiz</option>
             {usuarios.filter(u=>u.rol === 'Aprendiz').map(u=>(
               <option key={u.id_usuario} value={u.id_usuario}>
@@ -1033,78 +937,110 @@ export default function ProyectoDetallePage() {
               </option>
             ))}
           </select>
+          <span className="form-hint" id="tarea-asignado-ayuda">
+            {usuarios.some(u=>u.rol === 'Aprendiz')
+              ? 'El aprendiz recibirá una notificación con la tarea.'
+              : 'No hay aprendices disponibles: primero agrégalos al equipo.'}
+          </span>
         </div>
       </FormModal>
 
       {/* ─── Modal Equipo ──────────────────────────── */}
       <FormModal
-        open={modalEquip} title="Agregar miembro al equipo"
+        open={modalEquip} title="Agregar miembro al equipo" icono="👥" textoGuardar="Agregar miembro"
+        descripcion="Suma un aprendiz al proyecto y elige su rol: cada rol tiene una etiqueta de color."
         onClose={() => setModalEquip(false)}
         onSubmit={crearEquipo} saving={saving} error={saveError}
       >
         <div className="form-group">
-          <label className="form-label">Usuario *</label>
-          <select className="form-select" value={formEquip.id_usuario}
-            onChange={e=>setFormEquip({...formEquip,id_usuario:e.target.value})} required>
+          <label className="form-label" htmlFor="equipo-usuario">Aprendiz *</label>
+          <select id="equipo-usuario" className="form-select" value={formEquip.id_usuario}
+            onChange={e=>setFormEquip({...formEquip,id_usuario:e.target.value})} required aria-describedby="equipo-usuario-ayuda">
             <option value="">Seleccionar aprendiz</option>
-            {usuarios.filter(u=>u.rol === 'Aprendiz' && !equipo.find(e=>e.id_usuario===u.id_usuario)).map(u=>(
-              <option key={u.id_usuario} value={u.id_usuario}>
-                {u.nombres} {u.apellidos} ({u.rol})
-              </option>
-            ))}
+            {usuarios.filter(u=>u.rol === 'Aprendiz' && !equipo.find(e=>e.id_usuario===u.id_usuario)).map(u=>{
+              const motivo = motivoNoDisponible(u);
+              return (
+                <option key={u.id_usuario} value={u.id_usuario} disabled={!!motivo}>
+                  {u.nombres} {u.apellidos} · {u.programa_formacion || 'sin programa'}
+                  {u.proyectos_activos !== undefined ? ` · ${u.proyectos_activos}/${MAX_PROYECTOS_APRENDIZ} proyectos` : ''}
+                  {motivo ? ` — ${motivo}` : ''}
+                </option>
+              );
+            })}
           </select>
+          <span className="form-hint" id="equipo-usuario-ayuda">
+            {usuarios.some(u=>u.rol === 'Aprendiz' && !equipo.find(e=>e.id_usuario===u.id_usuario))
+              ? `Cada aprendiz tiene un programa de formación y puede estar como máximo en ${MAX_PROYECTOS_APRENDIZ} proyectos activos.`
+              : 'Todos los aprendices disponibles ya hacen parte del equipo.'}
+          </span>
         </div>
         <div className="form-group">
-          <label className="form-label">Rol en el proyecto</label>
-          <input className="form-input" placeholder="Ej: Líder técnico" value={formEquip.rol_en_equipo}
-            onChange={e=>setFormEquip({...formEquip,rol_en_equipo:e.target.value})} />
+          <span className="form-label" id="equipo-rol-etiqueta">Rol en el proyecto</span>
+          <SelectorRolEquipo idEtiqueta="equipo-rol-etiqueta"
+            valor={{ nombre: formEquip.rol_en_equipo, color: formEquip.color_rol }}
+            onChange={r => setFormEquip(f => ({ ...f, rol_en_equipo: r.nombre, color_rol: r.color }))} />
         </div>
       </FormModal>
+
+      {/* ─── Modal Cambiar rol de un miembro (NUEVO, punto 4) ─── */}
+      {miembroRol && (
+        <CambiarRolModal miembro={miembroRol} onClose={() => setMiembroRol(null)}
+          onGuardado={async () => {
+            setMiembroRol(null);
+            const r = await equiposService.getByProyecto(id);
+            setEquipo(r.data.data || []);
+          }} />
+      )}
 
       {/* ─── Modal Solicitar baja de equipo (NUEVO) ──── */}
       <FormModal
         open={!!modalSolicitarBaja} title={`Solicitar baja de ${modalSolicitarBaja?.nombre_usuario || ''}`}
+        icono="📨" textoGuardar="Enviar solicitud"
+        descripcion="No elimina al aprendiz de inmediato: un administrador aprobará o rechazará la solicitud."
         onClose={() => setModalSolicitarBaja(null)}
         onSubmit={solicitarBaja} saving={enviandoBaja} error={saveError}
       >
-        <p style={{ fontSize:13, color:'var(--slate-600)', marginBottom:8 }}>
-          Esto no elimina al aprendiz de inmediato — se envía como solicitud para que un administrador la apruebe o la rechace.
-        </p>
         <div className="form-group">
-          <label className="form-label">Motivo (opcional)</label>
-          <textarea className="form-textarea" placeholder="Ej: bajo desempeño, falta de comunicación con el equipo…"
-            value={motivoBaja} onChange={e=>setMotivoBaja(e.target.value)} />
+          <label className="form-label" htmlFor="motivo-baja">Motivo *</label>
+          <textarea id="motivo-baja" className="form-textarea" placeholder="Ej: bajo desempeño, falta de comunicación con el equipo…"
+            value={motivoBaja} onChange={e=>setMotivoBaja(e.target.value)}
+            required minLength={MOTIVO_BAJA_MIN} maxLength={500} aria-describedby="motivo-baja-ayuda" />
+          <small id="motivo-baja-ayuda" style={{ fontSize:12, color: motivoBaja.trim().length >= MOTIVO_BAJA_MIN ? 'var(--slate-500)' : 'var(--red-600, #dc2626)' }}>
+            Obligatorio. Mínimo {MOTIVO_BAJA_MIN} caracteres ({motivoBaja.trim().length}/{MOTIVO_BAJA_MIN}).
+          </small>
         </div>
       </FormModal>
 
       {/* ─── Modal Repositorio ─────────────────────── */}
       <FormModal
-        open={modalRepo} title="Vincular repositorio"
+        open={modalRepo} title="Vincular repositorio" icono="🔗" textoGuardar="Vincular"
+        descripcion="Conecta el repositorio de GitHub del proyecto para seguir su actividad."
         onClose={() => setModalRepo(false)}
         onSubmit={crearRepo} saving={saving} error={saveError}
       >
         <div className="form-group">
-          <label className="form-label">URL de GitHub *</label>
-          <input className="form-input" placeholder="https://github.com/usuario/repo"
+          <label className="form-label" htmlFor="repo-url">URL de GitHub *</label>
+          <input id="repo-url" className="form-input" placeholder="https://github.com/usuario/repo"
             value={formRepo.url_github}
             onChange={e=>setFormRepo({...formRepo,url_github:e.target.value})} required />
         </div>
         <div className="form-group">
-          <label className="form-label">Rama principal</label>
-          <input className="form-input" value={formRepo.rama_principal}
+          <label className="form-label" htmlFor="repo-rama">Rama principal</label>
+          <input id="repo-rama" className="form-input" placeholder="main" value={formRepo.rama_principal}
             onChange={e=>setFormRepo({...formRepo,rama_principal:e.target.value})} />
         </div>
       </FormModal>
 
       {/* ─── Modal Entregable (NUEVO) ──────────────── */}
       <FormModal
-        open={modalEntregable} title="Nuevo entregable"
+        open={modalEntregable} title="Nuevo entregable" icono="📦" textoGuardar="Crear entregable"
+        descripcion="Define un producto que el equipo debe entregar dentro de una fase, con su fecha."
         onClose={() => setModalEntregable(false)}
         onSubmit={crearEntregable} saving={saving} error={saveError}
       >
         <div className="form-group">
-          <label className="form-label">Fase *</label>
-          <select className="form-select" value={formEntregable.id_fase}
+          <label className="form-label" htmlFor="entregable-fase">Fase *</label>
+          <select id="entregable-fase" className="form-select" value={formEntregable.id_fase}
             onChange={e=>setFormEntregable({...formEntregable,id_fase:e.target.value})} required>
             {fases.map(f => (
               <option key={f.id_fase} value={f.id_fase}>{f.nombre_fase}</option>
@@ -1112,59 +1048,60 @@ export default function ProyectoDetallePage() {
           </select>
         </div>
         <div className="form-group">
-          <label className="form-label">Nombre *</label>
-          <input className="form-input" value={formEntregable.nombre}
+          <label className="form-label" htmlFor="entregable-nombre">Nombre *</label>
+          <input id="entregable-nombre" className="form-input" placeholder="Ej: Documento de requisitos" value={formEntregable.nombre}
             onChange={e=>setFormEntregable({...formEntregable,nombre:e.target.value})} required />
         </div>
         <div className="form-group">
-          <label className="form-label">Descripción</label>
-          <textarea className="form-textarea" value={formEntregable.descripcion}
+          <label className="form-label" htmlFor="entregable-descripcion">Descripción</label>
+          <textarea id="entregable-descripcion" className="form-textarea" value={formEntregable.descripcion}
             onChange={e=>setFormEntregable({...formEntregable,descripcion:e.target.value})} />
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        <div className="form-grid-2">
           <div className="form-group">
-            <label className="form-label">Fecha de entrega *</label>
-            <input className="form-input" type="date" value={formEntregable.fecha_entrega}
+            <label className="form-label" htmlFor="entregable-fecha">Fecha de entrega *</label>
+            <input id="entregable-fecha" className="form-input" type="date" value={formEntregable.fecha_entrega}
               onChange={e=>setFormEntregable({...formEntregable,fecha_entrega:e.target.value})} required />
           </div>
           <div className="form-group">
-            <label className="form-label">Versión</label>
-            <input className="form-input" value={formEntregable.version}
+            <label className="form-label" htmlFor="entregable-version">Versión</label>
+            <input id="entregable-version" className="form-input" placeholder="1.0" value={formEntregable.version}
               onChange={e=>setFormEntregable({...formEntregable,version:e.target.value})} />
           </div>
         </div>
         <div className="form-group">
-          <label className="form-label">URL de Drive (opcional)</label>
-          <input className="form-input" placeholder="https://drive.google.com/..." value={formEntregable.url_drive}
+          <label className="form-label" htmlFor="entregable-drive">URL de Drive (opcional)</label>
+          <input id="entregable-drive" className="form-input" placeholder="https://drive.google.com/..." value={formEntregable.url_drive}
             onChange={e=>setFormEntregable({...formEntregable,url_drive:e.target.value})} />
         </div>
       </FormModal>
 
       {/* ─── Modal Reunión (NUEVO) ─────────────────── */}
       <FormModal
-        open={modalReunion} title="Programar reunión"
+        open={modalReunion} title="Programar reunión" icono="📅" textoGuardar="Programar reunión"
+        descripcion="Agenda un encuentro con el equipo; aparecerá también en el calendario del proyecto."
         onClose={() => setModalReunion(false)}
         onSubmit={crearReunion} saving={saving} error={saveError}
       >
         <div className="form-group">
-          <label className="form-label">Título *</label>
-          <input className="form-input" value={formReunion.titulo}
+          <label className="form-label" htmlFor="reunion-titulo">Título *</label>
+          <input id="reunion-titulo" className="form-input" placeholder="Ej: Revisión de avance semanal" value={formReunion.titulo}
             onChange={e=>setFormReunion({...formReunion,titulo:e.target.value})} required />
         </div>
         <div className="form-group">
-          <label className="form-label">Descripción</label>
-          <textarea className="form-textarea" value={formReunion.descripcion}
+          <label className="form-label" htmlFor="reunion-descripcion">Descripción</label>
+          <textarea id="reunion-descripcion" className="form-textarea" value={formReunion.descripcion}
             onChange={e=>setFormReunion({...formReunion,descripcion:e.target.value})} />
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+        <div className="form-grid-2">
           <div className="form-group">
-            <label className="form-label">Fecha y hora *</label>
-            <input className="form-input" type="datetime-local" value={formReunion.fecha_reunion}
+            <label className="form-label" htmlFor="reunion-fecha">Fecha y hora *</label>
+            <input id="reunion-fecha" className="form-input" type="datetime-local" value={formReunion.fecha_reunion}
               onChange={e=>setFormReunion({...formReunion,fecha_reunion:e.target.value})} required />
           </div>
           <div className="form-group">
-            <label className="form-label">Lugar</label>
-            <input className="form-input" placeholder="Sala virtual, bloque, etc." value={formReunion.lugar}
+            <label className="form-label" htmlFor="reunion-lugar">Lugar</label>
+            <input id="reunion-lugar" className="form-input" placeholder="Sala virtual, bloque, etc." value={formReunion.lugar}
               onChange={e=>setFormReunion({...formReunion,lugar:e.target.value})} />
           </div>
         </div>
@@ -1174,11 +1111,10 @@ export default function ProyectoDetallePage() {
           Comentarios (RN-015) · Archivos · Evaluación (RN-016)      ─── */}
       {modalDetalle && entregableSel && (
         <div className="modal-overlay" onClick={() => setModalDetalle(false)}>
-          <div className="modal" onClick={e=>e.stopPropagation()} style={{ maxWidth:560 }}>
-            <div className="modal-header">
-              <span className="modal-title">{entregableSel.nombre}</span>
-              <button className="modal-close" onClick={() => setModalDetalle(false)}>×</button>
-            </div>
+          <div className="modal" ref={refDetalle} role="dialog" aria-modal="true" aria-labelledby="detalle-entregable-titulo" onClick={e=>e.stopPropagation()} style={{ maxWidth:560 }}>
+            <ModalHeader id="detalle-entregable-titulo" icono="📦" titulo={entregableSel.nombre}
+              descripcion="Comentarios, documentos y evaluación de este entregable."
+              onClose={() => setModalDetalle(false)} />
             <div className="modal-body" style={{ maxHeight:'70vh', overflowY:'auto' }}>
               {detalleError && <div className="alert alert-error">{detalleError}</div>}
               {esAdmin && (
@@ -1317,24 +1253,27 @@ function MiniStat({ icon, label, valor }) {
   );
 }
 
-function FormModal({ open, title, onClose, onSubmit, saving, error, children }) {
+// Aviso de formulario (MEJORADO): encabezado con ícono y descripción, foco en el
+// primer campo, Escape para cerrar, botón con el verbo de la acción y nota de
+// campos obligatorios.
+function FormModal({ open, title, icono, descripcion, textoGuardar = 'Guardar', onClose, onSubmit, saving, error, children }) {
+  const ref = useModalAccesible(open, saving ? undefined : onClose);
   if (!open) return null;
+  const idTitulo = 'form-modal-titulo';
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e=>e.stopPropagation()}>
-        <div className="modal-header">
-          <span className="modal-title">{title}</span>
-          <button className="modal-close" onClick={onClose}>×</button>
-        </div>
+      <div className="modal" ref={ref} role="dialog" aria-modal="true" aria-labelledby={idTitulo} onClick={e=>e.stopPropagation()}>
+        <ModalHeader id={idTitulo} icono={icono} titulo={title} descripcion={descripcion} onClose={onClose} />
         <form onSubmit={onSubmit}>
           <div className="modal-body">
-            {error && <div className="alert alert-error">{error}</div>}
+            {error && <div className="alert alert-error" role="alert">{error}</div>}
             {children}
           </div>
           <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancelar</button>
+            <NotaObligatorios />
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancelar</button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Guardando…' : 'Guardar'}
+              {saving ? 'Guardando…' : textoGuardar}
             </button>
           </div>
         </form>
