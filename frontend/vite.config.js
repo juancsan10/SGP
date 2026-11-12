@@ -33,11 +33,11 @@ export default defineConfig({
     setupFiles: ['./tests/setup.js'],
     passWithNoTests: true,
     coverage: {
-      // Se mide la lógica de la interfaz. Quedan fuera el arranque (main.jsx),
-      // que solo monta la app, y el cliente HTTP (services/api.js), que solo
-      // llama al backend y se prueba con MSW en la semana 5.
+      // Se mide la lógica de la interfaz. Queda fuera solo el arranque (main.jsx),
+      // que monta la app. El cliente HTTP (services/api.js) se mide desde la
+      // semana 5: lo prueba tests/api.test.js con MSW.
       include: ['src/**/*.{js,jsx}'],
-      exclude: ['src/main.jsx', 'src/services/api.js'],
+      exclude: ['src/main.jsx'],
       // Línea base de la semana 1. Este número solo puede subir.
       thresholds: { lines: 55, branches: 46, functions: 45, statements: 51 },
     },
