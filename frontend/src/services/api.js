@@ -93,6 +93,8 @@ export const equiposService = {
   // NUEVO — solo Administrador: gestión de solicitudes de eliminación.
   listSolicitudes:    (estado = 'Pendiente') => api.get('/equipos/solicitudes/listar', { params: { estado } }),
   resolverSolicitud:  (id, aprobar, observacion_admin) => api.put(`/equipos/solicitudes/${id}/resolver`, { aprobar, observacion_admin }),
+  // NUEVO (punto 4): cambiar el rol y el color de etiqueta de un miembro.
+  updateRol:          (id, rol_en_equipo, color_rol) => api.put(`/equipos/${id}/rol`, { rol_en_equipo, color_rol }),
 };
 
 // ── Fases ─────────────────────────────────────────────
@@ -132,6 +134,11 @@ export const mensajesService = {
   // NUEVO: mensajes recientes para el Dashboard, resueltos por el backend
   // (no depende de qué proyectos trajo primero /proyectos).
   getRecientes:  (limit = 8) => api.get('/mensajes/recientes/dashboard', { params: { limit } }),
+  // NUEVO (punto 6): encuestas, avisos fijados y firma personal.
+  votar:         (id, id_opcion) => api.post(`/mensajes/${id}/votar`, { id_opcion }),
+  fijar:         (id, fijado)    => api.put(`/mensajes/${id}/fijar`, { fijado }),
+  getFirma:      ()              => api.get('/mensajes/firma/mia'),
+  setFirma:      (firma)         => api.put('/mensajes/firma/mia', { firma }),
 };
 
 // ── Notificaciones ────────────────────────────────────
@@ -249,4 +256,21 @@ export const solicitudesService = {
   getAll:   (params = {}) => api.get('/solicitudes', { params }),
   create:   (data)        => api.post('/solicitudes', data),
   resolver: (id, estado, respuesta) => api.put(`/solicitudes/${id}/resolver`, { estado, respuesta }),
+};
+
+// NUEVO (punto 4, #19): catálogo de roles de equipo con color.
+export const rolesEquipoService = {
+  getAll: ()             => api.get('/roles-equipo'),
+  create: (nombre, color) => api.post('/roles-equipo', { nombre, color }),
+  update: (id, nombre, color) => api.put(`/roles-equipo/${id}`, { nombre, color }),
+  remove: (id)           => api.delete(`/roles-equipo/${id}`),
+};
+
+// NUEVO (punto 10, #19): el Instructor solicita crear un aprendiz y el
+// Administrador aprueba (se crea la cuenta y entra al equipo) o rechaza.
+export const solicitudesAprendizService = {
+  crear:    (data)        => api.post('/solicitudes/aprendices', data),
+  mias:     ()            => api.get('/solicitudes/aprendices/mias'),
+  getAll:   (params = {}) => api.get('/solicitudes/aprendices', { params }),
+  resolver: (id, estado, respuesta) => api.put(`/solicitudes/aprendices/${id}/resolver`, { estado, respuesta }),
 };

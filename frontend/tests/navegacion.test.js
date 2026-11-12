@@ -37,4 +37,24 @@ describe('navegación según rol (lógica pura)', () => {
     expect(rutas).toContain('/historial');
     expect(items.some(i => i.label === 'Administración')).toBe(true);
   });
+
+  it('muestra «Tareas» a Instructor y Administrador y «Mis Tareas» solo al Aprendiz', () => {
+    const etiqueta = (admin, instructor) => getNavItems(admin, instructor).find(i => i.path === '/tareas').label;
+
+    expect(etiqueta(false, true)).toBe('Tareas');
+    expect(etiqueta(true, false)).toBe('Tareas');
+    expect(etiqueta(false, false)).toBe('Mis Tareas');
+  });
+
+  it('incluye la sección «Solicitudes» en el menú principal para los tres roles', () => {
+    for (const [admin, instructor] of [[true, false], [false, true], [false, false]]) {
+      const items = getNavItems(admin, instructor);
+      const rutas = items.filter(i => !i.section).map(i => i.path);
+      expect(rutas).toContain('/solicitudes');
+      // Va en el bloque principal, antes de la sección «Administración»
+      const indiceAdmin = items.findIndex(i => i.label === 'Administración');
+      const indiceSolicitudes = items.findIndex(i => i.path === '/solicitudes');
+      if (indiceAdmin !== -1) expect(indiceSolicitudes).toBeLessThan(indiceAdmin);
+    }
+  });
 });

@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import DashboardPage from '../src/pages/DashboardPage.jsx';
 import { mensajesService, proyectosService, solicitudesService, tareasService } from '../src/services/api.js';
@@ -9,6 +9,8 @@ vi.mock('../src/services/api.js', () => ({
   tareasService: { getRecientes: vi.fn() },
   mensajesService: { getRecientes: vi.fn() },
   solicitudesService: { mias: vi.fn(), tipos: vi.fn() },
+  // renderConSesion monta NotificacionesProvider, que pide las notificaciones al iniciar
+  notificacionesService: { getByUsuario: vi.fn().mockResolvedValue({ data: { data: [] } }) },
 }));
 
 const INSTRUCTOR = { id: 2, nombres: 'Laura', rol: 'Instructor' };
@@ -47,8 +49,9 @@ describe('DashboardPage', () => {
     renderConSesion(<DashboardPage />, { usuario: INSTRUCTOR });
     await screen.findByRole('heading', { name: /Hola, Laura/ });
 
-    // Assert: "Planeado" cuenta como en planificación
-    expect(valorDe('Proyectos totales')).toBe('5');
+    // Assert: "Planeado" cuenta como en planificación. waitFor: el contador se actualiza
+    // en un efecto después del render, y leerlo de inmediato a veces daba 0 (test intermitente).
+    await waitFor(() => expect(valorDe('Proyectos totales')).toBe('5'));
     expect(valorDe('En curso')).toBe('2');
     expect(valorDe('En planificación')).toBe('2');
     expect(valorDe('Finalizados')).toBe('1');
@@ -58,7 +61,7 @@ describe('DashboardPage', () => {
     renderConSesion(<DashboardPage />, { usuario: INSTRUCTOR });
     await screen.findByRole('heading', { name: /Hola, Laura/ });
 
-    expect(valorDe('Tareas pendientes')).toBe('1');
+    await waitFor(() => expect(valorDe('Tareas pendientes')).toBe('1'));
   });
 
   it('should still show the dashboard when the recent messages fail', async () => {

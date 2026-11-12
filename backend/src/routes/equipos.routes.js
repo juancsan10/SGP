@@ -17,6 +17,8 @@ router.get('/:id_proyecto', verifyToken, requireProjectMember('project-direct'),
 router.get('/solicitudes/listar',      verifyToken, requireRole('Administrador'), ctrl.listSolicitudes);
 router.put('/solicitudes/:id/resolver', verifyToken, requireRole('Administrador'), [idParam('id')], validate, ctrl.resolverSolicitud);
 
+// NUEVO (punto 4): cambiar el rol y el color de un miembro (solo el instructor responsable).
+router.put('/:id/rol', verifyToken, requireInstructorOwner('team'), [idParam('id'), optionalText('rol_en_equipo', 100)], validate, ctrl.updateRol);
 router.delete('/:id', verifyToken, requireProjectManager('team'), [idParam('id')], validate, ctrl.remove);
 
 module.exports = router;
