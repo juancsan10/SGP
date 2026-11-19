@@ -111,6 +111,16 @@ const update = async (req, res) => {
 // DELETE /api/v1/entregables/:id
 const remove = async (req, res) => {
   try {
+    // Con comentarios, archivos o calificaciones la llave foránea impedía el borrado con un 500.
+    const [[{ total }]] = await db.query(
+      `SELECT (SELECT COUNT(*) FROM comentarios WHERE id_entregable = ?)
+            + (SELECT COUNT(*) FROM archivos WHERE id_entregable = ?)
+            + (SELECT COUNT(*) FROM evaluaciones WHERE id_entregable = ?) AS total`,
+      [req.params.id, req.params.id, req.params.id]
+    );
+    if (Number(total) > 0) {
+      return res.status(409).json({ success: false, message: `No se puede eliminar el entregable: tiene ${total} comentario(s), archivo(s) o calificación(es).` });
+    }
     const [result] = await db.query('DELETE FROM entregables WHERE id_entregable = ?', [req.params.id]);
     if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Entregable no encontrado' });
     await registrarCambio('entregables', req.params.id, 'DELETE', req.user?.id);
