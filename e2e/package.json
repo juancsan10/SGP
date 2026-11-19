@@ -10,6 +10,8 @@
     "report": "playwright show-report"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0"
+    "@playwright/test": "1.63.0",
+    "bcryptjs": "2.4.3",
+    "mysql2": "3.24.2"
   }
 }
