@@ -5,7 +5,7 @@ import {
   agendaService, archivosService, authService, comentariosService, entregablesService, entregasService,
   equiposService, evaluacionesService, fasesService, githubIntegrationService, historialService,
   mensajesService, notificacionesService, passwordService, proyectosService, repositoriosService,
-  reunionesService, solicitudesService, tareasService, usuariosService,
+  reunionesService, rolesEquipoService, solicitudesAprendizService, solicitudesService, tareasService, usuariosService,
 } from '../src/services/api.js';
 
 // Doble: FAKE del backend con MSW. A diferencia de vi.mock, aquí se ejecuta el código real de
@@ -280,6 +280,20 @@ describe('cliente HTTP: contrato de rutas con el backend', () => {
     ['solicitudesService.getAll', () => solicitudesService.getAll({ estado: 'Pendiente' }), 'GET', '/api/v1/solicitudes', '?estado=Pendiente'],
     ['solicitudesService.create', () => solicitudesService.create({}), 'POST', '/api/v1/solicitudes'],
     ['solicitudesService.resolver', () => solicitudesService.resolver(2, 'Aprobada', 'Listo'), 'PUT', '/api/v1/solicitudes/2/resolver', '', '{"estado":"Aprobada","respuesta":"Listo"}'],
+    // Funciones nuevas de #19 (roles de equipo, encuestas, firma y solicitudes de aprendices)
+    ['equiposService.updateRol', () => equiposService.updateRol(5, 'Líder', '#2563eb'), 'PUT', '/api/v1/equipos/5/rol', '', '{"rol_en_equipo":"Líder","color_rol":"#2563eb"}'],
+    ['mensajesService.votar', () => mensajesService.votar(8, 3), 'POST', '/api/v1/mensajes/8/votar', '', '{"id_opcion":3}'],
+    ['mensajesService.fijar', () => mensajesService.fijar(8, true), 'PUT', '/api/v1/mensajes/8/fijar', '', '{"fijado":true}'],
+    ['mensajesService.getFirma', () => mensajesService.getFirma(), 'GET', '/api/v1/mensajes/firma/mia'],
+    ['mensajesService.setFirma', () => mensajesService.setFirma('Carlos · ADSO'), 'PUT', '/api/v1/mensajes/firma/mia', '', '{"firma":"Carlos · ADSO"}'],
+    ['rolesEquipoService.getAll', () => rolesEquipoService.getAll(), 'GET', '/api/v1/roles-equipo'],
+    ['rolesEquipoService.create', () => rolesEquipoService.create('QA', '#16a34a'), 'POST', '/api/v1/roles-equipo', '', '{"nombre":"QA","color":"#16a34a"}'],
+    ['rolesEquipoService.update', () => rolesEquipoService.update(2, 'QA', '#15803d'), 'PUT', '/api/v1/roles-equipo/2', '', '{"nombre":"QA","color":"#15803d"}'],
+    ['rolesEquipoService.remove', () => rolesEquipoService.remove(2), 'DELETE', '/api/v1/roles-equipo/2'],
+    ['solicitudesAprendizService.crear', () => solicitudesAprendizService.crear({}), 'POST', '/api/v1/solicitudes/aprendices'],
+    ['solicitudesAprendizService.mias', () => solicitudesAprendizService.mias(), 'GET', '/api/v1/solicitudes/aprendices/mias'],
+    ['solicitudesAprendizService.getAll', () => solicitudesAprendizService.getAll({ estado: 'Pendiente' }), 'GET', '/api/v1/solicitudes/aprendices', '?estado=Pendiente'],
+    ['solicitudesAprendizService.resolver', () => solicitudesAprendizService.resolver(4, 'Rechazada', 'Ficha errada'), 'PUT', '/api/v1/solicitudes/aprendices/4/resolver', '', '{"estado":"Rechazada","respuesta":"Ficha errada"}'],
   ];
 
   it.each(casos)('%s should call %s %s', async (_nombre, llamar, metodo, ruta, query = '', cuerpo) => {
