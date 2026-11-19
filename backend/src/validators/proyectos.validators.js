@@ -31,12 +31,12 @@ const createProjectValidators = [
   body('fecha_inicio')
     .notEmpty()
     .withMessage('fecha_inicio es requerida')
-    .isISO8601()
+    .isISO8601({ strict: true })
     .withMessage('fecha_inicio debe ser una fecha válida (YYYY-MM-DD)'),
 
   body('fecha_fin')
     .optional({ nullable: true })
-    .isISO8601()
+    .isISO8601({ strict: true })
     .withMessage('fecha_fin debe ser una fecha válida (YYYY-MM-DD)'),
 
   idBody('id_instructor'),
@@ -60,12 +60,12 @@ const updateProjectValidators = [
 
   body('fecha_inicio')
     .optional()
-    .isISO8601()
+    .isISO8601({ strict: true })
     .withMessage('fecha_inicio debe ser una fecha válida (YYYY-MM-DD)'),
 
   body('fecha_fin')
     .optional({ nullable: true })
-    .isISO8601()
+    .isISO8601({ strict: true })
     .withMessage('fecha_fin debe ser una fecha válida (YYYY-MM-DD)'),
 
   body('estado')
