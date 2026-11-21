@@ -1,0 +1,16 @@
+flowchart TB
+  subgraph Dev["Equipo (GitHub)"]
+    F["feature/* → PR"] --> T["test"] --> D["develop"] --> M["main"]
+  end
+  CI["GitHub Actions<br/>ci.yml: install · audit · build<br/>tests.yml: pnpm test"]
+  F --> CI
+  subgraph Host["Servidor / Docker Compose"]
+    E[".env (secretos, no se sube)"]
+    C1["frontend (nginx)"]
+    C2["backend (node)"]
+    C3["db (mysql)"]
+    E --> C2
+    E --> C3
+    C1 --> C2 --> C3
+  end
+  M -->|docker compose up -d --build| Host
