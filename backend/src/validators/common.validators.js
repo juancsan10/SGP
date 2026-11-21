@@ -48,14 +48,14 @@ const requiredDate = (name) =>
   body(name)
     .notEmpty()
     .withMessage(`${name} es requerida`)
-    .isISO8601()
+    .isISO8601({ strict: true })
     .withMessage(`${name} debe ser una fecha válida (YYYY-MM-DD)`);
 
 // Fecha opcional en formato ISO 8601.
 const optionalDate = (name) =>
   body(name)
     .optional({ nullable: true })
-    .isISO8601()
+    .isISO8601({ strict: true })
     .withMessage(`${name} debe ser una fecha válida (YYYY-MM-DD)`);
 
 // Porcentaje de avance (0-100), usado en fases/tareas.
