@@ -1,0 +1,31 @@
+flowchart LR
+  U["Usuario<br/>(Administrador · Instructor · Aprendiz)"]
+  subgraph FE["Contenedor frontend · Nginx :80 (host 5173)"]
+    SPA["React 18 + Vite<br/>SPA (build estático)"]
+    NGX["Nginx proxy inverso<br/>/api · /uploads · /ws"]
+  end
+  subgraph BE["Contenedor backend · Node 20 + Express :3000"]
+    MW["Middlewares<br/>JWT · roles · rate limit · validación"]
+    RT["Rutas /api/v1<br/>auth · usuarios · proyectos · equipos<br/>fases · entregables · tareas · mensajes<br/>notificaciones · agenda · solicitudes"]
+    CT["Controladores"]
+    SV["Servicios<br/>alertas (cada hora) · correo · tiempo real"]
+    WS["WebSocket /ws<br/>+ SSE de respaldo"]
+    UP[("Volumen uploads<br/>archivos adjuntos")]
+  end
+  DB[("MySQL 8.0.42<br/>SistemaGestionProyectosSENA<br/>volumen persistente")]
+  SMTP["Servidor SMTP<br/>(códigos de recuperación)"]
+  GH["GitHub API<br/>(repositorios vinculados)"]
+  TDB[("MySQL de pruebas :3307<br/>tmpfs · _test")]
+
+  U -->|HTTPS delegado al proxy institucional| NGX
+  NGX --> SPA
+  NGX -->|/api/v1 REST + JSON| MW
+  NGX -->|upgrade WebSocket| WS
+  MW --> RT --> CT
+  CT --> DB
+  CT --> UP
+  CT --> SV
+  SV --> SMTP
+  SV --> WS
+  CT -.-> GH
+  TDB -. solo tests de integración .- CT
