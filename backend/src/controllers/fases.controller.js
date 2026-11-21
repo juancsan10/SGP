@@ -107,6 +107,11 @@ const update = async (req, res) => {
 // DELETE /api/v1/fases/:id
 const remove = async (req, res) => {
   try {
+    // Una fase con entregables no se puede borrar: la llave foránea lo impedía con un 500.
+    const [[{ total }]] = await db.query('SELECT COUNT(*) AS total FROM entregables WHERE id_fase = ?', [req.params.id]);
+    if (Number(total) > 0) {
+      return res.status(409).json({ success: false, message: `No se puede eliminar la fase: tiene ${total} entregable(s). Elimínalos primero.` });
+    }
     const [result] = await db.query('DELETE FROM fases_proyecto WHERE id_fase = ?', [req.params.id]);
     if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Fase no encontrada' });
     await registrarCambio('fases_proyecto', req.params.id, 'DELETE', req.user?.id);

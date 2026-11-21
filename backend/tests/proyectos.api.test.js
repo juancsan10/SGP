@@ -25,6 +25,7 @@ describe('API /api/v1/proyectos', () => {
   // 1. POST /api/v1/proyectos como instructor → 201 con id_proyecto; revisa código, cuerpo y Content-Type.
   it('POST /api/v1/proyectos como instructor responde 201 en JSON con id_proyecto', async () => {
     vi.spyOn(db, 'query')
+      .mockResolvedValueOnce([[{ id_rol: 2, estado: 1 }]]) // responsable: instructor activo (regla de S6)
       .mockResolvedValueOnce([[{ total: 0 }]]) // RN-002: conteo de proyectos activos
       .mockResolvedValueOnce([{ insertId: 77 }]) // INSERT del proyecto
       .mockResolvedValueOnce([{}]); // registro en historial

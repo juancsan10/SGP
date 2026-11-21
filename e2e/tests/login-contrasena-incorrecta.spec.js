@@ -1,11 +1,12 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/fixtures.js';
 
-test('should show an error and stay on login when the password is wrong', async ({ page }) => {
-  // Arrange
+test('should show an error and stay on login when the password is wrong', async ({ page, api }) => {
+  // Arrange: la cuenta se crea por el API en cada corrida (la suite no depende del seed)
+  const aprendiz = await api.crearAprendiz();
   await page.goto('/login');
 
   // Act
-  await page.getByLabel('Correo electrónico').fill('carlos.herrera@sgpsena.local');
+  await page.getByLabel('Correo electrónico').fill(aprendiz.correo);
   await page.getByLabel('Contraseña', { exact: true }).fill('ClaveEquivocada123');
   await page.getByRole('button', { name: 'Ingresar' }).click();
 

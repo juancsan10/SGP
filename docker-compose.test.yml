@@ -1,0 +1,31 @@
+# BD de pruebas para los tests de integración (semana 6).
+# - Mismo motor y versión que desarrollo (MySQL 8.0.42), pero en el puerto 3307
+#   y con una base que termina en _test: nunca toca la BD de desarrollo.
+# - El esquema se crea con el mismo 001_schema.sql de producción (ver test-init/).
+# - Los datos viven en memoria (tmpfs): "down -v" deja todo limpio.
+#
+#   docker compose -f docker-compose.test.yml up -d --wait
+#   cd backend && DATABASE_URL=mysql://sgp_test:sgp_test@127.0.0.1:3307/SistemaGestionProyectosSENA_test pnpm test:integration
+#   docker compose -f docker-compose.test.yml down -v
+services:
+  db-test:
+    image: mysql:8.0.42
+    container_name: sgp_sena_db_test
+    environment:
+      MYSQL_ROOT_PASSWORD: root_test
+      MYSQL_DATABASE: SistemaGestionProyectosSENA_test
+      MYSQL_USER: sgp_test
+      MYSQL_PASSWORD: sgp_test
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./database/docker-init/001_schema.sql:/schema/001_schema.sql:ro
+      - ./database/test-init:/docker-entrypoint-initdb.d:ro
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 20s

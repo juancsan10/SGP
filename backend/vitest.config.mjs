@@ -4,6 +4,8 @@ export default defineConfig({
   test: {
     // Todavía no hay tests unitarios (llegan en la semana 2): que no falle por eso
     passWithNoTests: true,
+    // Los tests de integración (BD real) se corren aparte con "pnpm test:integration"
+    exclude: ['**/node_modules/**', 'tests/integration/**'],
     coverage: {
       // Se mide la lógica de negocio que está en src/. server.js queda fuera porque
       // está en la raíz. También se excluye el adaptador de BD (config/db.js), que

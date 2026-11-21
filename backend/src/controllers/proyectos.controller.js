@@ -1,6 +1,9 @@
 const db = require('../config/db');
 const { registrarCambio } = require('../services/historial.service');
 
+const ROL_ADMINISTRADOR = 1;
+const ROL_INSTRUCTOR = 2;
+
 function sumarMeses(fecha, meses) {
   const resultado = new Date(fecha);
   resultado.setUTCMonth(resultado.getUTCMonth() + meses);
@@ -32,6 +35,17 @@ const create = async (req, res) => {
       if (fin < sumarMeses(fecha_inicio, 1) || fin > sumarMeses(fecha_inicio, 6)) {
         return res.status(400).json({ success: false, message: 'RN-004: Los proyectos deben durar entre 1 y 6 meses' });
       }
+    }
+
+    // El responsable debe existir, estar activo y ser instructor (o el administrador).
+    // Antes, un id inexistente llegaba al INSERT y la llave foránea respondía 500,
+    // y un aprendiz podía quedar como responsable del proyecto.
+    const [responsable] = await db.query('SELECT id_rol, estado FROM usuarios WHERE id_usuario = ?', [id_instructor]);
+    if (!responsable.length || !responsable[0].estado) {
+      return res.status(404).json({ success: false, message: 'Instructor no encontrado o inactivo' });
+    }
+    if (![ROL_ADMINISTRADOR, ROL_INSTRUCTOR].includes(Number(responsable[0].id_rol))) {
+      return res.status(400).json({ success: false, message: 'El responsable del proyecto debe ser un instructor' });
     }
 
     // RN-002: instructor no puede tener más de 10 proyectos activos

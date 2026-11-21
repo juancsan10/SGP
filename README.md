@@ -61,6 +61,25 @@ Si un puerto está ocupado, cambia `BACKEND_PORT` en `.env` o libera el puerto 5
 
 Para reiniciar desde cero (borra la base de datos y los archivos subidos): `docker compose down -v` y vuelve a levantar.
 
+## Tests de integración (BD de pruebas)
+
+Corren contra una BD MySQL aparte (`SistemaGestionProyectosSENA_test`, puerto **3307**), nunca contra la de desarrollo. Sin `DATABASE_URL` se saltan, así que `pnpm test` y el CI no cambian.
+
+```bash
+# 1. Levantar la BD de pruebas (crea el esquema con database/docker-init/001_schema.sql)
+docker compose -f docker-compose.test.yml up -d --wait
+
+# 2. Correr los tests de integración (dos veces seguidas deben pasar igual)
+cd backend
+DATABASE_URL=mysql://sgp_test:sgp_test@127.0.0.1:3307/SistemaGestionProyectosSENA_test pnpm test:integration
+cd ..
+
+# 3. Apagarla y borrar los datos
+docker compose -f docker-compose.test.yml down -v
+```
+
+Cada test limpia la BD antes de empezar (TRUNCATE de todas las tablas) y crea sus propios datos. La limpieza se niega a correr si la base no termina en `_test`.
+
 ## Cuentas de prueba
 
 Después de ejecutar el seed (paso 4 del arranque) se dispone de:

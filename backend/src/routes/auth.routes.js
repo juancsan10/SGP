@@ -18,9 +18,11 @@ const authLimiter=rateLimit({
 // Antes compartía el contador con la recuperación de contraseña y también
 // contaba los ingresos correctos, así que bastaban 5 inicios de sesión
 // legítimos (p. ej. probar los 3 roles de la demo) para bloquear el acceso.
+// LOGIN_RATE_LIMIT_MAX solo se cambia en el backend de los E2E: el contador vive en la
+// memoria del servidor y el test de contraseña incorrecta, repetido, bloqueaba a los demás.
 const loginLimiter=rateLimit({
   windowMs:15*60*1000,
-  max:5,
+  max:Number(process.env.LOGIN_RATE_LIMIT_MAX)||5,
   skipSuccessfulRequests:true,
   standardHeaders:true,
   legacyHeaders:false,
