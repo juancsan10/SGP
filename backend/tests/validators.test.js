@@ -81,6 +81,18 @@ describe('proyectos validators', () => {
     ]));
   });
 
+  // Hallazgo S6: '2026-02-30' pasaba el validador y MySQL respondía 500 al guardarla.
+  it.each([
+    ['2026-02-28', []],
+    ['2026-02-29', ['fecha_inicio debe ser una fecha válida (YYYY-MM-DD)']], // 2026 no es bisiesto
+    ['2028-02-29', []],                                                      // 2028 sí
+    ['2026-02-30', ['fecha_inicio debe ser una fecha válida (YYYY-MM-DD)']],
+  ])('should check that fecha_inicio %s exists in the calendar', async (fecha, esperado) => {
+    const { errores } = await validar(createProjectValidators, { body: { nombre: 'SGP', fecha_inicio: fecha, id_instructor: 2 } });
+
+    expect(errores).toEqual(esperado);
+  });
+
   it('should reject an unknown project state', async () => {
     const { errores } = await validar(updateProjectValidators, { params: { id: '1' }, body: { estado: 'Pausado' } });
 
