@@ -1,18 +1,14 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/fixtures.js';
 
-// Cuenta de aprendiz del seed
-const APRENDIZ = { correo: 'carlos.herrera@sgpsena.local', contrasena: 'Sena2026*' };
-
-// Helper para iniciar sesión con el backend real antes de navegar
-async function iniciarSesionComoAprendiz(page) {
-  await page.goto('/login');
-  await page.getByLabel('Correo electrónico').fill(APRENDIZ.correo);
-  await page.getByLabel('Contraseña', { exact: true }).fill(APRENDIZ.contrasena);
-  await page.getByRole('button', { name: 'Ingresar' }).click();
+// Desde la semana 7 la suite no depende del seed: cada test crea su aprendiz por el API
+// y entra con la sesión ya preparada (sin pasar por la pantalla de login).
+async function iniciarSesionComoAprendiz(page, api, entrarComo) {
+  await entrarComo(page, await api.crearAprendiz());
+  await page.goto('/dashboard');
   await expect(page).toHaveURL(/\/dashboard$/);
 }
 
-test('should show "Sin proyectos" when the API returns an empty list', async ({ page }) => {
+test('should show "Sin proyectos" when the API returns an empty list', async ({ page, api, entrarComo }) => {
   // Arrange
   // Doble: STUB de la respuesta HTTP con page.route.
   // Por qué: No se toca el backend real, ya que con datos reales sería difícil
@@ -27,7 +23,7 @@ test('should show "Sin proyectos" when the API returns an empty list', async ({ 
     })
   );
 
-  await iniciarSesionComoAprendiz(page);
+  await iniciarSesionComoAprendiz(page, api, entrarComo);
 
   // Act
   await page.goto('/proyectos');
@@ -37,7 +33,7 @@ test('should show "Sin proyectos" when the API returns an empty list', async ({ 
   await expect(page.getByText('0 proyectos registrados')).toBeVisible();
 });
 
-test('should show empty state gracefully instead of a blank screen when the backend fails with 500', async ({ page }) => {
+test('should show empty state gracefully instead of a blank screen when the backend fails with 500', async ({ page, api, entrarComo }) => {
   // Arrange
   // Doble: STUB de la respuesta HTTP con page.route simulando status 500.
   // Por qué: Simula una caída o error interno del servidor sin tener que apagar
@@ -53,17 +49,17 @@ test('should show empty state gracefully instead of a blank screen when the back
     })
   );
 
-  await iniciarSesionComoAprendiz(page);
+  await iniciarSesionComoAprendiz(page, api, entrarComo);
 
   // Act
   await page.goto('/proyectos');
 
   // Assert
-  await expect(page.getByRole('heading', { name: 'Proyectos' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Proyectos', exact: true })).toBeVisible();
   await expect(page.getByText('Sin proyectos')).toBeVisible();
 });
 
-test('should display validation error in login and call the endpoint exactly once', async ({ page }) => {
+test('should display validation error in login and call the endpoint exactly once', async ({ page, api, entrarComo }) => {
   // Arrange
   // Doble: STUB y SPY con page.route.
   // Por qué: Simula un error 400 de validación desde el servidor y cuenta las peticiones
@@ -98,7 +94,7 @@ test('should display validation error in login and call the endpoint exactly onc
   expect(llamadasLogin).toBe(1);
 });
 
-test('should handle network connection failure when request is aborted', async ({ page }) => {
+test('should handle network connection failure when request is aborted', async ({ page, api, entrarComo }) => {
   // Arrange
   // Doble: FALLO DE RED SIMULADO con route.abort('failed').
   // Por qué: Permite verificar la resiliencia de la interfaz ante pérdidas repentinas
@@ -107,12 +103,12 @@ test('should handle network connection failure when request is aborted', async (
   // no colapse y conserve la estructura visible de la vista con el estado vacío.
   await page.route('**/api/v1/proyectos', (route) => route.abort('failed'));
 
-  await iniciarSesionComoAprendiz(page);
+  await iniciarSesionComoAprendiz(page, api, entrarComo);
 
   // Act
   await page.goto('/proyectos');
 
   // Assert
-  await expect(page.getByRole('heading', { name: 'Proyectos' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Proyectos', exact: true })).toBeVisible();
   await expect(page.getByText('Sin proyectos')).toBeVisible();
 });
