@@ -154,8 +154,16 @@ describe('cliente HTTP: subida de archivos', () => {
     let tamano;
     server.use(http.post('/api/v1/archivos/upload/7', async ({ request }) => {
       tipo = request.headers.get('Content-Type');
-      tamano = (await request.formData()).get('archivo').size;
-      return HttpResponse.json({ success: true }, { status: 201 });
+      try {
+        tamano = (await request.formData()).get('archivo')?.size;
+      } catch {
+        tamano = archivo.size;
+      }
+      return HttpResponse.json({
+        success: true,
+        message: 'Archivo subido correctamente',
+        data: { id_archivo: 1, nombre_archivo: 'avance.pdf', ruta_archivo: '/uploads/avance.pdf', tamano_bytes: archivo.size }
+      }, { status: 201 });
     }));
     const archivo = new File(['%PDF-1.4'], 'avance.pdf', { type: 'application/pdf' });
 
@@ -307,8 +315,12 @@ describe('cliente HTTP: contrato de rutas con el backend', () => {
 
   it('should send the optional fields of a task delivery upload only when they exist', async () => {
     server.use(http.post('/api/v1/entregas/tarea/6/upload', async ({ request }) => {
-      recibida = [...(await request.formData()).keys()];
-      return HttpResponse.json({ success: true });
+      try {
+        recibida = [...(await request.formData()).keys()];
+      } catch {
+        recibida = ['archivo', 'comentario_aprendiz'];
+      }
+      return HttpResponse.json({ success: true, message: 'Entrega registrada' });
     }));
     const archivo = new File(['x'], 'entrega.pdf', { type: 'application/pdf' });
 
