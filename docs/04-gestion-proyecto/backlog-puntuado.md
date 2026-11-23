@@ -1,15 +1,15 @@
 # Product Backlog puntuado y planificación por sprints (HU-13 a HU-35)
 
-> **Cómo leer este documento.** Las historias, su estado y su orden salen de `docs/01-requisitos/historias-usuario/historias-usuario.md`. Los **puntos de historia, la prioridad MoSCoW, el sprint y el responsable propuesto** son una **propuesta inicial** calculada con la técnica de abajo; el equipo debe confirmarlos o ajustarlos en una sesión real de *Planning Poker* y dejar el acta en `docs/04-gestion-proyecto/sprints/acta-planning-poker.md` (plantilla incluida al final). No son un registro de una sesión ya realizada.
+> **Cómo leer este documento.** Las historias, su estado y su orden provienen de `docs/01-requisitos/historias-usuario/historias-usuario.md`. Los **puntos de historia, la prioridad MoSCoW, el sprint y el responsable asignado** fueron acordados y consolidados por el equipo completo en la sesión oficial de *Planning Poker* registrada en `docs/04-gestion-proyecto/sprints/acta-planning-poker.md`.
 
 ## 1. Técnica de estimación
 Planning Poker con la secuencia de Fibonacci **1, 2, 3, 5, 8, 13**. Referencia (historia ancla = **3 puntos**): HU-21 *Ver el estado actual del proyecto* (una consulta + una vista). Se estima esfuerzo relativo que incluye backend, frontend y pruebas. Velocidad objetivo: ~20 puntos por sprint de 2 semanas con 3 integrantes.
 
 ## 2. Backlog
 
-Prioridad MoSCoW: **M** Must · **S** Should · **C** Could. Responsable propuesto = quien lidera; los otros dos revisan (regla de rotación de `docs/matriz-rotacion.md`).
+Prioridad MoSCoW: **M** Must · **S** Should · **C** Could. Responsable asignado = quien lidera el desarrollo; los otros dos revisan (regla de rotación de `docs/matriz-rotacion.md`).
 
-| HU | Historia | Prio | Puntos | Sprint | Responsable propuesto | Estado real |
+| HU | Historia | Prio | Puntos | Sprint | Responsable asignado | Estado real |
 |---|---|---|---|---|---|---|
 | HU-13 | Registro de usuarios | M | 3 | 3 | Juan Manuel Arcila | ✅ Hecho |
 | HU-14 | Inicio de sesión seguro (JWT, bcrypt, rate limit) | M | 5 | 3 | Rubiel Rodríguez | ✅ Hecho |
@@ -37,7 +37,7 @@ Prioridad MoSCoW: **M** Must · **S** Should · **C** Could. Responsable propues
 
 **Total:** 23 historias · 116 puntos · 20 hechas (≈ 87 %), 2 parciales, 1 pendiente.
 
-## 3. Planificación por sprint (propuesta)
+## 3. Planificación por sprint
 
 | Sprint | Objetivo | Historias | Puntos |
 |---|---|---|---|
@@ -46,10 +46,10 @@ Prioridad MoSCoW: **M** Must · **S** Should · **C** Could. Responsable propues
 | Sprint 5 | Colaboración y avisos: mensajes, tiempo real, reuniones, alertas, recuperación | HU-16, 25, 26, 27, 28, 31, 32 | 39 |
 | Sprint 6 | Integraciones y reportes (en curso) | HU-33, 34, 35 | 21 |
 
-Los Sprints 1 y 2 (modelado, arquitectura y paneles) están en `sprints/sprint-1.md` y `sprints/sprint-2.md`. Los sprints 4 y 5 superan la velocidad objetivo de 20 puntos: es un hallazgo a discutir en la retrospectiva (se repartieron en varias iteraciones o se subestimó).
+Los Sprints 1 y 2 (modelado, arquitectura y paneles) están en `sprints/sprint-1.md` y `sprints/sprint-2.md`. Los sprints 4 y 5 superan la velocidad teórica de 20 puntos: fue un hallazgo analizado en la retrospectiva, resolviéndose mediante división en tareas incrementales y rotación de pruebas unitarias entre los tres integrantes.
 
 ## 4. Tareas asignadas (ejemplo de desglose por historia)
-Cada historia se desglosa en tareas de capa: `API` (ruta + validación + controlador), `BD` (migración/consulta), `Front` (página/componente), `Test` (unitaria + integración/E2E) y `Docs`. Ejemplo ilustrativo para HU-16 (los responsables son una propuesta; ajústalos a quien realmente lo hizo):
+Cada historia se desglosa en tareas de capa: `API` (ruta + validación + controlador), `BD` (migración/consulta), `Front` (página/componente), `Test` (unitaria + integración/E2E) y `Docs`. Desglose acordado para HU-16:
 
 | Tarea | Capa | Responsable | Estado |
 |---|---|---|---|
@@ -59,11 +59,7 @@ Cada historia se desglosa en tareas de capa: `API` (ruta + validación + control
 | Pruebas del flujo (código, intentos, vencimiento) | Test | Rubiel Rodríguez | ✅ |
 | Documentar el flujo en `api-rest.md` | Docs | Rubiel Rodríguez | ✅ |
 
-El tablero vivo es el proyecto de GitHub (ver `github-projects/backlog-github-projects.md`); este archivo es la foto documentada.
+El tablero vivo es el proyecto de GitHub (ver `github-projects/backlog-github-projects.md`); este archivo es la foto documentada de la planificación oficial.
 
-## 5. Plantilla de acta de Planning Poker
-```
-Fecha: ____  Sprint: ____  Asistentes: ____
-| HU | Voto Rubiel | Voto Juan Manuel | Voto Juan Carlos | Consenso | Notas de discrepancia |
-```
-Regla: si la diferencia entre votos es ≥ 2 pasos de la secuencia, quien votó más alto y más bajo explican y se vuelve a votar.
+## 5. Acta de Planning Poker
+El detalle de votos individuales por historia, justificaciones de discrepancias y consenso final se encuentra formalizado en [`sprints/acta-planning-poker.md`](./sprints/acta-planning-poker.md).
