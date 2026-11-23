@@ -13,9 +13,9 @@ Reglas:
 
 | Integrante (usuario GitHub) | S1 | S2 | S3 | S4 | S5 | S6 | S7 | S8 | S9 |
 |---|---|---|---|---|---|---|---|---|---|
-| Rubiel Rodríguez (@Rubloxil) | E2E: login exitoso | API: permisos por rol y reglas de proyectos | Front: EliminarUsuarioModal | E2E: seguridad y errores del API |Front: cliente HTTP con MSW y recuperación de contraseña|API: proyectos, equipos, fases y entregables contra la BD |E2E: instructor crea un proyecto | | |
-| Juan Manuel Arcila (@JuanArcila1) | E2E: campos vacíos | Front: validaciones, filtros y paginación | Front: EntregasPage | API: proyectos | E2E: estados con page.route | | | | |
-| Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta | E2E: CI + rutas protegidas y páginas | Front: SolicitudesPanel | Front: contrato del API |API: correo, tiempo real y avisos que fallan |BD: BD de pruebas y restricciones de proyectos |E2E: aprendiz entrega una tarea | | |
+| Rubiel Rodríguez (@Rubloxil) | E2E: login exitoso | API: permisos por rol y reglas de proyectos | Front: EliminarUsuarioModal | E2E: seguridad y errores del API | Front: cliente HTTP con MSW y recuperación de contraseña | API: proyectos, equipos, fases y entregables contra la BD ([PR #28](https://github.com/juancsan10/SGP/pull/28)) | E2E: instructor crea un proyecto ([PR #29](https://github.com/juancsan10/SGP/pull/29)) | | |
+| Juan Manuel Arcila (@JuanArcila1) | E2E: campos vacíos | Front: validaciones, filtros y paginación | Front: EntregasPage | API: proyectos | E2E: estados con page.route | Front: handlers de MSW contra el backend real ([PR #28](https://github.com/juancsan10/SGP/pull/28)) | E2E: instructor agrega un aprendiz al equipo ([PR #29](https://github.com/juancsan10/SGP/pull/29)) | | |
+| Juan Carlos Sánchez (@juancsan10) | E2E: contraseña incorrecta | E2E: CI + rutas protegidas y páginas | Front: SolicitudesPanel | Front: contrato del API | API: correo, tiempo real y avisos que fallan | BD: BD de pruebas y restricciones de proyectos ([PR #28](https://github.com/juancsan10/SGP/pull/28)) | E2E: aprendiz entrega una tarea ([PR #29](https://github.com/juancsan10/SGP/pull/29)) | | |
 
 Grupo de 3: rotamos entre Front, API y E2E (la capa BD se cubre desde la semana 6).
 
