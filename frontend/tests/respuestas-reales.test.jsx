@@ -4,11 +4,18 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import LoginPage from '../src/pages/LoginPage.jsx';
+import ProyectosPage from '../src/pages/ProyectosPage.jsx';
 import { authService, fasesService, proyectosService } from '../src/services/api.js';
 import { renderConSesion } from './render-con-sesion.jsx';
 
 // Doble HTTP con MSW que reproduce fielmente las respuestas reales del backend de SGP
-const server = setupServer();
+const server = setupServer(
+  http.get('/api/v1/proyectos', () => HttpResponse.json({ success: true, data: [] })),
+  http.get('/api/v1/usuarios', () => HttpResponse.json({ success: true, data: [] })),
+  http.get('/api/v1/notificaciones/no-leidas/count', () => HttpResponse.json({ success: true, data: { count: 0 } })),
+  http.get('/api/v1/notificaciones/*', () => HttpResponse.json({ success: true, data: [] })),
+  http.get('/api/v1/notificaciones', () => HttpResponse.json({ success: true, data: [] }))
+);
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => {
@@ -16,6 +23,8 @@ afterEach(() => {
   localStorage.clear();
 });
 afterAll(() => server.close());
+
+const INSTRUCTOR = { id: 2, nombres: 'Laura', rol: 'Instructor' };
 
 async function intentarLogin(correo, contrasena) {
   const user = userEvent.setup();
@@ -66,7 +75,7 @@ describe('respuestas reales del backend: autenticación y errores de negocio', (
   });
 
   // Caso 3 (Semana 6): 409 al intentar eliminar una fase que todavía tiene entregables
-  it('should reject with 409 and deliverable count when deleting a phase with deliverables', async () => {
+  it('should expose the real 409 message of the backend when deleting a phase with deliverables (contract)', async () => {
     // Arrange: respuesta real de backend/src/controllers/fases.controller.js (línea 113)
     server.use(
       http.delete('/api/v1/fases/5', () =>
@@ -91,8 +100,8 @@ describe('respuestas reales del backend: autenticación y errores de negocio', (
     );
   });
 
-  // Caso 4 (Semana 6): 404 al crear un proyecto con un instructor inexistente o inactivo
-  it('should reject with 404 and "Instructor no encontrado o inactivo" when instructor is not found', async () => {
+  // Caso 4 (Semana 6): 404 al crear un proyecto con un instructor inexistente o inactivo (en pantalla)
+  it('should show "Instructor no encontrado o inactivo" in ProyectosPage when creating a project with invalid instructor (404)', async () => {
     // Arrange: respuesta real de backend/src/controllers/proyectos.controller.js (línea 45)
     server.use(
       http.post('/api/v1/proyectos', () =>
@@ -102,23 +111,22 @@ describe('respuestas reales del backend: autenticación y errores de negocio', (
         )
       )
     );
+    const user = userEvent.setup();
+    renderConSesion(<ProyectosPage />, { usuario: INSTRUCTOR });
 
     // Act
-    const error = await proyectosService
-      .create({
-        nombre: 'Proyecto Formativo',
-        fecha_inicio: '2026-03-01',
-        id_instructor: 99999,
-      })
-      .catch((err) => err);
+    await user.click(await screen.findByRole('button', { name: '+ Nuevo proyecto' }));
+    await user.type(screen.getByLabelText('Nombre *'), 'Proyecto Formativo');
+    await user.type(screen.getByLabelText('Fecha inicio *'), '2026-03-01');
+    await user.click(screen.getByRole('button', { name: 'Crear proyecto' }));
 
     // Assert
-    expect(error.response.status).toBe(404);
-    expect(error.response.data.message).toBe('Instructor no encontrado o inactivo');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Instructor no encontrado o inactivo');
+    expect(screen.getByRole('dialog', { name: 'Nuevo proyecto' })).toBeVisible();
   });
 
-  // Caso 5 (Semana 6): 400 cuando el responsable asignado no es un instructor
-  it('should reject with 400 and "El responsable del proyecto debe ser un instructor" when assigning apprentice as manager', async () => {
+  // Caso 5 (Semana 6): 400 cuando el responsable asignado no es un instructor (en pantalla)
+  it('should show "El responsable del proyecto debe ser un instructor" in ProyectosPage when assigned manager is not instructor (400)', async () => {
     // Arrange: respuesta real de backend/src/controllers/proyectos.controller.js (línea 48)
     server.use(
       http.post('/api/v1/proyectos', () =>
@@ -128,18 +136,17 @@ describe('respuestas reales del backend: autenticación y errores de negocio', (
         )
       )
     );
+    const user = userEvent.setup();
+    renderConSesion(<ProyectosPage />, { usuario: INSTRUCTOR });
 
     // Act
-    const error = await proyectosService
-      .create({
-        nombre: 'Proyecto Formativo',
-        fecha_inicio: '2026-03-01',
-        id_instructor: 4, // Rol aprendiz
-      })
-      .catch((err) => err);
+    await user.click(await screen.findByRole('button', { name: '+ Nuevo proyecto' }));
+    await user.type(screen.getByLabelText('Nombre *'), 'Proyecto Formativo');
+    await user.type(screen.getByLabelText('Fecha inicio *'), '2026-03-01');
+    await user.click(screen.getByRole('button', { name: 'Crear proyecto' }));
 
     // Assert
-    expect(error.response.status).toBe(400);
-    expect(error.response.data.message).toBe('El responsable del proyecto debe ser un instructor');
+    expect(await screen.findByRole('alert')).toHaveTextContent('El responsable del proyecto debe ser un instructor');
+    expect(screen.getByRole('dialog', { name: 'Nuevo proyecto' })).toBeVisible();
   });
 });

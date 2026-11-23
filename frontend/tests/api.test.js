@@ -77,13 +77,13 @@ describe('cliente HTTP: errores del backend', () => {
 
   it('should give the pages the detail of a validation error (400 with errors[])', async () => {
     server.use(http.post('/api/v1/proyectos', () => HttpResponse.json({
-      success: false, message: 'Error de validación', errors: [{ campo: 'nombre', mensaje: 'El nombre es requerido' }],
+      success: false, message: 'Error de validación', errors: [{ campo: 'nombre', mensaje: 'nombre es requerido' }],
     }, { status: 400 })));
 
     const error = await proyectosService.create({ nombre: '' }).catch((e) => e);
 
     expect(error.response.status).toBe(400);
-    expect(error.response.data.errors).toEqual([{ campo: 'nombre', mensaje: 'El nombre es requerido' }]);
+    expect(error.response.data.errors).toEqual([{ campo: 'nombre', mensaje: 'nombre es requerido' }]);
   });
 
   it('should keep an HTML body as text, so the pages fall back to their own message', async () => {
@@ -154,11 +154,7 @@ describe('cliente HTTP: subida de archivos', () => {
     let tamano;
     server.use(http.post('/api/v1/archivos/upload/7', async ({ request }) => {
       tipo = request.headers.get('Content-Type');
-      try {
-        tamano = (await request.formData()).get('archivo')?.size;
-      } catch {
-        tamano = archivo.size;
-      }
+      tamano = (await request.formData()).get('archivo').size;
       return HttpResponse.json({
         success: true,
         message: 'Archivo subido correctamente',
@@ -315,11 +311,7 @@ describe('cliente HTTP: contrato de rutas con el backend', () => {
 
   it('should send the optional fields of a task delivery upload only when they exist', async () => {
     server.use(http.post('/api/v1/entregas/tarea/6/upload', async ({ request }) => {
-      try {
-        recibida = [...(await request.formData()).keys()];
-      } catch {
-        recibida = ['archivo', 'comentario_aprendiz'];
-      }
+      recibida = [...(await request.formData()).keys()];
       return HttpResponse.json({ success: true, message: 'Entrega registrada' });
     }));
     const archivo = new File(['x'], 'entrega.pdf', { type: 'application/pdf' });
