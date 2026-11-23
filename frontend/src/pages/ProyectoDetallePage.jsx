@@ -1138,7 +1138,7 @@ export default function ProyectoDetallePage() {
               </div>
               {!esAdmin && (
                 <form onSubmit={agregarComentario} style={{ display:'flex', gap:8, marginBottom:20 }}>
-                  <input className="form-input" style={{ flex:1 }} placeholder="Escribe un comentario…"
+                  <input className="form-input" style={{ flex:1 }} aria-label="Nuevo comentario" placeholder="Escribe un comentario…"
                     value={nuevoComentario} onChange={e=>setNuevoComentario(e.target.value)} />
                   <button type="submit" className="btn btn-primary btn-sm" disabled={!nuevoComentario.trim()}>Enviar</button>
                 </form>
