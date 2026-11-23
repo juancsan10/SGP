@@ -77,13 +77,13 @@ describe('cliente HTTP: errores del backend', () => {
 
   it('should give the pages the detail of a validation error (400 with errors[])', async () => {
     server.use(http.post('/api/v1/proyectos', () => HttpResponse.json({
-      success: false, message: 'Error de validación', errors: [{ campo: 'nombre', mensaje: 'El nombre es requerido' }],
+      success: false, message: 'Error de validación', errors: [{ campo: 'nombre', mensaje: 'nombre es requerido' }],
     }, { status: 400 })));
 
     const error = await proyectosService.create({ nombre: '' }).catch((e) => e);
 
     expect(error.response.status).toBe(400);
-    expect(error.response.data.errors).toEqual([{ campo: 'nombre', mensaje: 'El nombre es requerido' }]);
+    expect(error.response.data.errors).toEqual([{ campo: 'nombre', mensaje: 'nombre es requerido' }]);
   });
 
   it('should keep an HTML body as text, so the pages fall back to their own message', async () => {
