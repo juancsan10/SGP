@@ -99,6 +99,75 @@ jobs:
         env:
           DATABASE_URL: mysql://sgp_test:sgp_test@127.0.0.1:3307/SistemaGestionProyectosSENA_test
 
+  # Los flujos críticos de la semana 7 en el CI: MySQL como servicio, backend en segundo plano,
+  # espera con curl y reporte de Playwright como artefacto si algo falla
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0.42
+        env:
+          MYSQL_ROOT_PASSWORD: root_test
+          MYSQL_DATABASE: SistemaGestionProyectosSENA_test
+          MYSQL_USER: sgp_test
+          MYSQL_PASSWORD: sgp_test
+        ports:
+          - "3307:3306"
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -usgp_test -psgp_test"
+          --health-interval 2s
+          --health-retries 30
+    env:
+      DATABASE_URL: mysql://sgp_test:sgp_test@127.0.0.1:3307/SistemaGestionProyectosSENA_test
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          package_json_file: e2e/package.json
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: |
+            backend/pnpm-lock.yaml
+            frontend/pnpm-lock.yaml
+            e2e/pnpm-lock.yaml
+      - name: Cargar el esquema de producción en la BD de pruebas
+        run: sed 's/SistemaGestionProyectosSENA/SistemaGestionProyectosSENA_test/g' database/docker-init/001_schema.sql | mysql -h 127.0.0.1 -P 3307 -uroot -proot_test
+      - run: pnpm install --frozen-lockfile
+        working-directory: backend
+      - run: pnpm install --frozen-lockfile
+        working-directory: frontend
+      - run: pnpm install --frozen-lockfile
+        working-directory: e2e
+      - run: pnpm exec playwright install --with-deps chromium
+        working-directory: e2e
+      # El backend queda vivo en los pasos siguientes; lo que imprime va a api.log
+      - name: Arrancar el backend en segundo plano
+        working-directory: backend
+        env:
+          PORT: "3100"
+          JWT_SECRET: secreto_solo_para_los_e2e_de_sgp_32_caracteres
+          FRONTEND_URL: http://localhost:5199
+          MAIL_MODE: console
+          LOGIN_RATE_LIMIT_MAX: "1000"
+        run: node server.js > api.log 2>&1 &
+      # Espera a que el API responda (máximo 60 s), sin sleeps fijos
+      - name: Esperar al backend
+        run: curl --silent --fail --retry 30 --retry-delay 2 --retry-all-errors http://localhost:3100/
+      - name: Tests E2E
+        run: pnpm test
+        working-directory: e2e
+      # Si algo falla: reporte HTML de Playwright (con trazas) y el log del backend
+      - uses: actions/upload-artifact@v7.0.1
+        if: failure()
+        with:
+          name: e2e-report
+          path: |
+            e2e/playwright-report/
+            backend/api.log
+          retention-days: 7
+
   evidencia-individual:
     runs-on: ubuntu-latest
     steps:
