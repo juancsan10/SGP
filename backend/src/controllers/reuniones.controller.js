@@ -21,13 +21,19 @@ const create = async (req, res) => {
       `SELECT DISTINCT id_usuario FROM equipos_proyecto WHERE id_proyecto = ?`,
       [id_proyecto]
     );
-    await notificacionesService.crearYNotificarMultiples({
-      ids_usuarios: miembros.map(m => m.id_usuario),
-      titulo: 'Nueva reunión programada',
-      mensaje: `${titulo} — ${new Date(fecha_reunion).toLocaleString('es-CO')}`,
-      tipo: 'sistema',
-      prioridad: 'Media'
-    });
+    // La reunión ya quedó guardada: si el aviso falla se registra, pero no se responde 500
+    // (mismo defecto que se corrigió en tareas y mensajes en la semana 5).
+    try {
+      await notificacionesService.crearYNotificarMultiples({
+        ids_usuarios: miembros.map(m => m.id_usuario),
+        titulo: 'Nueva reunión programada',
+        mensaje: `${titulo} — ${new Date(fecha_reunion).toLocaleString('es-CO')}`,
+        tipo: 'sistema',
+        prioridad: 'Media'
+      });
+    } catch (avisoErr) {
+      console.error('[notificaciones] No se pudo avisar la nueva reunión:', avisoErr.message);
+    }
 
     await registrarCambio('reuniones', result.insertId, 'INSERT', req.user?.id);
     return res.status(201).json({ success: true, message: 'Reunión programada', data: { id_reunion: result.insertId } });

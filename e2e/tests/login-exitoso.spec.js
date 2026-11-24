@@ -1,18 +1,16 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/fixtures.js';
 
-// Cuenta de demo que crea backend/database/seed.js (no es un usuario real)
-const APRENDIZ = { correo: 'carlos.herrera@sgpsena.local', contrasena: 'Sena2026*' };
-
-test('should show the dashboard greeting after login with valid credentials', async ({ page }) => {
-  // Arrange
+test('should show the dashboard greeting after login with valid credentials', async ({ page, api }) => {
+  // Arrange: la cuenta se crea por el API en cada corrida (la suite no depende del seed)
+  const aprendiz = await api.crearAprendiz();
   await page.goto('/login');
 
   // Act
-  await page.getByLabel('Correo electrónico').fill(APRENDIZ.correo);
-  await page.getByLabel('Contraseña', { exact: true }).fill(APRENDIZ.contrasena);
+  await page.getByLabel('Correo electrónico').fill(aprendiz.correo);
+  await page.getByLabel('Contraseña', { exact: true }).fill('Sena2026*');
   await page.getByRole('button', { name: 'Ingresar' }).click();
 
   // Assert
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByRole('heading', { name: /Hola, Carlos Andrés/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: new RegExp(`Hola, ${aprendiz.nombres}`) })).toBeVisible();
 });

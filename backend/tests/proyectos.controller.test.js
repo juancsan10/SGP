@@ -17,8 +17,11 @@ function nuevoProyecto(datos = {}) {
 }
 
 // Stub de la BD para un create válido: el instructor tiene `activos` proyectos
+const RESPONSABLE_OK = [[{ id_rol: 2, estado: 1 }]]; // el id_instructor existe, está activo y es instructor
+
 function bdParaCrear(activos = 0) {
   return vi.spyOn(db, 'query')
+    .mockResolvedValueOnce(RESPONSABLE_OK)          // responsable del proyecto (S6)
     .mockResolvedValueOnce([[{ total: activos }]])  // RN-002: conteo de activos
     .mockResolvedValueOnce([{ insertId: 50 }])       // INSERT del proyecto
     .mockResolvedValueOnce([{}]);                    // historial
@@ -79,13 +82,13 @@ describe('create (otras reglas)', () => {
   });
 
   it('should reject a new project when the instructor already has 10 active (RN-002)', async () => {
-    const query = vi.spyOn(db, 'query').mockResolvedValueOnce([[{ total: 10 }]]);
+    const query = vi.spyOn(db, 'query').mockResolvedValueOnce(RESPONSABLE_OK).mockResolvedValueOnce([[{ total: 10 }]]);
     const res = crearRes();
 
     await create(crearReq({ user: INSTRUCTOR, body: nuevoProyecto() }), res);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(query).toHaveBeenCalledTimes(1); // no llegó a insertar
+    expect(query).toHaveBeenCalledTimes(2); // no llegó a insertar
   });
 
   it('should create the project in "En Planificación" state (RN-009)', async () => {
@@ -93,7 +96,44 @@ describe('create (otras reglas)', () => {
 
     await create(crearReq({ user: INSTRUCTOR, body: nuevoProyecto() }), crearRes());
 
-    expect(query.mock.calls[1][0]).toContain("'En Planificación'");
+    expect(query.mock.calls[2][0]).toContain("'En Planificación'");
+  });
+});
+
+// Hallazgos de la integración con la BD real (S6): antes, un id_instructor inexistente
+// llegaba al INSERT y la llave foránea respondía 500; y un aprendiz podía ser el responsable.
+describe('create (responsable del proyecto)', () => {
+  const ADMIN = { id: 1, rol: 'Administrador' };
+
+  it.each([
+    ['does not exist', [[]]],
+    ['is inactive', [[{ id_rol: 2, estado: 0 }]]],
+  ])('should respond 404 without inserting when the instructor %s', async (_caso, filas) => {
+    const query = vi.spyOn(db, 'query').mockResolvedValueOnce(filas);
+    const res = crearRes();
+
+    await create(crearReq({ user: ADMIN, body: nuevoProyecto({ id_instructor: 77 }) }), res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ success: false, message: 'Instructor no encontrado o inactivo' });
+    expect(query).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['an apprentice', 3, 400],
+    ['an instructor', 2, 201],
+    ['the administrator', 1, 201],
+  ])('should check the role when the responsible is %s', async (_caso, id_rol, estado) => {
+    vi.spyOn(db, 'query')
+      .mockResolvedValueOnce([[{ id_rol, estado: 1 }]])
+      .mockResolvedValueOnce([[{ total: 0 }]])
+      .mockResolvedValueOnce([{ insertId: 50 }])
+      .mockResolvedValueOnce([{}]);
+    const res = crearRes();
+
+    await create(crearReq({ user: ADMIN, body: nuevoProyecto({ id_instructor: 77 }) }), res);
+
+    expect(res.status).toHaveBeenCalledWith(estado);
   });
 });
 

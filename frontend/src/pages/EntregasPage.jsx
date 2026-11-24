@@ -147,6 +147,9 @@ function EntregasOperativas() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [subiendoArchivo, setSubiendoArchivo] = useState(false);
+  // Mientras llega la entrega guardada, el formulario queda deshabilitado. Antes se podía
+  // escribir y, al llegar la respuesta, setForm borraba lo escrito (red lenta, semana 7).
+  const [cargandoEntrega, setCargandoEntrega] = useState(false);
 
   async function cargar() {
     setLoading(true);
@@ -170,7 +173,7 @@ function EntregasOperativas() {
   const visibles = tareas.filter(t => esAprendiz ? Number(t.id_asignado) === Number(usuario?.id ?? usuario?.id_usuario) : true);
 
   async function abrir(t, tipo) {
-    setError(''); setEntrega(null); setModal({ t, tipo });
+    setError(''); setEntrega(null); setModal({ t, tipo }); setCargandoEntrega(true);
     try {
       const r = await entregasService.getByTarea(t.id_tarea);
       setEntrega(r.data.data);
@@ -189,6 +192,8 @@ function EntregasOperativas() {
       }
     } catch (e) {
       setError(e.response?.data?.message || 'No se pudo cargar la entrega');
+    } finally {
+      setCargandoEntrega(false);
     }
   }
 
@@ -313,12 +318,12 @@ function EntregasOperativas() {
                   <>
                     <div className="form-group">
                       <label className="form-label" htmlFor="entrega-comentario">Comentario</label>
-                      <textarea id="entrega-comentario" className="form-textarea" value={form.comentario_aprendiz}
+                      <textarea id="entrega-comentario" className="form-textarea" value={form.comentario_aprendiz} disabled={cargandoEntrega}
                         onChange={e => setForm({ ...form, comentario_aprendiz: e.target.value })} />
                     </div>
                     <div className="form-group">
                       <label className="form-label" htmlFor="entrega-enlace">Enlace</label>
-                      <input id="entrega-enlace" className="form-input" type="url" value={form.url_entrega}
+                      <input id="entrega-enlace" className="form-input" type="url" value={form.url_entrega} disabled={cargandoEntrega}
                         onChange={e => setForm({ ...form, url_entrega: e.target.value })} placeholder="https://…" />
                     </div>
 
@@ -332,7 +337,7 @@ function EntregasOperativas() {
                       <label htmlFor="entrega-archivo" className="btn btn-secondary btn-sm" style={{ cursor: subiendoArchivo ? 'not-allowed' : 'pointer', opacity: subiendoArchivo ? 0.6 : 1 }}>
                         {subiendoArchivo ? 'Subiendo…' : '📎 Adjuntar y enviar con archivo'}
                         <input id="entrega-archivo" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" style={{ display: 'none' }}
-                          disabled={subiendoArchivo} onChange={subirArchivo} />
+                          disabled={subiendoArchivo || cargandoEntrega} onChange={subirArchivo} />
                       </label>
                       <span className="form-hint" style={{ display: 'inline-flex', marginLeft: 8 }}>
                         PDF, JPG, PNG o WEBP · máx. 10 MB
@@ -382,7 +387,7 @@ function EntregasOperativas() {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setModal(null)}>Cancelar</button>
-                <button className="btn btn-primary" disabled={saving || (modal.tipo === 'revision' && !entrega)}>
+                <button className="btn btn-primary" disabled={saving || cargandoEntrega || (modal.tipo === 'revision' && !entrega)}>
                   {saving ? 'Guardando…' : modal.tipo === 'entrega' ? 'Enviar sin archivo' : 'Guardar revisión'}
                 </button>
               </div>

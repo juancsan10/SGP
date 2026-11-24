@@ -1,6 +1,12 @@
 const db = require('../config/db');
 const { registrarCambio } = require('../services/historial.service');
 
+// Fecha de hoy en la zona horaria del servidor, como texto YYYY-MM-DD
+function fechaLocalHoy() {
+  const hoy = new Date();
+  return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+}
+
 // POST /api/v1/entregables
 const create = async (req, res) => {
   try {
@@ -11,12 +17,12 @@ const create = async (req, res) => {
     }
 
     // NUEVO: no se permite crear un entregable con fecha límite ya pasada.
-    const hoy = new Date(); hoy.setHours(0,0,0,0);
-    const fechaEntregaDate = new Date(fecha_entrega); fechaEntregaDate.setHours(0,0,0,0);
-    if (isNaN(fechaEntregaDate.getTime())) {
+    // Se comparan los textos YYYY-MM-DD en la fecha local: new Date('2026-03-10') es
+    // medianoche UTC, que en Colombia (UTC-5) cae el día anterior y rechazaba la fecha de hoy.
+    if (isNaN(new Date(fecha_entrega).getTime())) {
       return res.status(400).json({ success: false, message: 'fecha_entrega no es una fecha válida' });
     }
-    if (fechaEntregaDate < hoy) {
+    if (String(fecha_entrega).slice(0, 10) < fechaLocalHoy()) {
       return res.status(400).json({ success: false, message: 'La fecha de entrega no puede ser una fecha pasada. Elige hoy o una fecha posterior.' });
     }
 
@@ -111,6 +117,16 @@ const update = async (req, res) => {
 // DELETE /api/v1/entregables/:id
 const remove = async (req, res) => {
   try {
+    // Con comentarios, archivos o calificaciones la llave foránea impedía el borrado con un 500.
+    const [[{ total }]] = await db.query(
+      `SELECT (SELECT COUNT(*) FROM comentarios WHERE id_entregable = ?)
+            + (SELECT COUNT(*) FROM archivos WHERE id_entregable = ?)
+            + (SELECT COUNT(*) FROM evaluaciones WHERE id_entregable = ?) AS total`,
+      [req.params.id, req.params.id, req.params.id]
+    );
+    if (Number(total) > 0) {
+      return res.status(409).json({ success: false, message: `No se puede eliminar el entregable: tiene ${total} comentario(s), archivo(s) o calificación(es).` });
+    }
     const [result] = await db.query('DELETE FROM entregables WHERE id_entregable = ?', [req.params.id]);
     if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Entregable no encontrado' });
     await registrarCambio('entregables', req.params.id, 'DELETE', req.user?.id);

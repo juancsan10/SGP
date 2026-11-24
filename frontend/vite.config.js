@@ -1,6 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Backend al que apunta el proxy. Los E2E (semana 7) lo cambian para usar un backend
+// conectado a la BD de pruebas en otro puerto y no tocar nunca el de desarrollo.
+const backend = process.env.BACKEND_URL || 'http://localhost:3000'
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
@@ -9,12 +13,12 @@ export default defineConfig({
     // Proxy: en desarrollo, las peticiones a /api van al backend
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: backend,
         changeOrigin: true,
       },
       // Proxy para WebSocket de notificaciones en tiempo real (RF4.4 / HU-28)
       '/ws': {
-        target: 'ws://localhost:3000',
+        target: backend.replace(/^http/, 'ws'),
         ws: true,
       },
       // NUEVO: los enlaces de descarga/vista de archivos subidos apuntan
@@ -22,7 +26,7 @@ export default defineConfig({
       // el navegador las pediría contra el propio Vite (5173) en vez del
       // backend.
       '/uploads': {
-        target: 'http://localhost:3000',
+        target: backend,
         changeOrigin: true,
       },
     },
@@ -39,7 +43,7 @@ export default defineConfig({
       include: ['src/**/*.{js,jsx}'],
       exclude: ['src/main.jsx'],
       // Línea base de la semana 1. Este número solo puede subir.
-      thresholds: { lines: 65, branches: 53, functions: 56, statements: 61 },
+      thresholds: { lines: 75, branches: 64, functions: 67, statements: 72 },
     },
   },
 })
