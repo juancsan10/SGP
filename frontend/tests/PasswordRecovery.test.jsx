@@ -25,7 +25,7 @@ const server = setupServer(
   }),
   http.post('/api/v1/auth/password-reset/confirm', async ({ request }) => {
     peticiones.push({ paso: 'confirm', cuerpo: await request.json() });
-    return HttpResponse.json({ success: true, message: 'Contraseña actualizada correctamente.' });
+    return HttpResponse.json({ success: true, message: 'Contraseña actualizada correctamente. Ya puedes iniciar sesión.' });
   }),
 );
 

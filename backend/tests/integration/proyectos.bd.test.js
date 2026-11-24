@@ -57,6 +57,18 @@ describe.skipIf(!hayBd)('tabla proyectos: restricciones', () => {
     await expect(crearUsuario({ rol: 'Aprendiz', correo: instructor.correo }))
       .rejects.toMatchObject({ code: 'ER_DUP_ENTRY' });
   });
+
+  // MySQL frente a PostgreSQL: la columna correo usa la intercalación por defecto de MySQL 8
+  // (utf8mb4_0900_ai_ci), que NO distingue mayúsculas. Para MySQL "Ana@..." y "ana@..." son el
+  // mismo correo y el UNIQUE lo rechaza; en PostgreSQL (texto sensible a mayúsculas) los dos
+  // entrarían como usuarios distintos. Si el proyecto cambia de motor, este test avisa.
+  it('should treat an email that only differs in uppercase as the same email (MySQL ci collation)', async () => {
+    await expect(crearUsuario({ rol: 'Aprendiz', correo: instructor.correo.toUpperCase() }))
+      .rejects.toMatchObject({ code: 'ER_DUP_ENTRY' });
+
+    const [filas] = await db.query('SELECT id_usuario FROM usuarios WHERE correo = ?', [instructor.correo.toUpperCase()]);
+    expect(filas.map((f) => f.id_usuario)).toEqual([instructor.id_usuario]);
+  });
 });
 
 describe.skipIf(!hayBd)('consulta del listado de proyectos (getAll)', () => {

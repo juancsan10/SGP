@@ -87,6 +87,10 @@ function crearApi(request) {
       const { data } = await cuerpo(await request.get(`/api/v1/entregas/tarea/${idTarea}`, { headers: conToken(usuario.token) }), 'ver entrega');
       return data;
     },
+    async equipoDe(usuario, idProyecto) {
+      const { data } = await cuerpo(await request.get(`/api/v1/equipos/${idProyecto}`, { headers: conToken(usuario.token) }), 'listar equipo');
+      return data;
+    },
   };
   return api;
 }

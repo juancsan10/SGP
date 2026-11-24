@@ -34,6 +34,7 @@ Anota la cobertura real al cerrar cada semana. El umbral de la semana siguiente 
 | S3 | 46.75 | 43.01 | Frontend 46 · Backend 43 (líneas) |
 | S4 | 55.43 | 53.1 | Frontend 55 · Backend 53 (líneas) |
 | S5 | 65.03 | 60.13 | Frontend 65 · Backend 60 (líneas) |
+| S6 | 71.17 | 70.45 | Frontend 71 · Backend 70 (líneas; piso 70) |
 
 > La línea base es 0% porque el proyecto no tenía pruebas unitarias y los E2E no cuentan para la cobertura. Se mide con `pnpm test` en `frontend/` y en `backend/`.
 
