@@ -43,6 +43,54 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Los tests unitarios no usan la BD: reemplazan db.query con stubs
       - run: pnpm test
+      # Reporte de cobertura del backend (HTML): se sube aunque el umbral falle, para ver las ramas sin cubrir
+      - uses: actions/upload-artifact@v7.0.1
+        if: always()
+        with:
+          name: coverage-backend
+          path: backend/coverage/
+          retention-days: 7
+
+  # Tests de integración de la semana 6 contra un MySQL real, igual al de producción (docker-compose.yml)
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0.42
+        env:
+          MYSQL_ROOT_PASSWORD: root_test
+          MYSQL_DATABASE: SistemaGestionProyectosSENA_test
+          MYSQL_USER: sgp_test
+          MYSQL_PASSWORD: sgp_test
+        ports:
+          - "3307:3306"
+        # El job espera a que el servicio responda antes del primer paso
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -usgp_test -psgp_test"
+          --health-interval 2s
+          --health-retries 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          package_json_file: backend/package.json
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      # Migraciones: el esquema de producción (001_schema.sql ya incluye las migraciones de database/)
+      # se carga con el nombre de la BD de pruebas, igual que docker-compose.test.yml
+      - name: Cargar el esquema de producción en la BD de pruebas
+        run: sed 's/SistemaGestionProyectosSENA/SistemaGestionProyectosSENA_test/g' ../database/docker-init/001_schema.sql | mysql -h 127.0.0.1 -P 3307 -uroot -proot_test
+      - name: Tests de integración (cero saltados)
+        run: pnpm test:integration
+        env:
+          DATABASE_URL: mysql://sgp_test:sgp_test@127.0.0.1:3307/SistemaGestionProyectosSENA_test
 
   evidencia-individual:
     runs-on: ubuntu-latest
