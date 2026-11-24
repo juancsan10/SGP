@@ -230,3 +230,8 @@ Authorization: Bearer TOKEN
 - Los recursos de proyecto usan `requireProjectMember` para autorizar acceso.
 - `GET /api/v1/agenda/:id_proyecto/calendario` devuelve tareas, entregables y reuniones.
 - `GET /api/v1/agenda/:id_proyecto/timeline` devuelve cambios cronológicos del proyecto.
+- `GET /api/v1/reportes/resumen` devuelve KPIs y resumen consolidado de proyectos para vista previa.
+- `GET /api/v1/reportes/consolidado/pdf` descarga archivo PDF institucional con el consolidado general de proyectos.
+- `GET /api/v1/reportes/consolidado/excel` descarga libro Excel (.xlsx) estructurado con el consolidado general.
+- `GET /api/v1/reportes/proyectos/:id/pdf` descarga archivo PDF completo del avance del proyecto especificado.
+- `GET /api/v1/reportes/proyectos/:id/excel` descarga libro Excel (.xlsx) de 5 hojas con toda la información y avance del proyecto.
