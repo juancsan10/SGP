@@ -24,6 +24,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Corre los tests con cobertura: si baja del umbral de vite.config.js, el job queda en rojo
       - run: pnpm test
+      # Reporte de cobertura del frontend (HTML): se sube aunque el umbral falle, que es cuando más se necesita
+      - uses: actions/upload-artifact@v7.0.1
+        if: always()
+        with:
+          name: coverage-frontend
+          path: frontend/coverage/
+          retention-days: 7
 
   backend:
     runs-on: ubuntu-latest
