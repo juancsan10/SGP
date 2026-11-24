@@ -81,6 +81,7 @@ y el backend ya implementa rutas/controladores para las **16**:
 | `evaluaciones` | `POST /evaluaciones` · `GET /evaluaciones/:id_entregable` · `PUT /evaluaciones/:id` | RN-016 (solo se evalúa un entregable si el proyecto está en estado "En Revisión") · RN-013 (calificación entre 0 y 100). Solo Instructor/Administrador califican. |
 | `reuniones` | `POST /reuniones` · `GET /reuniones/:id_proyecto` · `PUT /reuniones/:id` · `DELETE /reuniones/:id` | RN-021 (notifica automáticamente a todo el equipo del proyecto al programarse). Solo Instructor/Administrador programan. |
 | `github-integration` | `POST /github-integration` · `GET /github-integration/:id_usuario` · `PUT /github-integration` · `DELETE /github-integration` | Es 1 registro por usuario (su propia cuenta de GitHub). `github_token` **nunca** se expone en las respuestas JSON. Solo el propio usuario o un Administrador pueden consultarlo. |
+| `reportes` | `GET /reportes/proyectos/:id/pdf` · `GET /reportes/proyectos/:id/excel` · `GET /reportes/consolidado/pdf` · `GET /reportes/consolidado/excel` · `GET /reportes/resumen` | HU-35 / RF6.3: Exportación de reportes de avance en formatos nativos PDF institucional y Excel (.xlsx) estructurado en hojas para Instructores y Administradores. |
 
 ## 📦 Dependencias
 
@@ -96,13 +97,18 @@ momento de este commit. Si se agrega una dependencia nueva, se recomienda:
 2. Correr `pnpm audit` y resolver cualquier alerta antes de hacer commit
 3. Confirmar que quedó sin el prefijo `^`/`~` en `package.json`
 
+Prueba rápida de los generadores de reportes (HU-35), además de `pnpm test`:
+```bash
+pnpm test:reportes
+```
+
 ## ⚠️ Pendiente (fuera del alcance de esta corrección)
 
 - Subida física de archivos (hoy `archivos` solo guarda nombre + ruta como texto).
 - Consumo real de la API de GitHub con el token guardado en `github_integration`
   (hoy solo se almacena la credencial; no se listan commits/ramas todavía).
 - Notificaciones en tiempo real vía WebSocket (/ws) y canal SSE: implementado y activo.
-- Exportación de reportes a PDF/Excel.
+- Exportación de reportes a PDF/Excel: implementado (HU-35, `/api/v1/reportes`).
 
 ## Referencia
 
