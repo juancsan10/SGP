@@ -29,7 +29,8 @@ export default defineConfig({
       command: 'node server.js',
       cwd: '../backend',
       url: `${BACKEND_URL}/`,
-      reuseExistingServer: false,
+      // En el CI el backend se arranca en segundo plano en el workflow y se espera con curl
+      reuseExistingServer: !!process.env.CI,
       env: {
         PORT: String(backPort),
         DATABASE_URL,
