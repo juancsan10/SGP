@@ -18,6 +18,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage.jsx';
 import CalendarioPage from './pages/CalendarioPage.jsx';
 import TimelinePage from './pages/TimelinePage.jsx';
 import SolicitudesPage from './pages/SolicitudesPage.jsx';
+import ReportesPage from './pages/ReportesPage.jsx'; // HU-35: Exportación de reportes
 
 // Layout
 import AppLayout from './components/AppLayout.jsx';
@@ -62,6 +63,9 @@ export default function App() {
         <Route path="timeline" element={<TimelinePage />} />
         <Route path="historial"      element={
           <AdminRoute><HistorialPage /></AdminRoute>
+        } />
+        <Route path="reportes"       element={
+          <AdminRoute><ReportesPage /></AdminRoute>
         } />
         <Route path="usuarios"       element={
           <AdminRoute><UsuariosPage /></AdminRoute>

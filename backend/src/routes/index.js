@@ -24,6 +24,7 @@ const agendaRoutes = require('./agenda.routes');
 const entregasRoutes = require('./entregas.routes');
 const solicitudesRoutes = require('./solicitudes.routes'); // NUEVO
 const rolesEquipoRoutes = require('./roles-equipo.routes'); // NUEVO (punto 4)
+const reportesRoutes    = require('./reportes.routes'); // HU-35: Exportación de reportes PDF y Excel
 
 router.use('/auth',           authRoutes);
 router.use('/usuarios',       usuariosRoutes);
@@ -47,5 +48,6 @@ router.use('/agenda', agendaRoutes);
 router.use('/entregas', entregasRoutes);
 router.use('/solicitudes', solicitudesRoutes); // NUEVO
 router.use('/roles-equipo', rolesEquipoRoutes); // NUEVO (punto 4)
+router.use('/reportes', reportesRoutes); // HU-35: Exportación de reportes PDF y Excel
 
 module.exports = router;
