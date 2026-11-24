@@ -90,7 +90,7 @@ jobs:
       - name: Tests de integración (cero saltados)
         run: pnpm test:integration
         env:
-          DATABASE_URL: mysql://sgp_test:sgp_test@127.0.0.1:3307/SistemaGestionProyectosSENA_test
+          DATABASE_URL: mysql://sgp_test:sgp_test@127.0.0.1:3308/SistemaGestionProyectosSENA_test
 
   evidencia-individual:
     runs-on: ubuntu-latest
