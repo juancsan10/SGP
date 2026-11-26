@@ -27,12 +27,14 @@
 
 ### Párrafos de reflexión individual:
 
-- **Rubiel Rodríguez:** _pendiente_
+- **Rubiel Rodríguez:**
+  > "Al comparar los cuatro backends, SGP en Node y Express fue el más rápido de arrancar, pero también el que más dependió de disciplina manual: la documentación de la API quedó escrita a mano y se desfasó del código. Repetiría la separación en rutas, controladores y servicios, y el uso de hashes HMAC en la recuperación de contraseña. Cambiaría la documentación manual por OpenAPI generado, y centralizaría las validaciones desde el inicio. Para un siguiente proyecto elegiría un backend con contrato formal y tipado, manteniendo Docker Compose y las pruebas automatizadas desde la primera semana."
 
 - **Juan Manuel Arcila:**
   > "Al comparar los cuatro backends desarrollados en los ejercicios formativos, la lección más contundente desde la perspectiva de desarrollo frontend y coordinación es el impacto crítico que tiene el contrato de la API sobre la estabilidad del sistema. En SGP, Node.js y Express ofrecieron gran agilidad inicial y la conveniencia de usar JavaScript en todo el stack; sin embargo, al no contar con un esquema tipado ni OpenAPI nativo, la documentación manual en Markdown (`api-rest.md`) quedó desactualizada con el código real. Esto provocó que en las pruebas con MSW simuláramos respuestas y códigos de error que el backend real no manejaba, teniendo que corregir los handlers en etapas avanzadas de la rotación. Por el contrario, la experiencia con FastAPI en Python y Spring Boot en Java evidenció que frameworks con validación estricta (Pydantic / Bean Validation) y Swagger generado en tiempo de ejecución eliminan esa fricción, garantizando que el frontend consuma contratos confiables. Si iniciara un nuevo proyecto, mantendría React en el frontend pero seleccionaría un backend con especificación OpenAPI integrada y tipado estricto (como FastAPI o Node.js con NestJS/TypeScript), combinando rapidez de iteración con la solidez de un contrato formal."
 
-- **Juan Carlos Sánchez:** _pendiente_
+- **Juan Carlos Sánchez:**
+  > "Al comparar los cuatro backends, lo que más cambia entre ellos es cuánto ayuda cada uno a probar. En SGP, Node y Express nos permitieron tener 339 pruebas de backend, pero las pruebas de integración con base de datos real todavía no corren en el CI y solo se ejecutan en local, lo que deja regresiones de BD sin detectar. Los frameworks con validación y contrato integrados reducen ese riesgo porque el esquema se verifica solo. Para un siguiente proyecto priorizaría correr unitarias, integración y end-to-end en el CI desde la primera semana, y elegiría un backend cuyo contrato de API se pueda probar automáticamente."
 
 ## 3. Deuda técnica priorizada
 La lista priorizada (Alta/Media/Baja con impacto, esfuerzo y responsable) está en `docs/07-deuda-tecnica.md`.
