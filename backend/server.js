@@ -1,9 +1,6 @@
 require('dotenv').config();
-const required=['DB_HOST','DB_NAME','DB_USER','DB_PASSWORD','JWT_SECRET','FRONTEND_URL'];
-if(process.env.NODE_ENV==='production') {
-  for(const key of required) if(!process.env[key]) throw new Error(`Falta variable obligatoria: ${key}`);
-  if(process.env.JWT_SECRET.length<32) throw new Error('JWT_SECRET debe tener al menos 32 caracteres');
-}
+const { assertEnv } = require('./src/config/env');
+try { assertEnv(); } catch (e) { process.exit(1); } // fail-fast con mensaje claro
 const http = require('http');
 const app = require('./src/app');
 const db = require('./src/config/db');

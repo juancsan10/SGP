@@ -217,6 +217,9 @@ Authorization: Bearer TOKEN
 400 Error  
 401 No autorizado  
 404 No encontrado  
+403 Prohibido (rol sin permiso)  
+409 Conflicto (por ejemplo, borrar algo con registros hijos)  
+429 Demasiados intentos (rate limit)  
 500 Error servidor  
 
 
@@ -224,8 +227,9 @@ Authorization: Bearer TOKEN
 
 - `POST /api/v1/auth/register` crea únicamente Aprendices.
 - `POST /api/v1/auth/users` crea Administradores/Instructores y requiere rol Administrador.
-- `POST /api/v1/auth/password-reset/request` genera token temporal de recuperación.
-- `POST /api/v1/auth/password-reset/confirm` consume el token una sola vez.
+- `POST /api/v1/auth/password-reset/request` genera un código de 6 dígitos (ver «Recuperación de contraseña» más abajo).
+- `POST /api/v1/auth/password-reset/verify` valida el código y devuelve `reset_session`.
+- `POST /api/v1/auth/password-reset/confirm` cambia la contraseña con `reset_session`; se usa una sola vez.
 - `PUT /api/v1/usuarios/:id/password` cambia contraseña con verificación de la actual.
 - Los recursos de proyecto usan `requireProjectMember` para autorizar acceso.
 - `GET /api/v1/agenda/:id_proyecto/calendario` devuelve tareas, entregables y reuniones.
@@ -235,3 +239,53 @@ Authorization: Bearer TOKEN
 - `GET /api/v1/reportes/consolidado/excel` descarga libro Excel (.xlsx) estructurado con el consolidado general.
 - `GET /api/v1/reportes/proyectos/:id/pdf` descarga archivo PDF completo del avance del proyecto especificado.
 - `GET /api/v1/reportes/proyectos/:id/excel` descarga libro Excel (.xlsx) de 5 hojas con toda la información y avance del proyecto.
+
+
+---
+
+## 🔑 Recuperación de contraseña (HU-16)
+
+Flujo de 3 pasos. Todas las respuestas del paso 1 son iguales exista o no el correo, para no revelar qué cuentas existen.
+
+| Paso | Endpoint | Body | Respuesta |
+|---|---|---|---|
+| 1 | `POST /auth/password-reset/request` | `{ "correo": "..." }` | 200 `{ success, message }`. Envía un código de 6 dígitos al correo (vence en **3 min**, cooldown de 60 s entre solicitudes). |
+| 2 | `POST /auth/password-reset/verify` | `{ "correo", "token": "123456" }` | 200 `{ data: { reset_session, session_expires_in } }`. Máx. **5 intentos** por código. |
+| 3 | `POST /auth/password-reset/confirm` | `{ "correo", "reset_session", "nueva_contrasena" }` | 200 si cambia. `reset_session` (64 caracteres) vale **5 min** y es de un solo uso; la contraseña lleva 8 a 72 caracteres. |
+
+Errores: 400 (validación o código inválido/vencido), 429 (límite de intentos). Los códigos y sesiones se guardan como hash HMAC-SHA256. Con `MAIL_MODE=console` el código se imprime en la consola del backend (solo desarrollo).
+
+## 📨 SOLICITUDES AL ADMINISTRADOR *(nuevo)*
+
+Prefijo `/solicitudes`. Requieren `Authorization: Bearer TOKEN`.
+
+| Método | Ruta | Rol | Descripción |
+|---|---|---|---|
+| GET | `/solicitudes/tipos` | Cualquiera autenticado | Catálogo de tipos de solicitud |
+| GET | `/solicitudes/mias` | Instructor, Aprendiz | Mis solicitudes |
+| GET | `/solicitudes` | Administrador | Todas (filtros por query) |
+| POST | `/solicitudes` | Instructor, Aprendiz | Crear `{ tipo, asunto, descripcion, id_proyecto? }` → 201; 400 si el tipo es inválido |
+| PUT | `/solicitudes/:id/resolver` | Administrador | Resolver `{ estado, respuesta }` |
+| POST | `/solicitudes/aprendices` | Instructor | Pedir la creación de un aprendiz |
+| GET | `/solicitudes/aprendices/mias` | Instructor | Mis solicitudes de aprendices |
+| GET | `/solicitudes/aprendices` | Administrador | Todas las solicitudes de aprendices |
+| PUT | `/solicitudes/aprendices/:id/resolver` | Administrador | Aprobar (se crea la cuenta) o rechazar |
+
+## 🔔 TIEMPO REAL (HU-28)
+
+| Canal | Ruta | Uso |
+|---|---|---|
+| WebSocket | `ws://HOST:3000/ws` (en Docker: `/ws` por nginx) | Se autentica con el JWT; el servidor empuja las notificaciones nuevas |
+| SSE (respaldo) | `GET /api/v1/notificaciones/stream` | Si el WebSocket no conecta |
+| Estadísticas | `GET /api/v1/notificaciones/realtime/stats` | Solo Administrador |
+| Difusión | `POST /api/v1/notificaciones/broadcast` | Administrador, Instructor |
+| Enviadas | `GET /api/v1/notificaciones/enviadas` | Administrador, Instructor |
+
+## 📅 AGENDA
+
+- `GET /agenda/:id_proyecto/calendario` — tareas, entregables y reuniones del proyecto.
+- `GET /agenda/:id_proyecto/timeline` — cambios cronológicos (línea de tiempo, HU-32).
+
+## ⚙️ Configuración del backend (variables de entorno)
+
+Ver `README.md`, sección «Variables de entorno». El backend valida todas al arrancar y, si falta alguna, termina con código 1 listando cada una.

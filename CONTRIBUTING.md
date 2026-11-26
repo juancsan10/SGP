@@ -58,3 +58,13 @@ clonar después del `force-push`.
 - `feature/<nombre-descriptivo>` — una rama por tarea/historia de usuario. Ejemplo: `feature/recuperacion-contrasena`.
 
 Todo cambio a `main` o `develop` debe llegar vía **Pull Request**, no vía push directo.
+
+
+## Autoría de los commits
+Cada integrante commitea con su propio usuario de git (`git config user.name` y `user.email` con el correo de su cuenta de GitHub). Si un asistente de IA ayudó, el commit lo hace la persona responsable y se agrega al final del mensaje:
+
+```
+Co-authored-by: Claude <noreply@anthropic.com>
+```
+
+Así el historial refleja quién respondió por el cambio.

@@ -49,6 +49,38 @@ docker compose exec backend node database/seed.js
 
 El Compose levanta tres servicios: MySQL, backend y frontend. No se requiere instalar Node, pnpm ni MySQL en la máquina para ejecutar la entrega.
 
+## Variables de entorno
+
+Se definen en `.env` (copiado de `.env.example`; **nunca se sube al repositorio**). El backend las valida al arrancar: si falta alguna termina con código 1 y lista **todas** las que faltan.
+
+| Variable | Obligatoria | Descripción |
+|---|---|---|
+| `DB_HOST`, `DB_NAME`, `DB_USER` | Sí en producción | Conexión a MySQL (`DB_NAME` = `SistemaGestionProyectosSENA`) |
+| `DB_PASSWORD`, `DB_ROOT_PASSWORD` | Sí en producción | Claves de la BD |
+| `JWT_SECRET` | Sí (≥ 32 caracteres) | Firma de los tokens; corto = error en producción, aviso en desarrollo |
+| `JWT_EXPIRES_IN` | No (`2h`) | Vigencia del token |
+| `FRONTEND_URL` | Sí en producción | Origen permitido por CORS |
+| `PORT`, `NODE_ENV` | No (`3000`, `development`) | Puerto y modo |
+| `MAIL_MODE` | No (`console`) | `smtp` envía correos reales y exige `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` |
+| `LOGIN_RATE_LIMIT_MAX` | No (`5`) | Solo para el ambiente de E2E |
+| `DATABASE_URL` | No | Reemplaza a `DB_*` (la usan los tests de integración) |
+
+Mensajes al arrancar: `✅ Variables de entorno validadas`, `⚠️ ...` (aviso, sigue) o `❌ Configuración inválida` (se detiene).
+Arquitectura y despliegue: [`docs/02-arquitectura/diagramas/`](docs/02-arquitectura/diagramas/README.md).
+
+## Pruebas
+
+| Nivel | Comando | Estado (2026-11-26) |
+|---|---|---|
+| Unitarias backend | `cd backend && pnpm test` | 339 casos ✅ |
+| Unitarias frontend | `cd frontend && pnpm test` | 333 casos ✅ |
+| Integración (BD `_test`, puerto 3307) | ver sección siguiente | 20 casos ✅ |
+| E2E (Playwright) | `cd e2e && pnpm test` ([guía](e2e/README.md)) | 6 especificaciones |
+
+Documentos: [plan de pruebas](docs/08-pruebas/plan-de-pruebas.md) · [informe de pruebas unitarias](docs/08-pruebas/informe-pruebas-unitarias.md) · [reporte de ejecución y defectos](docs/08-pruebas/reporte-ejecucion-y-defectos.md).
+
+API alternativa (FastAPI): [referencia](docs/03-api/api-fastapi-referencia.md)
+
 ## Verificación
 
 ```bash
@@ -139,6 +171,9 @@ ISC. Uso académico/formativo.
 
 La documentación completa está en [`docs/`](docs/), incluyendo RF/RNF, reglas de negocio, historias de usuario, API, seguridad, arquitectura y deuda técnica.
 
+- **API REST** (incluye recuperación de contraseña, solicitudes, tiempo real y agenda): [`docs/03-api/api-rest.md`](docs/03-api/api-rest.md)
+- **Conclusión de la documentación** (índice de diagramas, MER, UML, casos de uso): [`docs/00-general/conclusion-documentacion.md`](docs/00-general/conclusion-documentacion.md)
+- **Gestión del proyecto**: [backlog puntuado](docs/04-gestion-proyecto/backlog-puntuado.md) · [retroalimentación del equipo](docs/05-equipo/feedback-equipo.md) · [deuda técnica priorizada](docs/07-deuda-tecnica.md) · [comparativo de backends](docs/09-reflexion/comparativo-cuatro-backends.md)
 - **Matriz de trazabilidad** (RF → RN → CU → HU → endpoint real → estado verificado): [`docs/01-requisitos/matriz-trazabilidad.md`](docs/01-requisitos/matriz-trazabilidad.md)
 
 ### Nota de lockfiles
