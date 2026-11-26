@@ -27,7 +27,7 @@
 | HU | Título de la Historia | Voto Rubiel | Voto Juan Manuel | Voto Juan Carlos | Consenso | Sprint | Responsable Asignado | Notas de discrepancia y justificación |
 |---|---|---|---|---|---|---|---|---|
 | **HU-13** | Registro de usuarios | 3 | 3 | 5 | **3** | 3 | Juan Manuel Arcila | Juan Carlos votó 5 por validaciones de formato de documento y correo único. Rubiel y Juan Manuel mostraron que con `express-validator` y restricciones `UNIQUE` en MySQL el esfuerzo es estándar. |
-| **HU-14** | Inicio de sesión seguro (JWT, bcrypt, rate limit) | 5 | 5 | 8 | **5** | 3 | Rubiel Rodríguez | Juan Carlos votó 8 por el rate limiting y configuración de cookies/tokens. Rubiel mostró que `express-rate-limit` y la firma JWT en middleware centralizado acotan la complejidad a 5 puntos. |
+| **HU-14** | Inicio de sesión seguro (JWT, bcrypt, rate limit) | 5 | 5 | 8 | **5** | 3 | Rubiel Rodríguez | Juan Carlos votó 8 por el rate limiting y configuración de tokens JWT. Rubiel mostró que `express-rate-limit` y la firma JWT en middleware centralizado acotan la complejidad a 5 puntos. |
 | **HU-15** | Acceso diferenciado por rol | 5 | 3 | 5 | **5** | 3 | Rubiel Rodríguez | Juan Manuel votó 3 pensando solo en proteger rutas en React. Rubiel y Juan Carlos recordaron que requiere middlewares por rol (`auth.middleware.js`) en cada endpoint del backend. |
 | **HU-16** | Recuperación de contraseña (código 6 dígitos) | 8 | 8 | 5 | **8** | 5 | Juan Carlos Sánchez | Juan Carlos votó 5 pensando en un endpoint directo con email. Rubiel y Juan Manuel argumentaron que el estándar de seguridad exige 3 pasos (`request`, `verify`, `confirm`), hash HMAC, expiración y límite de reintentos. |
 | **HU-17** | Crear proyecto | 5 | 5 | 5 | **5** | 4 | Rubiel Rodríguez | Unanimidad (5). Implica validaciones de negocio: fechas coherentes, asignación obligatoria de instructor y estado inicial 'Propuesta'. |
@@ -55,7 +55,7 @@
 ## 3. Resumen y Conclusiones del Acta
 
 - **Total de historias estimadas:** 23 historias (HU-13 a HU-35).
-- **Puntos totales de historia:** **116 puntos**.
+- **Puntos totales de historia:** **115 puntos**.
 - **Distribución por Sprint acordada:**
   - **Sprint 3 (Acceso seguro):** HU-13, HU-14, HU-15 $\rightarrow$ **13 puntos**.
   - **Sprint 4 (Núcleo de seguimiento):** HU-17, HU-18, HU-19, HU-20, HU-21, HU-22, HU-23, HU-24, HU-29, HU-30 $\rightarrow$ **42 puntos**.

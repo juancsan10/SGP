@@ -35,7 +35,7 @@ Prioridad MoSCoW: **M** Must · **S** Should · **C** Could. Responsable asignad
 | HU-34 | Adjuntar archivos a un entregable | S | 5 | 6 | Juan Manuel Arcila | 🟡 Parcial (almacenamiento en nube, RF6.2) |
 | HU-35 | Exportar reportes del proyecto | S | 8 | 6 | Juan Carlos Sánchez | ✅ Hecho |
 
-**Total:** 23 historias · 116 puntos · 21 hechas (≈ 91 %), 2 parciales.
+**Total:** 23 historias · 115 puntos · 21 hechas (≈ 91 %), 2 parciales.
 
 ## 3. Planificación por sprint
 
