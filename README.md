@@ -79,6 +79,8 @@ Arquitectura y despliegue: [`docs/02-arquitectura/diagramas/`](docs/02-arquitect
 
 Documentos: [plan de pruebas](docs/08-pruebas/plan-de-pruebas.md) · [informe de pruebas unitarias](docs/08-pruebas/informe-pruebas-unitarias.md) · [reporte de ejecución y defectos](docs/08-pruebas/reporte-ejecucion-y-defectos.md).
 
+API alternativa (FastAPI): [referencia](docs/03-api/api-fastapi-referencia.md)
+
 ## Verificación
 
 ```bash
