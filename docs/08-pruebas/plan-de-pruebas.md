@@ -16,7 +16,7 @@ Verificar de forma repetible y automatizada que SGP SENA cumple sus requisitos (
 
 **Fuera del alcance (documentado como deuda técnica)**
 - Pruebas de carga/rendimiento y de penetración.
-- Exportación de reportes (HU-35, sin implementar) e integración con GitHub (HU-33, parcial).
+- Integración con GitHub (HU-33, parcial).
 - Pruebas en navegadores distintos de Chromium y en dispositivos móviles reales.
 - Envío real de correo por SMTP (se prueba el modo consola y la lógica; el SMTP real requiere credenciales).
 

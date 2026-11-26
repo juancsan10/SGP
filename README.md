@@ -70,10 +70,10 @@ Arquitectura y despliegue: [`docs/02-arquitectura/diagramas/`](docs/02-arquitect
 
 ## Pruebas
 
-| Nivel | Comando | Estado (2026-11-20) |
+| Nivel | Comando | Estado (2026-11-26) |
 |---|---|---|
-| Unitarias backend | `cd backend && pnpm test` | 321 casos ✅ |
-| Unitarias frontend | `cd frontend && pnpm test` | 313 casos ✅ |
+| Unitarias backend | `cd backend && pnpm test` | 339 casos ✅ |
+| Unitarias frontend | `cd frontend && pnpm test` | 333 casos ✅ |
 | Integración (BD `_test`, puerto 3307) | ver sección siguiente | 20 casos ✅ |
 | E2E (Playwright) | `cd e2e && pnpm test` ([guía](e2e/README.md)) | 6 especificaciones |
 

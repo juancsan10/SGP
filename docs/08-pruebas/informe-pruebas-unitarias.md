@@ -6,12 +6,12 @@
 
 | Capa | Archivos de prueba | Casos | Pasan | Fallan | Omitidos |
 |---|---|---|---|---|---|
-| Backend (API) | 29 | **321** | 321 | 0 | 0 |
-| Frontend (React) | 32 | **313** | 313 | 0 | 0 |
-| **Total unitarias** | 61 | **634** | 634 | 0 | 0 |
+| Backend (API) | 30 | **339** | 339 | 0 | 0 |
+| Frontend (React) | 35 | **333** | 333 | 0 | 0 |
+| **Total unitarias** | 65 | **672** | 672 | 0 | 0 |
 | Integración con BD real (aparte, ver §5) | 2 | 20 | 20 | 0 | 0 |
 
-**Criterio mínimo (≥ 20 casos distintos): cumplido con amplio margen** (634 casos unitarios en 61 archivos).
+**Criterio mínimo (≥ 20 casos distintos): cumplido con amplio margen** (672 casos unitarios en 65 archivos).
 
 ## 2. Cobertura (Vitest + v8)
 

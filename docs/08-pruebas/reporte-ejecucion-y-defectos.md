@@ -8,8 +8,8 @@
 
 | # | Suite | Comando | Casos | Pasan | Fallan | Resultado |
 |---|---|---|---|---|---|---|
-| 1 | Unitarias backend | `cd backend && pnpm test` | 321 (29 archivos) | 321 | 0 | ✅ |
-| 2 | Unitarias frontend | `cd frontend && pnpm test` | 313 (32 archivos) | 313 | 0 | ✅ |
+| 1 | Unitarias backend | `cd backend && pnpm test` | 339 (30 archivos) | 339 | 0 | ✅ |
+| 2 | Unitarias frontend | `cd frontend && pnpm test` | 333 (35 archivos) | 333 | 0 | ✅ |
 | 3 | Integración API + BD | `pnpm test:integration` (BD `_test`, puerto 3307) | 20 (2 archivos) | 20 | 0 | ✅ (ejecutada sobre MariaDB; el ambiente oficial es MySQL 8.0.42) |
 | 4 | Vulnerabilidades backend | `pnpm audit --audit-level=high` | — | — | — | ✅ sin altas/críticas |
 | 5 | Vulnerabilidades frontend | `pnpm audit --audit-level=high` | — | — | — | ✅ sin altas/críticas |
@@ -17,7 +17,7 @@
 | 7 | E2E Playwright | `cd e2e && pnpm test` | 6 especificaciones | — | — | ⚪ No ejecutadas en esta auditoría (requieren Docker y navegador); se corren en local |
 
 Cobertura: backend 75.6 % de líneas, frontend 75.55 % (detalle en `informe-pruebas-unitarias.md`).
-Total de casos automatizados ejecutados en esta auditoría: **654** (634 unitarios + 20 de integración), **0 fallos**.
+Total de casos automatizados ejecutados en esta auditoría: **692** (672 unitarios + 20 de integración), **0 fallos**.
 
 ## 2. Resumen de defectos
 
@@ -64,7 +64,7 @@ Estados: 19 corregidos y verificados con pruebas · 2 mitigados · 2 corregidos 
 | DEF-22 | Seguridad (SEC-13) | TLS no configurado dentro del proyecto | Media | Mitigado | Delegado al proxy institucional; documentar certificado |
 | DEF-23 | Despliegue Docker | `frontend/nginx.conf` no tenía proxy para `/ws` (tiempo real en Docker) | Media | Corregido en esta rama; verificar en Docker | Se añadió `location /ws` y SSE sin buffer |
 | DEF-24 | Documentación | `docs/03-api/api-rest.md` sin solicitudes, `/verify`, WebSocket ni SSE | Baja | Corregido en esta rama | API documentada al día |
-| DEF-25 | Funcionalidad | HU-35 exportar reportes sin implementar; HU-33 y HU-34 parciales | Media | Abierto | Ver `docs/07-deuda-tecnica.md` |
+| DEF-25 | Funcionalidad | HU-33 y HU-34 parciales (HU-35 ya implementada en `main`) | Media | Abierto | Ver `docs/07-deuda-tecnica.md` |
 
 ## 5. Cómo se mantiene este registro
 Cada `fix:` que se fusione agrega una fila aquí (ID siguiente, severidad, commit). Los hallazgos de seguridad se siguen también en `docs/06-seguridad/hallazgos.md`. Cada defecto abierto debe tener un issue en GitHub con etiqueta `bug` y su severidad (`sev-critica`, `sev-alta`, `sev-media`, `sev-baja`).

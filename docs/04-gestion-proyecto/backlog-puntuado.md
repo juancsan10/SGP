@@ -33,9 +33,9 @@ Prioridad MoSCoW: **M** Must · **S** Should · **C** Could. Responsable asignad
 | HU-32 | Línea de tiempo del proyecto | C | 5 | 5 | Juan Carlos Sánchez | ✅ Hecho |
 | HU-33 | Vincular cuenta de GitHub | C | 8 | 6 | Rubiel Rodríguez | 🟡 Parcial (falta cifrar token, SEC-06) |
 | HU-34 | Adjuntar archivos a un entregable | S | 5 | 6 | Juan Manuel Arcila | 🟡 Parcial (almacenamiento en nube, RF6.2) |
-| HU-35 | Exportar reportes del proyecto | S | 8 | 6 | Juan Carlos Sánchez | ⬜ Pendiente |
+| HU-35 | Exportar reportes del proyecto | S | 8 | 6 | Juan Carlos Sánchez | ✅ Hecho |
 
-**Total:** 23 historias · 116 puntos · 20 hechas (≈ 87 %), 2 parciales, 1 pendiente.
+**Total:** 23 historias · 116 puntos · 21 hechas (≈ 91 %), 2 parciales.
 
 ## 3. Planificación por sprint
 

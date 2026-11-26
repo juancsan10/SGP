@@ -13,7 +13,6 @@ Prioridad = riesgo e impacto sobre usuarios reales, no solo esfuerzo. Esfuerzo: 
 ## Prioridad MEDIA
 | ID | Deuda | Impacto | Esfuerzo |
 |---|---|---|---|
-| TD-05 | HU-35 exportar reportes PDF/Excel (RF6.3) | Funcionalidad pedida sin entregar | L |
 | TD-06 | HU-33 completar integración con GitHub | Funcionalidad parcial | M |
 | TD-07 | RF6.2 almacenamiento en la nube de archivos (hoy volumen local) | Pérdida de adjuntos si se pierde el volumen | M |
 | TD-08 | API documentada manualmente → generar OpenAPI/Swagger | El contrato se desactualiza (ya ocurrió) | M |
@@ -26,10 +25,11 @@ Prioridad = riesgo e impacto sobre usuarios reales, no solo esfuerzo. Esfuerzo: 
 |---|---|---|---|
 | TD-12 | Nomenclatura técnica en español → inglés gradual | Consistencia | L |
 | TD-13 | React Router 7: validar compatibilidad final | Riesgo bajo, CI verde | S |
-| TD-14 | Ramas obsoletas (`STG`, `feature/HU-35`, `chore/deps-audit`) | Orden del repositorio | S |
+| TD-14 | Ramas obsoletas (`STG`, `feature/HU-35`; `chore/deps-audit` ya eliminada) | Orden del repositorio | S |
 | TD-15 | Tablero de seguimiento apunta al repositorio antiguo | Documentación confusa | S |
 
 ## Resuelto
+- TD-05 / HU-35 exportar reportes (RF6.3): PDF institucional y Excel (.xlsx) por proyecto y consolidado, en `main` (PR #37/#38).
 - RF4.4 tiempo real: WebSocket nativo (`/ws`) + SSE (`/api/v1/notificaciones/stream`).
 - Dependencias vulnerables: `pnpm audit --audit-level=high` sin hallazgos en backend y frontend.
 - Validación de variables de entorno al arrancar (`backend/src/config/env.js`).

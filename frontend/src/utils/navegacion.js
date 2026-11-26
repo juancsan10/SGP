@@ -21,6 +21,7 @@ export function getNavItems(esAdmin = false, esInstructor = false) {
 
   if (esAdmin || esInstructor) {
     items.push({ label: 'Administración', section: true });
+    items.push({ path: '/reportes',  icon: '📊', label: 'Reportes' }); // HU-35: Exportación de reportes
     items.push({ path: '/usuarios',  icon: '👥', label: 'Usuarios' });
     items.push({ path: '/historial', icon: '📋', label: 'Historial' });
   }

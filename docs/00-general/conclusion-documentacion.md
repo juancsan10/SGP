@@ -28,8 +28,8 @@ Aplicación web para gestionar y dar seguimiento a los proyectos formativos del 
 | Comparativo de backends | `docs/09-reflexion/` | 🟡 plantilla |
 
 ## 3. Resultados
-- 23 historias (HU-13 a HU-35): 20 hechas, 2 parciales (GitHub, archivos en nube) y 1 pendiente (exportar reportes).
-- 634 pruebas unitarias y 20 de integración pasando; cobertura de líneas ≈ 76 %; sin vulnerabilidades altas ni críticas en dependencias.
+- 23 historias (HU-13 a HU-35): 21 hechas y 2 parciales (GitHub, archivos en nube).
+- 672 pruebas unitarias y 20 de integración pasando; cobertura de líneas ≈ 76 %; sin vulnerabilidades altas ni críticas en dependencias.
 - Seguridad: JWT + bcrypt, roles verificados en el backend, rate limit en login y recuperación, códigos con hash HMAC, validación de entradas.
 
 ## 4. Limitaciones conocidas
